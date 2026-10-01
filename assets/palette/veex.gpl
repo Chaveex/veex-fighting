@@ -1,0 +1,80 @@
+GIMP Palette
+Name: VEEX
+Columns: 5
+#
+255 204 174	skin-reflet
+232 168 136	skin-clair
+198 118 106	skin-base
+165  82  91	skin-ombre
+135  62  85	skin-profond
+118  75  54	hair-reflet
+ 78  41  28	hair-clair
+ 44  16  13	hair-base
+ 17   4   6	hair-ombre
+ 17   4   8	hair-profond
+200 173 148	beard-reflet
+160 128 102	beard-clair
+126  86  74	beard-base
+ 93  51  52	beard-ombre
+ 63  32  39	beard-profond
+192 240 248	iris-reflet
+140 179 208	iris-clair
+108 141 174	iris-base
+ 82 105 141	iris-ombre
+ 61  76 111	iris-profond
+122 183 208	denim-reflet
+ 82 117 168	denim-clair
+ 59  85 134	denim-base
+ 40  56 101	denim-ombre
+ 26  34  71	denim-profond
+102  93 160	jeans-reflet
+ 57  67 120	jeans-clair
+ 37  43  86	jeans-base
+ 21  22  53	jeans-ombre
+  8   8  23	jeans-profond
+255 255 255	white-reflet
+244 240 243	white-clair
+210 196 208	white-base
+177 158 176	white-ombre
+146 127 147	white-profond
+250 103  94	red-reflet
+210  58  60	red-clair
+176  40  64	red-base
+143  26  71	red-ombre
+113  17  69	red-profond
+112  96 232	blue-reflet
+ 60  82 192	blue-clair
+ 41  55 158	blue-base
+ 27  33 125	blue-ombre
+ 18  19  95	blue-profond
+255 255 255	shoe-reflet
+243 240 247	shoe-clair
+204 197 213	shoe-base
+167 159 180	shoe-ombre
+136 127 150	shoe-profond
+255 249 238	gum-reflet
+226 214 189	gum-clair
+192 169 151	gum-base
+159 125 119	gum-ombre
+129  92  95	gum-profond
+162 105  66	leather-reflet
+122  69  37	leather-clair
+ 88  34  23	leather-base
+ 55  12  15	leather-ombre
+ 25   4  10	leather-profond
+255 242 214	gold-reflet
+216 198 160	gold-clair
+182 151 126	gold-base
+149 105  97	gold-ombre
+119  73  77	gold-profond
+ 68  50  83	dark-reflet
+ 34  26  53	dark-clair
+ 17  12  28	dark-base
+ 10   7  17	dark-ombre
+ 10   6  17	dark-profond
+ 39 240 255	neon-cyan
+255  47 208	neon-magenta
+255 228  77	neon-jaune
+139  92 255	neon-violet
+ 36  18  48	contour
+ 58  34  64	contour-doux

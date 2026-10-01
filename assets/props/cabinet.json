@@ -1,0 +1,103 @@
+{
+ "frames": {
+  "cab0": {
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 48,
+    "h": 72
+   },
+   "duration": 120
+  },
+  "cab1": {
+   "frame": {
+    "x": 48,
+    "y": 0,
+    "w": 48,
+    "h": 72
+   },
+   "duration": 120
+  },
+  "cab2": {
+   "frame": {
+    "x": 96,
+    "y": 0,
+    "w": 48,
+    "h": 72
+   },
+   "duration": 120
+  },
+  "cab3": {
+   "frame": {
+    "x": 144,
+    "y": 0,
+    "w": 48,
+    "h": 72
+   },
+   "duration": 120
+  },
+  "cab_hit": {
+   "frame": {
+    "x": 192,
+    "y": 0,
+    "w": 48,
+    "h": 72
+   },
+   "duration": 60
+  },
+  "cab_dmg1": {
+   "frame": {
+    "x": 240,
+    "y": 0,
+    "w": 48,
+    "h": 72
+   },
+   "duration": 100
+  },
+  "cab_dmg2": {
+   "frame": {
+    "x": 288,
+    "y": 0,
+    "w": 48,
+    "h": 72
+   },
+   "duration": 100
+  },
+  "cab_wreck": {
+   "frame": {
+    "x": 336,
+    "y": 0,
+    "w": 48,
+    "h": 72
+   },
+   "duration": 200
+  }
+ },
+ "meta": {
+  "app": "veexing-force prop generator",
+  "image": "cabinet.png",
+  "size": {
+   "w": 384,
+   "h": 72
+  },
+  "anchor": {
+   "x": 24,
+   "y": 68
+  },
+  "scale": 1,
+  "frameTags": [
+   {
+    "name": "idle",
+    "from": 0,
+    "to": 3,
+    "direction": 0
+   },
+   {
+    "name": "damage",
+    "from": 4,
+    "to": 7,
+    "direction": 0
+   }
+  ]
+ }
+}

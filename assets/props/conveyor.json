@@ -1,0 +1,79 @@
+{
+ "frames": {
+  "belt0": {
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 80
+   },
+   "duration": 70
+  },
+  "belt1": {
+   "frame": {
+    "x": 32,
+    "y": 0,
+    "w": 32,
+    "h": 80
+   },
+   "duration": 70
+  },
+  "belt2": {
+   "frame": {
+    "x": 64,
+    "y": 0,
+    "w": 32,
+    "h": 80
+   },
+   "duration": 70
+  },
+  "belt3": {
+   "frame": {
+    "x": 96,
+    "y": 0,
+    "w": 32,
+    "h": 80
+   },
+   "duration": 70
+  },
+  "capL": {
+   "frame": {
+    "x": 128,
+    "y": 0,
+    "w": 32,
+    "h": 80
+   },
+   "duration": 100
+  },
+  "capR": {
+   "frame": {
+    "x": 160,
+    "y": 0,
+    "w": 32,
+    "h": 80
+   },
+   "duration": 100
+  }
+ },
+ "meta": {
+  "app": "veexing-force prop generator",
+  "image": "conveyor.png",
+  "size": {
+   "w": 256,
+   "h": 80
+  },
+  "anchor": {
+   "x": 0,
+   "y": 0
+  },
+  "scale": 1,
+  "frameTags": [
+   {
+    "name": "belt",
+    "from": 0,
+    "to": 3,
+    "direction": 0
+   }
+  ]
+ }
+}

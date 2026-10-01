@@ -1,0 +1,1165 @@
+{
+ "w": 128,
+ "h": 128,
+ "ax": 64,
+ "ay": 118,
+ "cols": 10,
+ "guides": [
+  28,
+  58,
+  65,
+  85,
+  95
+ ],
+ "frames": [
+  {
+   "name": "idle_0",
+   "duration": 117
+  },
+  {
+   "name": "idle_1",
+   "duration": 117
+  },
+  {
+   "name": "idle_2",
+   "duration": 117
+  },
+  {
+   "name": "idle_3",
+   "duration": 117
+  },
+  {
+   "name": "idle_4",
+   "duration": 117
+  },
+  {
+   "name": "idle_5",
+   "duration": 117
+  },
+  {
+   "name": "idle_6",
+   "duration": 117
+  },
+  {
+   "name": "idle_7",
+   "duration": 117
+  },
+  {
+   "name": "walk_0",
+   "duration": 50
+  },
+  {
+   "name": "walk_1",
+   "duration": 50
+  },
+  {
+   "name": "walk_2",
+   "duration": 50
+  },
+  {
+   "name": "walk_3",
+   "duration": 50
+  },
+  {
+   "name": "walk_4",
+   "duration": 50
+  },
+  {
+   "name": "walk_5",
+   "duration": 50
+  },
+  {
+   "name": "walk_6",
+   "duration": 50
+  },
+  {
+   "name": "walk_7",
+   "duration": 50
+  },
+  {
+   "name": "crouch_in",
+   "duration": 70
+  },
+  {
+   "name": "crouch_0",
+   "duration": 267
+  },
+  {
+   "name": "crouch_1",
+   "duration": 267
+  },
+  {
+   "name": "jump_up0",
+   "duration": 17
+  },
+  {
+   "name": "jump_up1",
+   "duration": 17
+  },
+  {
+   "name": "jump_top",
+   "duration": 17
+  },
+  {
+   "name": "jump_fall0",
+   "duration": 17
+  },
+  {
+   "name": "jump_fall1",
+   "duration": 17
+  },
+  {
+   "name": "land_0",
+   "duration": 70
+  },
+  {
+   "name": "land_1",
+   "duration": 70
+  },
+  {
+   "name": "dash_0",
+   "duration": 70
+  },
+  {
+   "name": "dash_1",
+   "duration": 70
+  },
+  {
+   "name": "dash_2",
+   "duration": 70
+  },
+  {
+   "name": "airdash_0",
+   "duration": 70
+  },
+  {
+   "name": "airdash_1",
+   "duration": 70
+  },
+  {
+   "name": "hurt_0",
+   "duration": 70
+  },
+  {
+   "name": "hurt_1",
+   "duration": 70
+  },
+  {
+   "name": "hurt_2",
+   "duration": 70
+  },
+  {
+   "name": "tumble_0",
+   "duration": 17
+  },
+  {
+   "name": "tumble_1",
+   "duration": 17
+  },
+  {
+   "name": "down_0",
+   "duration": 70
+  },
+  {
+   "name": "down_1",
+   "duration": 70
+  },
+  {
+   "name": "getup_0",
+   "duration": 70
+  },
+  {
+   "name": "getup_1",
+   "duration": 70
+  },
+  {
+   "name": "getup_2",
+   "duration": 70
+  },
+  {
+   "name": "getup_3",
+   "duration": 70
+  },
+  {
+   "name": "fury_0",
+   "duration": 70
+  },
+  {
+   "name": "fury_1",
+   "duration": 70
+  },
+  {
+   "name": "fury_2",
+   "duration": 70
+  },
+  {
+   "name": "spin_0",
+   "duration": 33
+  },
+  {
+   "name": "spin_1",
+   "duration": 33
+  },
+  {
+   "name": "spin_2",
+   "duration": 33
+  },
+  {
+   "name": "spin_3",
+   "duration": 33
+  },
+  {
+   "name": "spin_4",
+   "duration": 33
+  },
+  {
+   "name": "spin_5",
+   "duration": 33
+  },
+  {
+   "name": "spin_6",
+   "duration": 33
+  },
+  {
+   "name": "spin_7",
+   "duration": 33
+  },
+  {
+   "name": "fury_end_0",
+   "duration": 70
+  },
+  {
+   "name": "fury_end_1",
+   "duration": 70
+  },
+  {
+   "name": "fury_end_2",
+   "duration": 70
+  },
+  {
+   "name": "jab_w0",
+   "duration": 70
+  },
+  {
+   "name": "jab_s0",
+   "duration": 60
+  },
+  {
+   "name": "jab_r0",
+   "duration": 70
+  },
+  {
+   "name": "jab_r1",
+   "duration": 70
+  },
+  {
+   "name": "cross_w0",
+   "duration": 70
+  },
+  {
+   "name": "cross_w1",
+   "duration": 70
+  },
+  {
+   "name": "cross_s0",
+   "duration": 60
+  },
+  {
+   "name": "cross_r0",
+   "duration": 70
+  },
+  {
+   "name": "cross_r1",
+   "duration": 70
+  },
+  {
+   "name": "elbow_w0",
+   "duration": 70
+  },
+  {
+   "name": "elbow_w1",
+   "duration": 70
+  },
+  {
+   "name": "elbow_w2",
+   "duration": 70
+  },
+  {
+   "name": "elbow_w3",
+   "duration": 70
+  },
+  {
+   "name": "elbow_s0",
+   "duration": 60
+  },
+  {
+   "name": "elbow_r0",
+   "duration": 70
+  },
+  {
+   "name": "elbow_r1",
+   "duration": 70
+  },
+  {
+   "name": "elbow_r2",
+   "duration": 70
+  },
+  {
+   "name": "teep_w0",
+   "duration": 70
+  },
+  {
+   "name": "teep_w1",
+   "duration": 70
+  },
+  {
+   "name": "teep_s0",
+   "duration": 60
+  },
+  {
+   "name": "teep_r0",
+   "duration": 70
+  },
+  {
+   "name": "teep_r1",
+   "duration": 70
+  },
+  {
+   "name": "round_w0",
+   "duration": 70
+  },
+  {
+   "name": "round_w1",
+   "duration": 70
+  },
+  {
+   "name": "round_w2",
+   "duration": 70
+  },
+  {
+   "name": "round_s0",
+   "duration": 60
+  },
+  {
+   "name": "round_r0",
+   "duration": 70
+  },
+  {
+   "name": "round_r1",
+   "duration": 70
+  },
+  {
+   "name": "round_r2",
+   "duration": 70
+  },
+  {
+   "name": "knee_w0",
+   "duration": 70
+  },
+  {
+   "name": "knee_w1",
+   "duration": 70
+  },
+  {
+   "name": "knee_s0",
+   "duration": 60
+  },
+  {
+   "name": "knee_r0",
+   "duration": 70
+  },
+  {
+   "name": "knee_r1",
+   "duration": 70
+  },
+  {
+   "name": "upper_w0",
+   "duration": 70
+  },
+  {
+   "name": "upper_w1",
+   "duration": 70
+  },
+  {
+   "name": "upper_s0",
+   "duration": 60
+  },
+  {
+   "name": "upper_r0",
+   "duration": 70
+  },
+  {
+   "name": "upper_r1",
+   "duration": 70
+  },
+  {
+   "name": "low_w0",
+   "duration": 70
+  },
+  {
+   "name": "low_w1",
+   "duration": 70
+  },
+  {
+   "name": "low_s0",
+   "duration": 60
+  },
+  {
+   "name": "low_r0",
+   "duration": 70
+  },
+  {
+   "name": "low_r1",
+   "duration": 70
+  },
+  {
+   "name": "rknee_w0",
+   "duration": 70
+  },
+  {
+   "name": "rknee_s0",
+   "duration": 60
+  },
+  {
+   "name": "rknee_r0",
+   "duration": 70
+  },
+  {
+   "name": "rknee_r1",
+   "duration": 70
+  },
+  {
+   "name": "airp_w0",
+   "duration": 70
+  },
+  {
+   "name": "airp_s0",
+   "duration": 60
+  },
+  {
+   "name": "airp_r0",
+   "duration": 70
+  },
+  {
+   "name": "airp_r1",
+   "duration": 70
+  },
+  {
+   "name": "airk_w0",
+   "duration": 70
+  },
+  {
+   "name": "airk_s0",
+   "duration": 60
+  },
+  {
+   "name": "airk_r0",
+   "duration": 70
+  },
+  {
+   "name": "airk_r1",
+   "duration": 70
+  },
+  {
+   "name": "airknee_w0",
+   "duration": 70
+  },
+  {
+   "name": "airknee_s0",
+   "duration": 60
+  },
+  {
+   "name": "airknee_r0",
+   "duration": 70
+  },
+  {
+   "name": "airknee_r1",
+   "duration": 70
+  },
+  {
+   "name": "rushp_w0",
+   "duration": 70
+  },
+  {
+   "name": "rushp_s0",
+   "duration": 60
+  },
+  {
+   "name": "rushp_r0",
+   "duration": 70
+  },
+  {
+   "name": "rushp_r1",
+   "duration": 70
+  },
+  {
+   "name": "rushk_w0",
+   "duration": 70
+  },
+  {
+   "name": "rushk_s0",
+   "duration": 60
+  },
+  {
+   "name": "rushk_r0",
+   "duration": 70
+  },
+  {
+   "name": "rushk_r1",
+   "duration": 70
+  },
+  {
+   "name": "rushn_w0",
+   "duration": 70
+  },
+  {
+   "name": "rushn_s0",
+   "duration": 60
+  },
+  {
+   "name": "rushn_r0",
+   "duration": 70
+  },
+  {
+   "name": "rushn_r1",
+   "duration": 70
+  }
+ ],
+ "tags": [
+  {
+   "name": "idle",
+   "from": 0,
+   "to": 7,
+   "color": "#3dffa0"
+  },
+  {
+   "name": "walk",
+   "from": 8,
+   "to": 15,
+   "color": "#27f0ff"
+  },
+  {
+   "name": "crouch",
+   "from": 16,
+   "to": 18,
+   "color": "#3dffa0"
+  },
+  {
+   "name": "jump",
+   "from": 19,
+   "to": 23,
+   "color": "#27f0ff"
+  },
+  {
+   "name": "land",
+   "from": 24,
+   "to": 25,
+   "color": "#27f0ff"
+  },
+  {
+   "name": "dash",
+   "from": 26,
+   "to": 28,
+   "color": "#8b5cff"
+  },
+  {
+   "name": "airdash",
+   "from": 29,
+   "to": 30,
+   "color": "#8b5cff"
+  },
+  {
+   "name": "hurt",
+   "from": 31,
+   "to": 33,
+   "color": "#ff2a4d"
+  },
+  {
+   "name": "tumble",
+   "from": 34,
+   "to": 35,
+   "color": "#ff2a4d"
+  },
+  {
+   "name": "down",
+   "from": 36,
+   "to": 37,
+   "color": "#ff2a4d"
+  },
+  {
+   "name": "getup",
+   "from": 38,
+   "to": 41,
+   "color": "#ff2a4d"
+  },
+  {
+   "name": "fury",
+   "from": 42,
+   "to": 44,
+   "color": "#ffe44d"
+  },
+  {
+   "name": "spin",
+   "from": 45,
+   "to": 52,
+   "color": "#ffe44d"
+  },
+  {
+   "name": "fury_end",
+   "from": 53,
+   "to": 55,
+   "color": "#ffe44d"
+  },
+  {
+   "name": "jab",
+   "from": 56,
+   "to": 59,
+   "color": "#ff2fd0"
+  },
+  {
+   "name": "cross",
+   "from": 60,
+   "to": 64,
+   "color": "#ff2fd0"
+  },
+  {
+   "name": "elbow",
+   "from": 65,
+   "to": 72,
+   "color": "#ff2fd0"
+  },
+  {
+   "name": "teep",
+   "from": 73,
+   "to": 77,
+   "color": "#ff2fd0"
+  },
+  {
+   "name": "round",
+   "from": 78,
+   "to": 84,
+   "color": "#ff2fd0"
+  },
+  {
+   "name": "knee",
+   "from": 85,
+   "to": 89,
+   "color": "#ff2fd0"
+  },
+  {
+   "name": "upper",
+   "from": 90,
+   "to": 94,
+   "color": "#ff2fd0"
+  },
+  {
+   "name": "low",
+   "from": 95,
+   "to": 99,
+   "color": "#ff2fd0"
+  },
+  {
+   "name": "rknee",
+   "from": 100,
+   "to": 103,
+   "color": "#ff2fd0"
+  },
+  {
+   "name": "airp",
+   "from": 104,
+   "to": 107,
+   "color": "#ff2fd0"
+  },
+  {
+   "name": "airk",
+   "from": 108,
+   "to": 111,
+   "color": "#ff2fd0"
+  },
+  {
+   "name": "airknee",
+   "from": 112,
+   "to": 115,
+   "color": "#ff2fd0"
+  },
+  {
+   "name": "rushp",
+   "from": 116,
+   "to": 119,
+   "color": "#ff2fd0"
+  },
+  {
+   "name": "rushk",
+   "from": 120,
+   "to": 123,
+   "color": "#ff2fd0"
+  },
+  {
+   "name": "rushn",
+   "from": 124,
+   "to": 127,
+   "color": "#ff2fd0"
+  }
+ ],
+ "anims": {
+  "idle": {
+   "f": [
+    "idle_0",
+    "idle_1",
+    "idle_2",
+    "idle_3",
+    "idle_4",
+    "idle_5",
+    "idle_6",
+    "idle_7"
+   ],
+   "w": [
+    7,
+    7,
+    7,
+    7,
+    7,
+    7,
+    7,
+    7
+   ],
+   "ph": "llllllll"
+  },
+  "walk": {
+   "f": [
+    "walk_0",
+    "walk_1",
+    "walk_2",
+    "walk_3",
+    "walk_4",
+    "walk_5",
+    "walk_6",
+    "walk_7"
+   ],
+   "w": [
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3
+   ],
+   "ph": "llllllll"
+  },
+  "crouch": {
+   "f": [
+    "crouch_in",
+    "crouch_0",
+    "crouch_1"
+   ],
+   "w": [
+    1,
+    16,
+    16
+   ],
+   "ph": "wll"
+  },
+  "jump": {
+   "f": [
+    "jump_up0",
+    "jump_up1",
+    "jump_top",
+    "jump_fall0",
+    "jump_fall1"
+   ],
+   "w": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "ph": "lllll"
+  },
+  "land": {
+   "f": [
+    "land_0",
+    "land_1"
+   ],
+   "w": [
+    1,
+    1
+   ],
+   "ph": "ww"
+  },
+  "dash": {
+   "f": [
+    "dash_0",
+    "dash_1",
+    "dash_2"
+   ],
+   "w": [
+    0.3,
+    0.5,
+    0.2
+   ],
+   "ph": "www"
+  },
+  "airdash": {
+   "f": [
+    "airdash_0",
+    "airdash_1"
+   ],
+   "w": [
+    0.4,
+    0.6
+   ],
+   "ph": "ww"
+  },
+  "hurt": {
+   "f": [
+    "hurt_0",
+    "hurt_1",
+    "hurt_2"
+   ],
+   "w": [
+    0.2,
+    0.35,
+    0.45
+   ],
+   "ph": "www"
+  },
+  "tumble": {
+   "f": [
+    "tumble_0",
+    "tumble_1"
+   ],
+   "w": [
+    1.0,
+    1.0
+   ],
+   "ph": "ll"
+  },
+  "down": {
+   "f": [
+    "down_0",
+    "down_1"
+   ],
+   "w": [
+    1,
+    1
+   ],
+   "ph": "ww"
+  },
+  "getup": {
+   "f": [
+    "getup_0",
+    "getup_1",
+    "getup_2",
+    "getup_3"
+   ],
+   "w": [
+    0.25,
+    0.3,
+    0.25,
+    0.2
+   ],
+   "ph": "wwww"
+  },
+  "fury": {
+   "f": [
+    "fury_0",
+    "fury_1",
+    "fury_2"
+   ],
+   "w": [
+    0.3,
+    0.5,
+    0.2
+   ],
+   "ph": "www"
+  },
+  "spin": {
+   "f": [
+    "spin_0",
+    "spin_1",
+    "spin_2",
+    "spin_3",
+    "spin_4",
+    "spin_5",
+    "spin_6",
+    "spin_7"
+   ],
+   "w": [
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2
+   ],
+   "ph": "llllllll"
+  },
+  "fury_end": {
+   "f": [
+    "fury_end_0",
+    "fury_end_1",
+    "fury_end_2"
+   ],
+   "w": [
+    0.55,
+    0.25,
+    0.2
+   ],
+   "ph": "rrr"
+  },
+  "jab": {
+   "f": [
+    "jab_w0",
+    "jab_s0",
+    "jab_r0",
+    "jab_r1"
+   ],
+   "w": [
+    1,
+    1,
+    0.4,
+    0.6
+   ],
+   "ph": "wsrr"
+  },
+  "cross": {
+   "f": [
+    "cross_w0",
+    "cross_w1",
+    "cross_s0",
+    "cross_r0",
+    "cross_r1"
+   ],
+   "w": [
+    0.5,
+    0.5,
+    1,
+    0.4,
+    0.6
+   ],
+   "ph": "wwsrr"
+  },
+  "elbow": {
+   "f": [
+    "elbow_w0",
+    "elbow_w1",
+    "elbow_w2",
+    "elbow_w3",
+    "elbow_s0",
+    "elbow_r0",
+    "elbow_r1",
+    "elbow_r2"
+   ],
+   "w": [
+    0.2,
+    0.25,
+    0.25,
+    0.3,
+    1,
+    0.3,
+    0.35,
+    0.35
+   ],
+   "ph": "wwwwsrrr"
+  },
+  "teep": {
+   "f": [
+    "teep_w0",
+    "teep_w1",
+    "teep_s0",
+    "teep_r0",
+    "teep_r1"
+   ],
+   "w": [
+    0.45,
+    0.55,
+    1,
+    0.45,
+    0.55
+   ],
+   "ph": "wwsrr"
+  },
+  "round": {
+   "f": [
+    "round_w0",
+    "round_w1",
+    "round_w2",
+    "round_s0",
+    "round_r0",
+    "round_r1",
+    "round_r2"
+   ],
+   "w": [
+    0.3,
+    0.35,
+    0.35,
+    1,
+    0.35,
+    0.35,
+    0.3
+   ],
+   "ph": "wwwsrrr"
+  },
+  "knee": {
+   "f": [
+    "knee_w0",
+    "knee_w1",
+    "knee_s0",
+    "knee_r0",
+    "knee_r1"
+   ],
+   "w": [
+    0.5,
+    0.5,
+    1,
+    0.45,
+    0.55
+   ],
+   "ph": "wwsrr"
+  },
+  "upper": {
+   "f": [
+    "upper_w0",
+    "upper_w1",
+    "upper_s0",
+    "upper_r0",
+    "upper_r1"
+   ],
+   "w": [
+    0.5,
+    0.5,
+    1,
+    0.45,
+    0.55
+   ],
+   "ph": "wwsrr"
+  },
+  "low": {
+   "f": [
+    "low_w0",
+    "low_w1",
+    "low_s0",
+    "low_r0",
+    "low_r1"
+   ],
+   "w": [
+    0.5,
+    0.5,
+    1,
+    0.4,
+    0.6
+   ],
+   "ph": "wwsrr"
+  },
+  "rknee": {
+   "f": [
+    "rknee_w0",
+    "rknee_s0",
+    "rknee_r0",
+    "rknee_r1"
+   ],
+   "w": [
+    1,
+    1,
+    0.45,
+    0.55
+   ],
+   "ph": "wsrr"
+  },
+  "airp": {
+   "f": [
+    "airp_w0",
+    "airp_s0",
+    "airp_r0",
+    "airp_r1"
+   ],
+   "w": [
+    1,
+    1,
+    0.5,
+    0.5
+   ],
+   "ph": "wsrr"
+  },
+  "airk": {
+   "f": [
+    "airk_w0",
+    "airk_s0",
+    "airk_r0",
+    "airk_r1"
+   ],
+   "w": [
+    1,
+    1,
+    0.5,
+    0.5
+   ],
+   "ph": "wsrr"
+  },
+  "airknee": {
+   "f": [
+    "airknee_w0",
+    "airknee_s0",
+    "airknee_r0",
+    "airknee_r1"
+   ],
+   "w": [
+    1,
+    1,
+    0.5,
+    0.5
+   ],
+   "ph": "wsrr"
+  },
+  "rushp": {
+   "f": [
+    "rushp_w0",
+    "rushp_s0",
+    "rushp_r0",
+    "rushp_r1"
+   ],
+   "w": [
+    1,
+    1,
+    0.4,
+    0.6
+   ],
+   "ph": "wsrr"
+  },
+  "rushk": {
+   "f": [
+    "rushk_w0",
+    "rushk_s0",
+    "rushk_r0",
+    "rushk_r1"
+   ],
+   "w": [
+    1,
+    1,
+    0.45,
+    0.55
+   ],
+   "ph": "wsrr"
+  },
+  "rushn": {
+   "f": [
+    "rushn_w0",
+    "rushn_s0",
+    "rushn_r0",
+    "rushn_r1"
+   ],
+   "w": [
+    1,
+    1,
+    0.45,
+    0.55
+   ],
+   "ph": "wsrr"
+  }
+ }
+}

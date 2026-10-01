@@ -1,0 +1,106 @@
+{
+ "frames": {
+  "ball0": {
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 24,
+    "h": 24
+   },
+   "duration": 80
+  },
+  "ball1": {
+   "frame": {
+    "x": 24,
+    "y": 0,
+    "w": 24,
+    "h": 24
+   },
+   "duration": 80
+  },
+  "ball2": {
+   "frame": {
+    "x": 48,
+    "y": 0,
+    "w": 24,
+    "h": 24
+   },
+   "duration": 80
+  },
+  "ball3": {
+   "frame": {
+    "x": 72,
+    "y": 0,
+    "w": 24,
+    "h": 24
+   },
+   "duration": 80
+  },
+  "ball4": {
+   "frame": {
+    "x": 96,
+    "y": 0,
+    "w": 24,
+    "h": 24
+   },
+   "duration": 80
+  },
+  "ball5": {
+   "frame": {
+    "x": 120,
+    "y": 0,
+    "w": 24,
+    "h": 24
+   },
+   "duration": 80
+  },
+  "ball6": {
+   "frame": {
+    "x": 144,
+    "y": 0,
+    "w": 24,
+    "h": 24
+   },
+   "duration": 80
+  },
+  "ball7": {
+   "frame": {
+    "x": 168,
+    "y": 0,
+    "w": 24,
+    "h": 24
+   },
+   "duration": 80
+  },
+  "squash": {
+   "frame": {
+    "x": 0,
+    "y": 24,
+    "w": 24,
+    "h": 24
+   },
+   "duration": 60
+  }
+ },
+ "meta": {
+  "app": "veexing-force prop generator",
+  "image": "ball.png",
+  "size": {
+   "w": 192,
+   "h": 48
+  },
+  "anchor": {
+   "x": 12,
+   "y": 22
+  },
+  "scale": 1,
+  "frameTags": [
+   {
+    "name": "spin",
+    "from": 0,
+    "to": 7,
+    "direction": 0
+   }
+  ]
+ }
+}

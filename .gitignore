@@ -1,0 +1,14 @@
+# build output (npm run build / deploy regenerates it)
+dist/
+# Netlify CLI local state
+.netlify/
+# Python / OS junk
+__pycache__/
+*.pyc
+*.stackdump
+Thumbs.db
+.DS_Store
+node_modules/
+# generated previews
+tools/*_preview*.png
+tools/pixel_preview.png

@@ -1,0 +1,103 @@
+{
+ "frames": {
+  "srv0": {
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 40,
+    "h": 72
+   },
+   "duration": 120
+  },
+  "srv1": {
+   "frame": {
+    "x": 40,
+    "y": 0,
+    "w": 40,
+    "h": 72
+   },
+   "duration": 120
+  },
+  "srv2": {
+   "frame": {
+    "x": 80,
+    "y": 0,
+    "w": 40,
+    "h": 72
+   },
+   "duration": 120
+  },
+  "srv3": {
+   "frame": {
+    "x": 120,
+    "y": 0,
+    "w": 40,
+    "h": 72
+   },
+   "duration": 120
+  },
+  "srv_hit": {
+   "frame": {
+    "x": 160,
+    "y": 0,
+    "w": 40,
+    "h": 72
+   },
+   "duration": 60
+  },
+  "srv_dmg1": {
+   "frame": {
+    "x": 200,
+    "y": 0,
+    "w": 40,
+    "h": 72
+   },
+   "duration": 100
+  },
+  "srv_dmg2": {
+   "frame": {
+    "x": 240,
+    "y": 0,
+    "w": 40,
+    "h": 72
+   },
+   "duration": 100
+  },
+  "srv_dead": {
+   "frame": {
+    "x": 280,
+    "y": 0,
+    "w": 40,
+    "h": 72
+   },
+   "duration": 200
+  }
+ },
+ "meta": {
+  "app": "veexing-force prop generator",
+  "image": "server.png",
+  "size": {
+   "w": 320,
+   "h": 72
+  },
+  "anchor": {
+   "x": 20,
+   "y": 68
+  },
+  "scale": 1,
+  "frameTags": [
+   {
+    "name": "idle",
+    "from": 0,
+    "to": 3,
+    "direction": 0
+   },
+   {
+    "name": "damage",
+    "from": 4,
+    "to": 7,
+    "direction": 0
+   }
+  ]
+ }
+}

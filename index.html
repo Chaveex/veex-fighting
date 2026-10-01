@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VEEXING FORCE</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #05010f; overflow: hidden; }
+  canvas { display: block; position: fixed; inset: 0; image-rendering: pixelated; }
+  #loading { position: fixed; inset: 0; display: grid; place-items: center; color: #ff2fd0; font: 700 22px Impact, sans-serif; letter-spacing: 3px; }
+  #err { display: none; position: fixed; left: 0; bottom: 0; right: 0; max-height: 40%; overflow: auto; background: #300; color: #fcc; font: 12px monospace; padding: 6px; white-space: pre-wrap; z-index: 9; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="loading">LOADING...</div>
+<pre id="err"></pre>
+<script src="js/assets.js"></script>
+<script src="js/util.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/rig.js"></script>
+<script src="js/heroSprites.js"></script>
+<script src="js/heroSprites_roxy.js"></script>
+<script src="js/enemySprites.js"></script>
+<script src="js/sprites.js"></script>
+<script src="js/ventSprites.js"></script>
+<script src="js/propSprites.js"></script>
+<script src="js/fighter.js"></script>
+<script src="js/enemies.js"></script>
+<script src="js/hazards.js"></script>
+<script src="js/props.js"></script>
+<script src="js/levelArt.js"></script>
+<script src="js/levels.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>

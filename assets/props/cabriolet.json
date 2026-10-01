@@ -1,0 +1,85 @@
+{
+ "frames": {
+  "car0": {
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 112,
+    "h": 64
+   },
+   "duration": 200
+  },
+  "car1": {
+   "frame": {
+    "x": 112,
+    "y": 0,
+    "w": 112,
+    "h": 64
+   },
+   "duration": 200
+  },
+  "car2_0": {
+   "frame": {
+    "x": 224,
+    "y": 0,
+    "w": 112,
+    "h": 64
+   },
+   "duration": 90
+  },
+  "car2_1": {
+   "frame": {
+    "x": 336,
+    "y": 0,
+    "w": 112,
+    "h": 64
+   },
+   "duration": 90
+  },
+  "car2_2": {
+   "frame": {
+    "x": 448,
+    "y": 0,
+    "w": 112,
+    "h": 64
+   },
+   "duration": 90
+  },
+  "wreck": {
+   "frame": {
+    "x": 560,
+    "y": 0,
+    "w": 112,
+    "h": 64
+   },
+   "duration": 200
+  }
+ },
+ "meta": {
+  "app": "veexing-force prop generator",
+  "image": "cabriolet.png",
+  "size": {
+   "w": 896,
+   "h": 64
+  },
+  "anchor": {
+   "x": 56,
+   "y": 58
+  },
+  "scale": 1,
+  "frameTags": [
+   {
+    "name": "states",
+    "from": 0,
+    "to": 1,
+    "direction": 0
+   },
+   {
+    "name": "burning",
+    "from": 2,
+    "to": 4,
+    "direction": 0
+   }
+  ]
+ }
+}

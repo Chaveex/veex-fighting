@@ -1,0 +1,21 @@
+{
+  "name": "veexing-force",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Beat'em all 2D 80s neo-retro, Muay Thai",
+  "scripts": {
+    "dev": "node tools/serve.js",
+    "start": "node tools/serve.js",
+    "sprites": "python tools/make_hero_sprites.py && python tools/build_enemy_sheets.py && python tools/make_vent_sprites.py && python tools/make_prop_sprites.py",
+    "soak": "node tools/soak.js 1 -1 30000",
+    "build": "node -e \"const fs=require('fs');fs.rmSync('dist',{recursive:true,force:true});fs.mkdirSync('dist');fs.copyFileSync('index.html','dist/index.html');fs.cpSync('js','dist/js',{recursive:true})\"",
+    "deploy": "npm run build && netlify deploy --prod --dir=dist",
+    "hero:palette": "python tools/make_hero_palette.py",
+    "hero:workspace": "python tools/make_hero_workspace.py",
+    "hero:import": "python tools/import_hero_sheet.py",
+    "level1": "python tools/make_level_bg.py 1",
+    "level2": "python tools/make_level_bg.py 2",
+    "level3": "python tools/make_level_bg.py 3",
+    "level4": "python tools/make_level_bg.py 4"
+  }
+}
