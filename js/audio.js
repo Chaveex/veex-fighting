@@ -22,6 +22,11 @@ const Snd = (() => {
     duck: { music: -7, sfx2: -4, attack: 0.05, release: 0.45 },
   };
   let route = null;                                  // bus forced by a sfx2 wrapper (see SECONDARY below)
+  // player volume settings (OPTIONS screen), 0..1, saved in localStorage; they scale the calibrated faders, never replace them
+  const USER = { master: 1, music: 1, sfx: 1, voice: 1 };
+  try { Object.assign(USER, JSON.parse(localStorage.getItem('veexVol') || '{}')); } catch (e) { /* defaults */ }
+  const userOf = name => (name === 'sfx' || name === 'sfx2') ? USER.sfx : USER[name];
+  const busGain = name => dB(MIX.fader[name] + MIX.trim[name]) * userOf(name);
   const meters = {};                                 // AnalyserNode taps for the bus meters
 
   function init() {
@@ -30,7 +35,7 @@ const Snd = (() => {
     if (!AC) return;
     ctx = new AC();
     // ---- groups -> master -> limiter -> brickwall clipper -> output ----
-    const bus = name => { const g = ctx.createGain(); g.gain.value = dB(MIX.fader[name] + MIX.trim[name]); g.connect(masterIn); return g; };
+    const bus = name => { const g = ctx.createGain(); g.gain.value = busGain(name); g.connect(masterIn); return g; };
     masterIn = ctx.createGain();
     voiceBus = bus('voice'); sfx2Bus = bus('sfx2'); musBus = bus('music');
     // sfx group: a glue compressor in front of the fader tames stacked impacts (5 hits + a blast on the same frame) without flattening single hits
@@ -49,7 +54,7 @@ const Snd = (() => {
       cv[i] = Math.sign(x) * Math.min(C, y);
     }
     clip.curve = cv; clip.oversample = '4x';
-    master = ctx.createGain(); master.gain.value = muted ? 0 : 1;
+    master = ctx.createGain(); master.gain.value = muted ? 0 : USER.master;
     masterIn.connect(lim); lim.connect(clip); clip.connect(master); master.connect(ctx.destination);
     for (const [name, node] of [['voice', voiceBus], ['sfx', sfxBus.fader], ['sfx2', sfx2Bus], ['music', musBus], ['master', clip]]) {
       const an = ctx.createAnalyser(); an.fftSize = 2048; node.connect(an); meters[name] = { an, buf: new Float32Array(2048), peak: -120, hold: -120 };
@@ -142,12 +147,24 @@ const Snd = (() => {
   function stopLoops() { for (const k in loops) loopStop(k, 0.1); }
   function loopsActive(on) { if (loopBus) loopBus.gain.setTargetAtTime(on ? 1 : 0, ctx.currentTime, 0.05); }
   function resume() { init(); if (ctx && ctx.state === 'suspended') ctx.resume(); }
-  function toggleMute() { muted = !muted; if (master) master.gain.value = muted ? 0 : 1; return muted; }
+  function toggleMute() { muted = !muted; if (master) master.gain.value = muted ? 0 : USER.master; return muted; }
+  // OPTIONS: player volumes (0..1 by steps of 0.1)
+  function getVol(k) { return USER[k]; }
+  function setVol(k, v) {
+    USER[k] = Math.round(Math.max(0, Math.min(1, v)) * 10) / 10;
+    try { localStorage.setItem('veexVol', JSON.stringify(USER)); } catch (e) { /* ignore */ }
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    if (k === 'master') master.gain.setTargetAtTime(muted ? 0 : USER.master, t, 0.02);
+    if (k === 'music') musBus.gain.setTargetAtTime(busGain('music'), t, 0.02);
+    if (k === 'voice') voiceBus.gain.setTargetAtTime(busGain('voice'), t, 0.02);
+    if (k === 'sfx') { sfxBus.fader.gain.setTargetAtTime(busGain('sfx'), t, 0.02); sfx2Bus.gain.setTargetAtTime(busGain('sfx2'), t, 0.02); }
+  }
   // ducking: music and secondary sfx dip while a voice line plays, then come back
   function duck(seconds) {
     if (!ctx) return; const t = ctx.currentTime, D = MIX.duck;
     for (const [b, name, amt] of [[musBus, 'music', D.music], [sfx2Bus, 'sfx2', D.sfx2]]) {
-      const base = dB(MIX.fader[name] + MIX.trim[name]), g = b.gain;
+      const base = busGain(name), g = b.gain;
       g.cancelScheduledValues(t); g.setTargetAtTime(base * dB(amt), t, D.attack / 3);
       g.setTargetAtTime(base, t + Math.max(0.2, seconds), D.release / 3);
     }
@@ -199,13 +216,25 @@ const Snd = (() => {
   }
 
   const sfx = {
-    swing(p = 1) { noise({ f: 700 * p, f2: 3200 * p, dur: 0.11, vol: 0.14, q: 0.8, attack: 0.03 }); },
-    hit(w = 1) {
-      noise({ f: 1800, f2: 300, dur: 0.09 + w * 0.03, vol: 0.4 + w * 0.08, q: 0.7 });
-      tone({ type: 'sine', f: 190 - w * 20, f2: 38, dur: 0.14 + w * 0.05, vol: 0.55 + w * 0.1 });
-      if (w >= 2) tone({ type: 'square', f: 900, f2: 120, dur: 0.07, vol: 0.12 });
+    // ---- strikes (sound design pass): recorded body layer (ElevenLabs, round robin without repeat, pitch jitter, cut short)
+    // + the synth sub thump for a tight onset and weight. Light / medium / heavy use different recordings, not just more gain.
+    // The whoosh is quiet and short: it announces the strike, the impact is the reward.
+    swing(p = 1) {
+      const heavy = p >= 1.15;
+      if (!playFamily(heavy ? 'whoosh_h' : 'whoosh_l', { vol: heavy ? 0.5 : 0.38, rate: (heavy ? 0.95 : 1.02) + Math.random() * 0.12, dur: heavy ? 0.42 : 0.24 }))
+        noise({ f: 700 * p, f2: 3200 * p, dur: 0.11, vol: 0.14, q: 0.8, attack: 0.03 });
     },
+    hit(w = 1) {
+      const fam = w >= 3 ? 'hit_h' : w === 2 ? 'hit_m' : 'hit_l';
+      const rec = playFamily(fam, { vol: [0, 0.62, 0.72, 0.85][w] || 0.7, rate: 0.93 + Math.random() * 0.14, dur: [0, 0.22, 0.32, 0.55][w] || 0.3 });
+      if (!rec) noise({ f: 1800, f2: 300, dur: 0.09 + w * 0.03, vol: 0.4 + w * 0.08, q: 0.7 });
+      tone({ type: 'sine', f: 190 - w * 20, f2: 38, dur: 0.12 + w * 0.05, vol: (rec ? 0.32 : 0.55) + w * 0.1 });   // sub thump under the recording
+      if (w >= 2 && !rec) tone({ type: 'square', f: 900, f2: 120, dur: 0.07, vol: 0.12 });
+    },
+    grab() { if (!playFamily('grab', { vol: 0.6, rate: 0.95 + Math.random() * 0.1, dur: 0.3 })) { noise({ f: 900, f2: 400, dur: 0.08, vol: 0.25, q: 0.6 }); tone({ type: 'sine', f: 140, f2: 70, dur: 0.08, vol: 0.3 }); } },
+    slam() { if (!playFamily('slam', { vol: 0.95, rate: 0.95 + Math.random() * 0.08, dur: 0.7 })) sfx.hit(3); tone({ type: 'sine', f: 110, f2: 28, dur: 0.35, vol: 0.6 }); },
     crit() {
+      if (playFamily('crit', { vol: 0.68, rate: 0.97 + Math.random() * 0.06, dur: 0.45 })) { tone({ type: 'sine', f: 110, f2: 30, dur: 0.28, vol: 0.55 }); return; }
       noise({ f: 5000, f2: 400, dur: 0.22, vol: 0.5, q: 0.5, ftype: 'highpass' });
       tone({ type: 'sawtooth', f: 1400, f2: 90, dur: 0.22, vol: 0.28, lp: 4000 });
       tone({ type: 'sine', f: 110, f2: 30, dur: 0.3, vol: 0.8 });
@@ -222,6 +251,7 @@ const Snd = (() => {
     land() { tone({ type: 'sine', f: 90, f2: 40, dur: 0.1, vol: 0.4 }); noise({ f: 300, dur: 0.06, vol: 0.12 }); },
     hurt() { tone({ type: 'sawtooth', f: 420, f2: 90, dur: 0.24, vol: 0.2, lp: 1800 }); sfx.hit(2); },
     ko() {
+      if (playFamily('ko_hit', { vol: 1.0, rate: 0.95 + Math.random() * 0.06, dur: 0.95 })) { tone({ type: 'sine', f: 150, f2: 26, dur: 0.55, vol: 0.6 }); return; }
       noise({ f: 2400, f2: 120, dur: 0.6, vol: 0.55, q: 0.5 });
       tone({ type: 'sine', f: 150, f2: 26, dur: 0.6, vol: 0.9 });
       tone({ type: 'sawtooth', f: 800, f2: 60, dur: 0.4, vol: 0.18, lp: 2500 });
@@ -425,5 +455,5 @@ const Snd = (() => {
     sfx[k] = (...a) => { const prev = route; route = sfx2Bus; try { return f(...a); } finally { route = prev; } };
   }
 
-  return { init, resume, sfx, sample, meterTick, meter, meterReset, MIX, duck, loopStart, loopVol, loopStop, stopLoops, loopsActive, playMusic, stopMusic, toggleMute, get ready() { return !!ctx; }, get clips() { return samples; } };
+  return { init, resume, sfx, sample, meterTick, meter, meterReset, MIX, duck, getVol, setVol, loopStart, loopVol, loopStop, stopLoops, loopsActive, playMusic, stopMusic, toggleMute, get ready() { return !!ctx; }, get clips() { return samples; } };
 })();

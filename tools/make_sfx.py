@@ -13,6 +13,34 @@ OUT = os.path.join(ROOT, 'assets', 'sfx')
 
 # name: (prompt, duration in s, prompt influence 0..1[, loop])
 SFX = {
+    # ---- hero strikes (sound design pass): every impact = an ElevenLabs body layer (round robin, pitch jitter) + the synth sub
+    # thump kept in js/audio.js for a tight onset and weight. Light / medium / heavy are different SOURCES, not only louder.
+    'hit_l_a': ('Loud crisp punch smack on a face, sharp bright knuckle slap with a dry crack, very short, retro beat em up hit, very loud and close', 1.0, 0.7),
+    'hit_l_b': ('Loud quick jab hitting a jaw, crisp dry smack of knuckles on skin, very short, punchy, kung fu movie foley, very loud and close', 1.0, 0.6),
+    'hit_l_c': ('Loud single hard slap punch to the chest, dry thump with a crisp snap, very short, fighting game hit, very loud and close', 1.0, 0.6),
+    'hit_l_d': ('Loud single karate chop impact on a body, dry whack, very short and punchy, retro brawler sound effect, very loud and close', 1.0, 0.6),
+    'hit_m_a': ('Loud heavy punch to the stomach, deep meaty thud with a crack, body blow, action movie foley, very loud and close', 1.0, 0.6),
+    'hit_m_b': ('Loud powerful kick hitting a body, thick meaty smack with a bass thump, short, fighting game impact, very loud and close', 1.0, 0.6),
+    'hit_m_c': ('Loud elbow strike to the face, hard crunchy thwack with weight, short, muay thai fight foley, very loud and close', 1.0, 0.6),
+    'hit_h_a': ('Loud devastating roundhouse kick impact, huge bone crunching smack with a deep boom, brutal, action movie punch, very loud and close', 1.2, 0.6),
+    'hit_h_b': ('Loud massive uppercut punch, explosive cracking impact with a deep heavy thump and a short whip crack, brutal, very loud and close', 1.2, 0.6),
+    'hit_h_c': ('Loud flying knee strike smashing into a body, heavy crunchy bone crack with a bass drop, fighting game super hit, very loud and close', 1.2, 0.6),
+    'crit_a': ('Loud critical hit, sharp glassy crack with a metallic ring and a punchy bass hit, video game power strike, very loud and close', 1.0, 0.5),
+    'crit_b': ('Loud super punch impact with an electric snap and a cracking shockwave, short, arcade fighting game critical hit, very loud and close', 1.0, 0.5),
+    'ko_hit_a': ('Loud final knockout blow, enormous slow motion punch impact, deep boom and crunch with a long low tail, fighting game KO, very loud and close', 1.6, 0.5),
+    'ko_hit_b': ('Loud knockout kick, massive meaty smash with a thunderous low end and a cracking snap, epic finishing blow, very loud and close', 1.6, 0.5),
+    'whoosh_l_a': ('Loud thin airy swish of a fast punch, high pitched breathy whoosh, very short, no rumble, martial arts foley, very loud and close', 0.8, 0.7),
+    'whoosh_l_b': ('Loud bright quick swipe through the air, crisp high whoosh like a whip of cloth, very short, no bass, very loud and close', 0.8, 0.7),
+    'whoosh_l_c': ('Loud sharp fist cutting through air, short whip swish, very loud and close', 0.8, 0.6),
+    'whoosh_h_a': ('Loud heavy spinning kick whoosh, big deep swoosh of a leg through the air, martial arts foley, very loud and close', 1.0, 0.6),
+    'whoosh_h_b': ('Loud powerful roundhouse swing, deep heavy whoosh with a rush of air, very loud and close', 1.0, 0.6),
+    # ---- clinch: grabbing the opponent (cloth + bodies colliding) and the body slam after a projection
+    'grab_a': ('Loud hands grabbing a leather jacket hard, quick cloth rustle and a dull body bump, close fight foley, very loud and close', 0.8, 0.6),
+    'grab_b': ('Loud fighter seizing an opponent by the neck, sharp fabric grab with a short thud of chests colliding, very loud and close', 0.8, 0.6),
+    'slam_a': ('Loud heavy body slammed onto the asphalt, deep meaty thud with a crunch and a short dust skid, wrestling throw impact, very loud and close', 1.2, 0.6),
+    'slam_b': ('Loud man thrown hard to the ground, huge flat body impact on concrete with a bass boom, brutal, very loud and close', 1.2, 0.6),
+    # ---- stage 3 (Vice / Miami beach): sea ambience bed, seamless loop
+    'amb_waves': ('Calm ocean waves rolling and breaking gently on a sandy beach at sunset, soft surf wash and foam, distant, steady, no seagulls, no music, no wind gusts', 12.0, 0.5, True),
     # trash bins (stage 1): 2 hits dent the bin, the 3rd breaks it. Three hit takes so repeated hits never sound identical.
     'bin_hit_a': ('Loud metal trash can being kicked hard, a big clanging bang of thin galvanized steel, ringing and wobbling, '
                   'street fight sound effect, very loud and close', 1.2, 0.5),

@@ -151,6 +151,19 @@ def build_anims():
              nf=(14, 1.5, 5), ff=(-13, 1.5, -4), nk=(1, 0.2, 0.6), fk=(1, 0.2, -0.3))
     A['fury_end'] = [F('0', SLAM, 0.55, 'r'), F('1', mix(SLAM, G, 0.5, hy=20), 0.25, 'r'), F('2', mix(SLAM, G, 0.85), 0.2, 'r')]
 
+    # --- CLINCH (muay thai plum): both hands locked behind the opponent's neck, forearms on the collarbones, hips in, weight forward
+    CL = P(hx=2, hy=24.5, pitch=0.22, hp=8, nh=(22, 55, 6), fh=(20, 55, -1), ne=(0.2, -1, 0.7), fe=(0.2, -1, -0.3),
+           nf=(12, 1.5, 4), ff=(-9, 1.5, -3.5))
+    A['clinch'] = [F('0', CL, 10), F('1', P(CL, hy=24, pitch=0.27, hp=10, nh=(21, 53, 6), fh=(19, 53, -1), nf=(13, 1.5, 4)), 10)]
+    # --- PROJECTION (hip throw): sink and load -> hips under, the opponent comes up over the shoulder -> heave forward, chest turns over
+    TH = P(hx=5, hy=24, pitch=0.48, twist=40, yb=46, hp=6, nh=(34, 44, 6), fh=(31, 42, 0), fe=(0, -1, -0.1),
+           nf=(15, 1.5, 4), ff=(-6, 4, -3), fk=(1, 0.2, 0.4))
+    A['throw'] = [F('w0', P(CL, hx=-2, hy=22, pitch=0.30, twist=-22, yb=18, nh=(18, 48, 6), fh=(16, 49, -1), nf=(10, 1.5, 4), ff=(-12, 1.5, -3.5)), 0.4, 'w'),
+                  F('w1', P(hx=0, hy=26.5, pitch=-0.08, twist=8, yb=32, hp=-12, nh=(13, 67, 6), fh=(9, 69, -2), ne=(0.3, -1, 0.6), fe=(0.3, -1, -0.3),
+                            nf=(11, 1.5, 4), ff=(-10, 1.5, -3.5)), 0.6, 'w'),
+                  F('s0', TH, 1, 's'),
+                  F('r0', mix(TH, G, 0.45), 0.45, 'r'), F('r1', mix(TH, G, 0.85), 0.55, 'r')]
+
     # --- moves (pw names = contract with js/fighter.js)
     for name, frames in moves().items(): A[name] = frames
     return A

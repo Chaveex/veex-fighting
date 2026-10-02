@@ -124,6 +124,12 @@ class Enemy extends Fighter {
   isWinding() { return this.state === 'windup'; }
   hittable() { return !this.dead && this.state !== 'down' && this.state !== 'dead' && this.invulT <= 0 && !(this.state === 'getup' && this.stT < 8) && this.alpha > 0.6; }
   setState(s, n) { this.state = s; this.stT = 0; if (n !== undefined) this.stunT = n; }
+  // clinch: the hero holds this enemy (Player.startClinch); it does nothing until it is let go, knocked or thrown
+  grab(by) {
+    if (this.attacker) { this.attacker = false; G.tokens = Math.max(0, G.tokens - 1); }
+    this.setState('held'); this.heldBy = by; this.trail.length = 0; this.vx = this.vy = this.vz = 0; this.rot = 0;
+  }
+  letGo() { this.heldBy = null; if (this.state === 'held') { this.setState('hurt', 10); this.z = 0; this.rot = 0; } }
   release() {
     if (this.attacker) { this.attacker = false; G.tokens = Math.max(0, G.tokens - 1); }
     const d = this.def;
@@ -145,7 +151,11 @@ class Enemy extends Fighter {
         this.vx *= 0.86; this.vy *= 0.86;
         if (this.stT >= this.stunT) { this.setState('move'); this.release(); this.cool = Math.min(this.cool, 30); }
         break;
-      case 'launched': this.rot = lerp(this.rot, -1.1, 0.1); this.vx *= 0.995; this.wallSplat(); break;
+      case 'held':
+        this.vx = this.vy = 0;
+        if (!this.heldBy || (this.heldBy.clinchE !== this)) this.letGo();
+        break;
+      case 'launched': this.rot = lerp(this.rot, -1.1, 0.1); this.vx *= 0.995; this.wallSplat(); if (this.thrown) this.thrownImpacts(); break;
       case 'down':
         this.vx *= 0.8; this.vy *= 0.8;
         if (this.stT >= this.stunT) { this.setState('getup'); this.juggle = 0; }
@@ -160,7 +170,7 @@ class Enemy extends Fighter {
         break;
     }
     if (this.state !== 'attack' && this.state !== 'windup') this.trail.length = 0;
-    const landed = this.physics();
+    const landed = this.state === 'held' ? false : this.physics();   // a held enemy is placed by the hero
     if (landed) this.onLand();
     // keep inside the arena once we walked in
     const b = G.bounds;
@@ -176,7 +186,29 @@ class Enemy extends Fighter {
     }
   }
 
+  // a thrown enemy is a projectile: it strikes the other enemies (bowling) and the level props on its way
+  thrownImpacts() {
+    const th = this.thrown, dir = sgn(this.vx) || -this.facing, mv = Object.assign({ dir }, CLINCH.impactMv);
+    for (const o of G.enemies) {
+      if (th.hit.has(o) || !o.hittable() || o.state === 'held') continue;
+      if (Math.abs(o.y - this.y) > 22 || Math.abs(o.x - this.x) > this.hw + o.hw + 6 || this.z > o.hh) continue;
+      th.hit.add(o); th.n++;
+      G.registerHit(G.player, o, mv, mv.dmg - (o.boss ? 4 : 0), false, false);
+      FX.text(th.n >= 2 ? 'STRIKE x' + th.n : 'STRIKE!', o.x, o.y - o.hh - 10, { color: '#ffe44d', size: 11, glow: '#ff2fd0', life: 40 });
+      this.vx *= 0.75;
+      if (th.n >= 2) Ach.unlock('bowling');
+    }
+    for (const pr of G.props) {
+      if (th.hit.has(pr) || !pr.breakable()) continue;
+      const hb = pr.hurtbox();
+      if (Math.abs(hb.y - this.y) > 18 || Math.abs(hb.x - this.x) > this.hw + hb.hw + 4 || this.z > (hb.z || 0) + hb.hh) continue;
+      th.hit.add(pr); pr.onHit(G.player, mv, dir, 2); this.vx *= 0.6;
+    }
+  }
   onLand() {
+    if (this.state === 'launched' && this.thrown) {   // body slam on the floor after a projection
+      this.thrown = null; FX.addShake(5); FX.dust(this.x, this.y, 14); FX.ring(this.x, this.y, 4, 4, 16, '#ffe44d', 2); Snd.sfx.slam();
+    }
     if (this.state === 'launched') {
       if (this.vz < -6 && !this.bounced) {
         this.vz = -this.vz * 0.3; this.bounced = true; FX.dust(this.x, this.y, 8); FX.addShake(this.dead ? 5 : 3); Snd.sfx.land();
@@ -477,6 +509,7 @@ class Enemy extends Fighter {
         return lerpPose(s, this.enemyStance(), easeInOut(clamp(this.stT / (a.rc * 0.9), 0, 1)));
       }
       case 'hurt': return this.stT < 6 ? POSES.hurt2 : POSES.hurt;
+      case 'held': return POSES.held || POSES.hurt2;
       case 'launched': return POSES.tumble;
       case 'down': return POSES.down;
       case 'getup': return lerpPose(POSES.down, POSES.getup, clamp(this.stT / 16, 0, 1));
@@ -493,6 +526,7 @@ class Enemy extends Fighter {
       case 'attack': return S.first(a.pw + '_s', a.pw, 'idle0');
       case 'recover': return (t / a.rc < 0.55) ? S.first(a.pw + '_r', a.pw, a.pw + '_s', 'idle0') : 'idle0';
       case 'hurt': return t < 6 ? 'hurt2' : 'hurt';
+      case 'held': return this.z > 4 ? 'tumble' : S.first('held', 'hurt2');
       case 'launched': return 'tumble';
       case 'down': case 'dead': return 'down';
       case 'getup': return t < 10 ? 'getup0' : 'getup1';
@@ -513,7 +547,7 @@ class Enemy extends Fighter {
   draw(c, camX) {
     const j = computeJoints(this.getPose()); this.lastJ = j;
     const o = { t: this.t, sqx: this.sqx, sqy: this.sqy };
-    if (this.state === 'launched') o.rot = this.rot;
+    if (this.state === 'launched' || (this.state === 'held' && this.z > 4)) o.rot = this.rot;
     if (this.state === 'attack' && this.atk && this.atk.spin) {
       o.sx = Math.cos(this.stT / Math.max(6, this.atk.ac) * Math.PI * 2 * this.atk.spin);
       if (Math.abs(o.sx) < 0.2) o.sx = 0.2;

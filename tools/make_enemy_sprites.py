@@ -441,7 +441,8 @@ ROSTER = [
     spec('l1_boss1', 'boss1', 1, S=1.55, skin='#9c6444', head='shades', hair='#111111', accent='#ff2fd0', jacket='#ff2fd0', sleeve='#ff2fd0', tee0='#151515', tee1='#27f0ff', pants='#151515', trim='#ffe44d', shoe='#ffffff', wrap='#ffe44d', extras=('chain', 'boombox'), bulk=1.2),
     # ---- level 2: galaxy arcade
     spec('l2_grunt', 'grunt', 2, skin='#e2a887', head='bandana', hat='#e8323c', hair='#3a2210', jacket='#2a3fa8', sleeve='#2a3fa8', tee0='#ffffff', tee1='#3dffa0', pants='#15121f', trim='#3dffa0', shoe='#eeeeee', wrap='#3dffa0', accent='#3dffa0'),
-    spec('l2_fast', 'fast', 2, skin='#f0c0a0', head='blonde', hat='#ff2fd0', hair='#ffd84a', jacket='#ff8adf', sleeve='#ff8adf', tee0='#ffffff', tee1='#27f0ff', pants='#27f0ff', trim='#ff2fd0', shoe='#ffffff', wrap='#ff2fd0', accent='#ff8adf', legs='tights', sleeves='short', shoe_type='skate'),
+    # l2_fast: orange / black so it never reads as ROXY (pink / teal)
+    spec('l2_fast', 'fast', 2, skin='#f0c0a0', head='blonde', hat='#ffd84a', hair='#d8452a', jacket='#ff7a1a', sleeve='#ff7a1a', tee0='#2a2238', tee1='#ffd84a', pants='#221c30', trim='#ff7a1a', shoe='#2a2238', wrap='#2a2238', accent='#ff7a1a', legs='tights', sleeves='short', shoe_type='skate'),
     spec('l2_thrower', 'thrower', 2, skin='#e8c0a0', head='visor', hair='#5a3a1a', jacket='#2a2a3a', sleeve='#2a2a3a', tee0='#3dffa0', tee1='#111111', pants='#3a3a4a', trim='#3dffa0', shoe='#ff2fd0', wrap='#3dffa0', accent='#3dffa0'),
     spec('l2_heavy', 'heavy', 2, S=1.22, skin='#e2a887', head='cap', hat='#e8323c', hair='#c9a24a', accent='#ffe44d', top='varsity', jacket='#e8323c', sleeve='#ffffff', tee0='#ffffff', tee1='#e8323c', pants='#f4f4f4', trim='#e8323c', shoe='#ffffff', wrap='#ffffff', bulk=1.15),
     spec('l2_rusher', 'rusher', 2, skin='#a06a48', head='cap', hat='#27f0ff', hair='#222222', jacket='#ffe44d', sleeve='#ffe44d', tee0='#111111', tee1='#ff2fd0', pants='#8b5cff', trim='#ffffff', shoe='#27f0ff', wrap='#8b5cff', accent='#8b5cff', sleeves='short'),
@@ -469,7 +470,7 @@ def frame_plan(sp):
     for i in range(6): fr.append(('walk%d' % i, walk_pose(i * 2 * math.pi / 6, st, 0.9), (-1, 1.5 * abs(math.cos(i * math.pi / 3)))))
     P = POSES
     fr += [('hurt', P['hurt'], (3, 0)), ('hurt2', P['hurt2'], (4, 1)), ('tumble', P['tumble'], (3, 3)), ('down', P['down'], (0, 0)),
-           ('getup0', lerp_pose(P['down'], P['getup'], .5), (0, 0)), ('getup1', P['getup'], (-1, 0))]
+           ('getup0', lerp_pose(P['down'], P['getup'], .5), (0, 0)), ('getup1', P['getup'], (-1, 0)), ('held', P['held'], (2, 1))]
     for pw in PWS[sp['kind']]:
         if pw == 'arms_up': fr.append(('arms_up', P['arms_up'], (0, 4))); continue
         s = P[pw + '_s']

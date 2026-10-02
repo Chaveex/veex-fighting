@@ -96,6 +96,14 @@ HeroSheet.prototype.frameFor = function (p) {
       if (t < 76) return this.loop('spin', t - 20);
       return this.at('fury_end', 'r', (t - 76) / 20);
     }
+    case 'clinch': return this.anim('clinch') ? this.loop('clinch', p.clinchT) : 'knee_w0';
+    case 'throw': {
+      const T = CLINCH.throwT, t = p.throwT;
+      if (!this.anim('throw')) return t < T.w ? 'knee_w0' : 'cross_s0';
+      if (t < T.w) return this.at('throw', 'w', t / T.w);
+      if (t < T.w + T.s) return this.at('throw', 's', (t - T.w) / T.s);
+      return this.at('throw', 'r', (t - T.w - T.s) / T.r);
+    }
     case 'hurt': return this.at('hurt', 'w', 1 - p.stunT / 16);
     case 'launched': return p.vz > 1.5 ? 'tumble_0' : 'tumble_1';
     case 'down': return p.stunT > 36 ? 'down_0' : 'down_1';

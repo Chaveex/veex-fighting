@@ -32,6 +32,17 @@ Combos libres : enchaîne J/K/L dans n'importe quel ordre (3 coups max, le 3e es
 Accroupi : J uppercut, K low kick (balayage), L genou remontant (launcher → jongle en l'air avec un saut).
 En l'air : J jab aérien, K dive kick, L genou volant. Pendant un dash : rush hook / rush kick / rush knee.
 
+## Clinch et projections
+
+- **Clinch** : fonce dans un ennemi (avance contre lui ~0,1 s, instantané s'il est sonné). Les boss ne s'attrapent pas,
+  ni un ennemi qui arme ou porte une attaque.
+- **Genou / poing** dans le clinch : genoux (8 dégâts), le 3e est un genou volant (KHAO LOI) qui l'envoie en l'air.
+- **Pied** : projection devant (14 dégâts) ; avec **arrière + pied**, le héros se retourne et l'envoie derrière lui.
+- **Saut / dash** : lâcher. L'ennemi se libère seul au bout de ~1,8 s (~1,2 s pour un lourd), et les autres peuvent te frapper pendant ce temps.
+- Un ennemi projeté vole bas comme une boule de bowling : il fauche les ennemis sur sa ligne (12 dégâts chacun, « STRIKE x2 »),
+  casse les éléments du décor, s'écrase contre les murs (SPLAT) et se fait griller sur les plaques électrifiées.
+- Succès : **PROJECTION** et **STRIKE** (faucher 2 ennemis d'un coup). Réglages dans `CLINCH` (`js/fighter.js`).
+
 ## Cancels et maîtrise
 
 - **Cancel** : un coup qui touche (ou la fin de sa récupération) peut être annulé par un **dash** ou un **saut**.
@@ -72,6 +83,12 @@ Asset : `assets/vent.aseprite` (vrai fichier Aseprite, 2 calques `base`/`steam`,
 
 Les ennemis projetés qui percutent poubelles, bornes, cabriolets et serveurs les abîment aussi. Assets : `assets/props/*.aseprite` (calques, tags d'animation, un fichier par élément).
 `node tools/soak.js` avec `PROPS=1` lance un test de comportement de chaque élément.
+
+## Ennemis
+
+Les 24 ennemis / boss sont dessinés en pixel art 2D comme le héros (`tools/enemy_pixel.py` : membres effilés, cel shading 4 tons,
+contour 1 px, liseré néon), puis finalisés et exportés par Aseprite : `python tools/build_enemy_sheets.py [clés...]`
+(`--3d` pour l'ancien rendu). Aperçu rapide : `python tools/enemy_pixel.py l1_grunt l4_boss4`.
 
 ## Dessiner le héros à la main (Aseprite)
 
@@ -124,6 +141,19 @@ Chaque famille a plusieurs prises : le jeu en tire une au hasard, jamais deux fo
   Voix sur mesure (Voice Design) : `python tools/design_announcer.py` (offre ElevenLabs payante requise).
   Les annonces importantes passent par-dessus les mineures. La clé ElevenLabs doit avoir la permission `text_to_speech`.
 
+## Options (volume)
+
+Écran **OPTIONS** : touche **O** (titre et pause), manette **LB** au titre, **Y** en pause. Quatre réglages par pas de 10 % :
+Général, Musique, Effets, Voix (haut/bas pour choisir, gauche/droite pour régler). Sauvegardés dans `localStorage` (`veexVol`).
+Ils multiplient les faders calibrés du mixeur (les cibles dB et le brickwall -1 dBFS restent valables).
+
+## Coups et impacts
+
+Chaque impact superpose une prise ElevenLabs (tirée sans répétition, hauteur variée de ±7 %, coupée court) et le grave synthétisé
+pour l'attaque et le poids. Léger / moyen / lourd utilisent des enregistrements différents (`hit_l_*` ×4, `hit_m_*` ×3, `hit_h_*` ×3),
+plus `crit_*`, `ko_hit_*` pour le coup final et des souffles discrets (`whoosh_l_*`, `whoosh_h_*`).
+Niveau 3 (Vice) : nappe de vagues en boucle (`amb_waves`), sur le bus secondaire, baissée sous l'annonceur.
+
 ## Mixage audio
 
 `js/audio.js` (objet `MIX`) : quatre groupes sommés dans un master, calibrés en jeu (bot, niveaux 1 et 4) sur la crête au 95e centile.
@@ -148,7 +178,7 @@ Chaque famille a plusieurs prises : le jeu en tire une au hasard, jamais deux fo
 - `python tools/make_prop_sprites.py` régénère les 8 éléments de niveau (`assets/props/`, `js/propSprites.js`) ; `tools/asekit.py` écrit les vrais fichiers `.aseprite`.
 - `python tools/make_vent_sprites.py` régénère la bouche d'égout (`assets/vent.aseprite|png|json`, `js/ventSprites.js`).
 - `python tools/build_enemy_sheets.py` : les 24 ennemis / boss sont des **modèles 3D rendus en pixel art** (même moteur que le héros : `tools/enemy3d.py`, `render3d.py`), finis par le vrai Aseprite (`assets/enemies/*.aseprite|png|json`, `js/enemySprites.js`). `tools/make_enemy_sprites.py` ne sert plus que de bibliothèque (roster, poses).
-- `python tools/make_hero_sprites.py roxy` : même pipeline pour la 2e héroïne (look `roxy` de `tools/hero6.py` : palette + coiffure / tenue / silhouette), sorties `assets/hero_roxy.*` et `js/heroSprites_roxy.js` (portrait pixel inclus). Les deux héros partagent l'animation `tools/hero_anim.py`.
+- `python tools/make_hero_sprites.py roxy` : même pipeline pour la 2e héroïne (pixel art 2D dessiné comme VEEX : `tools/roxy_pixel.py`, têtes dérivées des cartes de VEEX avec bandeau et queue de cheval), sorties `assets/hero_roxy.*` et `js/heroSprites_roxy.js` (portrait pixel inclus). Les deux héros partagent l'animation `tools/hero_anim.py`.
 - `python tools/make_hero_sprites.py` (v7) : le héros est conçu **d'après la description** (plus de photo) : modèle 3D à squelette complet (`tools/hero6.py`, IK 3D, torsion du buste, vraie vrille) rendu en pixel art (`render3d.py`). L'**animation v7** (réécrite de zéro) est dans `tools/hero_anim.py` : cibles en espace écran, frames par phase (préparation / impact / retour), table exportée dans le JSON et lue par `HeroSprites.frameFor` (`python tools/hero_anim_preview.py jab cross elbow` pour les voir, `all` pour tout). Frames → `assets/hero_src.aseprite` (calques `body` + `rim`), puis **le vrai Aseprite** (`tools/ase/hero_finalize.lua`) → `assets/hero.aseprite` indexé, `hero.png` + JSON, GIF d'aperçu (`assets/hero_preview/`). `hero3d.py` (version photo) n'est plus utilisé que par les ennemis (helpers) et le comparatif de styles.
 - Échelle : `PU` (héros, 1.26) et `EU` (ennemis, 1.22) dans `js/util.js` agrandissent sprites, hitboxes, portées et vitesses ; ils doivent rester égaux à `k` des générateurs (`UNIT` / `EU`).
 - `python tools/make_assets.py` régénère `js/assets.js` (tête + portrait embarqués) depuis `public/veex.png`.

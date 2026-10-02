@@ -60,6 +60,46 @@ function codeKey(e) {
   if (e.key === 'Enter') { submitCode(ce); return; }
   if (e.key.length === 1 && /[a-z0-9]/i.test(e.key) && ce.text.length < 12) ce.text += e.key.toUpperCase();
 }
+// ---------- OPTIONS: volumes (title: O / pad LB, pause: O / pad Y) ----------
+const OPT_ROWS = [['GENERAL', 'master'], ['MUSIQUE', 'music'], ['EFFETS', 'sfx'], ['VOIX', 'voice']];
+function openOptions(from) { G.opts = { sel: 0, from, t: 0 }; Snd.sfx.ui(); Input.clear(); Input.padTap = {}; }
+function stepOptions() {   // returns true when the panel closes
+  const o = G.opts, tap = Input.padTap || {};
+  if (Input.eat('up')) { o.sel = (o.sel + OPT_ROWS.length) % (OPT_ROWS.length + 1); Snd.sfx.ui(); }
+  if (Input.eat('down')) { o.sel = (o.sel + 1) % (OPT_ROWS.length + 1); Snd.sfx.ui(); }
+  const row = OPT_ROWS[o.sel];
+  if (row) {
+    const d = Input.eat('left') ? -0.1 : Input.eat('right') ? 0.1 : 0;
+    if (d) {
+      Snd.setVol(row[1], Snd.getVol(row[1]) + d);
+      if (row[1] === 'voice') Snd.sfx.cry('kiai', G.hero); else if (row[1] !== 'music') Snd.sfx.hit(1);   // instant preview
+    }
+  }
+  const back = tap.b1 || tap.b9 || (o.from === 'title' ? tap.b4 : tap.b3) || Input.eat('pause') || (!row && Input.eat('confirm'));
+  if (back) { G.opts = null; Snd.sfx.ui(); Input.clear(); return true; }
+  return false;
+}
+function drawOptions(c) {
+  const o = G.opts; o.t++;
+  c.fillStyle = 'rgba(5,1,15,.86)'; c.fillRect(0, 0, W, H);
+  drawText(c, 'OPTIONS', W / 2, 70, { size: 26, color: '#fff', outline: '#ff2fd0', align: 'center', italic: true, glow: '#ff2fd0', outlineW: 5 });
+  drawText(c, 'VOLUME', W / 2, 92, { size: 11, color: '#27f0ff', outline: OUT, align: 'center' });
+  OPT_ROWS.forEach(([label, k], i) => {
+    const y = 124 + i * 34, on = o.sel === i, v = Snd.getVol(k);
+    if (on) { c.fillStyle = 'rgba(255,47,208,.18)'; c.fillRect(W / 2 - 200, y - 18, 400, 28); }
+    drawText(c, label, W / 2 - 185, y, { size: 13, color: on ? '#ffe44d' : '#fff', outline: OUT, italic: true });
+    for (let s = 0; s < 10; s++) {
+      const x = W / 2 - 50 + s * 18, lit = s < Math.round(v * 10);
+      c.fillStyle = lit ? (s < 6 ? '#3dffa0' : s < 9 ? '#ffe44d' : '#ff2fd0') : '#2a1a4a'; c.fillRect(x, y - 12, 14, 14);
+    }
+    drawText(c, Math.round(v * 100) + '%', W / 2 + 190, y, { size: 12, color: on ? '#ffe44d' : '#fff', outline: OUT, align: 'right' });
+    if (on) { drawText(c, '<', W / 2 - 64, y, { size: 13, color: '#ffe44d', outline: OUT }); drawText(c, '>', W / 2 + 134, y, { size: 13, color: '#ffe44d', outline: OUT }); }
+  });
+  const yb = 124 + OPT_ROWS.length * 34, onB = o.sel === OPT_ROWS.length;
+  if (onB) { c.fillStyle = 'rgba(255,47,208,.18)'; c.fillRect(W / 2 - 200, yb - 18, 400, 28); }
+  drawText(c, 'RETOUR', W / 2, yb, { size: 13, color: onB ? '#ffe44d' : '#fff', outline: OUT, align: 'center', italic: true });
+  drawText(c, K('HAUT/BAS : CHOISIR   -   GAUCHE/DROITE : REGLER   -   ECHAP : RETOUR', 'CROIX : CHOISIR / REGLER   -   B : RETOUR'), W / 2, H - 24, { size: 9, color: '#27f0ff', outline: OUT, align: 'center' });
+}
 function openTitlePanel(kind) { G.titlePanel = kind; Snd.sfx.ui(); Input.clear(); Input.padTap = {}; if (kind === 'board') { Online.myRank = null; Online.load(); } }
 function openCodeEntry() { G.codeEntry = { text: '', msg: '', col: '#fff', t: 0, shake: 0, pick: 0 }; Snd.sfx.ui(); Input.clear(); }
 function padCode() {
@@ -370,6 +410,8 @@ function step() {
   G.menuT++;
   switch (G.state) {
     case 'title':
+      if (G.opts) { stepOptions(); Input.clear(); break; }            // panels capture the inputs before the hero selector
+      if (G.codeEntry && !G.cheatGo) { padCode(); Input.clear(); break; }
       if (HERO_ORDER.length > 1 && (Input.eat('left') || Input.eat('right'))) {
         const i = HERO_ORDER.indexOf(G.hero), d = Input.held.left ? -1 : 1;
         selectHero(HERO_ORDER[(i + d + HERO_ORDER.length) % HERO_ORDER.length]); saveHero(); Snd.resume(); Snd.sfx.ui(); G.heroSwapT = 0;
@@ -377,6 +419,7 @@ function step() {
       G.heroSwapT = (G.heroSwapT || 0) + 1;
       if (G.cheatGo) { if (--G.cheatGo.t <= 0) { const go = G.cheatGo; G.cheatGo = null; G.codeEntry = null; startGame(go.li, true); if (G.cheatBoss) jumpToStop(LEVELS[go.li].stops.length - 1); } break; }
       if (G.codeEntry) { padCode(); Input.clear(); break; }
+      if (Input.padTap.b4) { openOptions('title'); break; }
       if (G.titlePanel) { const tp = Input.padTap; if (tp.b1 || tp.b9 || tp.b0 || (G.titlePanel === 'board' ? tp.b3 : tp.b2)) { G.titlePanel = null; Snd.sfx.ui(); } Input.clear(); break; }
       if (Input.padTap.b3) { openTitlePanel('board'); break; }
       if (Input.padTap.b2) { openTitlePanel('ach'); break; }
@@ -390,6 +433,8 @@ function step() {
       worldTick();
       break;
     case 'pause':
+      if (G.opts) { stepOptions(); break; }
+      if (Input.codeDown['KeyO'] || Input.padTap.b3) { openOptions('pause'); break; }
       if (Input.eat('pause') || Input.eat('confirm')) { G.state = 'play'; Input.clear(); Snd.sfx.ui(); }
       if (Input.eat('title')) { G.state = 'title'; Snd.stopMusic(); Input.clear(); }
       break;
@@ -650,7 +695,7 @@ function drawTitle(c) {
   }
   drawText(c, 'MUAY THAI STREET FIGHTER  -  1986', lx, 150, { size: 11, color: '#27f0ff', outline: OUT, align: 'center', italic: true });
   if (t % 60 < 40) drawText(c, K('PRESS  ENTER', 'PRESS  START'), lx, 178, { size: 18, color: '#fff', outline: '#ff2fd0', align: 'center', italic: true, glow: '#ff2fd0' });
-  drawText(c, K('C : CODE   -   L : CLASSEMENT   -   S : SUCCES', 'SELECT : CODE   -   Y : CLASSEMENT   -   X : SUCCES'), lx, 200, { size: 9, color: '#8b5cff', outline: OUT, align: 'center' });
+  drawText(c, K('C : CODE   -   L : CLASSEMENT   -   S : SUCCES   -   O : OPTIONS', 'SELECT : CODE  -  Y : CLASSEMENT  -  X : SUCCES  -  LB : OPTIONS'), lx, 200, { size: 9, color: '#8b5cff', outline: OUT, align: 'center' });
   // controls
   const rows = padUI() ? [['STICK / CROIX', 'BOUGER'], ['X', 'POING'], ['Y', 'PIED'], ['B', 'GENOU'], ['A', 'SAUT'], ['RB / RT', 'DASH (AIR AUSSI)'], ['LB / LT', 'SE BAISSER'], ['L3 / R3', 'FURY (JAUGE PLEINE)']]
     : [['WASD / ZQSD / FLECHES', 'BOUGER'], ['J', 'POING'], ['K', 'PIED'], ['L', 'GENOU'], ['ESPACE', 'SAUT'], ['SHIFT', 'DASH (AIR AUSSI)'], ['C', 'SE BAISSER'], ['R', 'FURY (JAUGE PLEINE)']];
@@ -662,8 +707,9 @@ function drawTitle(c) {
     drawText(c, r[0], cx + col * 178, cy + row * 13, { size: 9, color: '#ffe44d', outline: OUT });
     drawText(c, r[1], cx + col * 178 + (col ? 62 : 108), cy + row * 13, { size: 9, color: '#fff', outline: OUT });
   });
-  drawText(c, 'ANNULE TES COUPS AVEC DASH / SAUT  -  ESQUIVE AU DERNIER MOMENT = RALENTI', cx + 168, cy + 62, { size: 9, color: '#27f0ff', outline: OUT, align: 'center' });
-  drawText(c, K('MANETTE OK  -  C : CODE  -  M : SON  -  F : PLEIN ECRAN', 'MANETTE CONNECTEE  -  START : JOUER  -  SELECT : CODE'), cx + 168, cy + 76, { size: 9, color: '#ff9ae9', outline: OUT, align: 'center' });
+  drawText(c, K('FONCE DANS UN ENNEMI = CLINCH  :  L GENOUX  -  K PROJECTION (+ ARRIERE : DERRIERE TOI)', 'FONCE DANS UN ENNEMI = CLINCH  :  B GENOUX  -  Y PROJECTION (+ ARRIERE : DERRIERE TOI)'), cx + 168, cy + 54, { size: 9, color: '#ffe44d', outline: OUT, align: 'center' });
+  drawText(c, 'ANNULE TES COUPS AVEC DASH / SAUT  -  ESQUIVE AU DERNIER MOMENT = RALENTI', cx + 168, cy + 66, { size: 9, color: '#27f0ff', outline: OUT, align: 'center' });
+  drawText(c, K('MANETTE OK  -  C : CODE  -  M : SON  -  F : PLEIN ECRAN', 'MANETTE CONNECTEE  -  START : JOUER  -  SELECT : CODE'), cx + 168, cy + 79, { size: 9, color: '#ff9ae9', outline: OUT, align: 'center' });
   drawText(c, 'HI-SCORE ' + String(G.best).padStart(8, '0'), cx + 168, cy + 96, { size: 10, color: '#fff', outline: OUT, align: 'center' });
   c.drawImage(vig, 0, 0);
 }
@@ -691,10 +737,10 @@ function drawScreen(c) {
     case 'pause': {
       drawPanel(c, 'PAUSE', padUI()
         ? [['DEPLACEMENT', 'STICK / CROIX'], ['POING / PIED / GENOU', 'X / Y / B'], ['SAUT  /  DASH', 'A  /  RB - RT'], ['SE BAISSER', 'LB - LT  (esquive les coups hauts)'],
-          ['FURY', 'L3 / R3 (jauge pleine)'], ['ANNULER UNE ATTAQUE', 'DASH ou SAUT apres un coup touche'], ['ESQUIVE PARFAITE', 'DASH au moment de l\'impact'], ['PAUSE', 'START']]
+          ['FURY', 'L3 / R3 (jauge pleine)'], ['CLINCH', 'fonce dedans : B genoux / Y projette'], ['CANCEL', 'DASH ou SAUT apres un coup touche'], ['ESQUIVE PARFAITE', 'DASH au moment de l\'impact'], ['PAUSE', 'START']]
         : [['DEPLACEMENT', 'WASD / ZQSD / FLECHES'], ['POING / PIED / GENOU', 'J / K / L'], ['SAUT  /  DASH', 'ESPACE  /  SHIFT'], ['SE BAISSER', 'C  (esquive les coups hauts)'],
-          ['FURY', 'R (jauge pleine)'], ['ANNULER UNE ATTAQUE', 'DASH ou SAUT apres un coup touche'], ['ESQUIVE PARFAITE', 'DASH au moment de l\'impact'], ['SON / PLEIN ECRAN', 'M / F']],
-        K('ENTREE : REPRENDRE   -   T : TITRE', 'START / A : REPRENDRE   -   SELECT : TITRE'));
+          ['FURY', 'R (jauge pleine)'], ['CLINCH', 'fonce dedans : L genoux / K projette'], ['CANCEL', 'DASH ou SAUT apres un coup touche'], ['ESQUIVE PARFAITE', 'DASH au moment de l\'impact'], ['SON / PLEIN ECRAN', 'M / F']],
+        K('ENTREE : REPRENDRE   -   O : OPTIONS   -   T : TITRE', 'START / A : REPRENDRE   -   Y : OPTIONS   -   SELECT : TITRE'));
       break;
     }
     case 'clear': {
@@ -766,12 +812,13 @@ function overlay() {
   sctx.save();
   sctx.translate(VIEW.ox, VIEW.oy); sctx.scale(VIEW.sc, VIEW.sc);
   sctx.imageSmoothingEnabled = true;
-  if (G.state === 'title') { drawTitle(sctx); drawCodeEntry(sctx); if (G.titlePanel === 'board') { drawBoardPanel(sctx, 'CLASSEMENT MONDIAL'); drawText(sctx, K('L / ECHAP : RETOUR', 'B / Y : RETOUR'), W / 2, H - 22, { size: 10, color: '#27f0ff', outline: OUT, align: 'center' }); } if (G.titlePanel === 'ach') Ach.drawList(sctx); }
+  if (G.state === 'title') { drawTitle(sctx); drawCodeEntry(sctx); if (G.opts) drawOptions(sctx); if (G.titlePanel === 'board') { drawBoardPanel(sctx, 'CLASSEMENT MONDIAL'); drawText(sctx, K('L / ECHAP : RETOUR', 'B / Y : RETOUR'), W / 2, H - 22, { size: 10, color: '#27f0ff', outline: OUT, align: 'center' }); } if (G.titlePanel === 'ach') Ach.drawList(sctx); }
   else {
     FX.drawText(sctx, Math.round(G.camX));
     if (G.state === 'play' || G.state === 'pause' || G.state === 'clear' || G.state === 'gameover') drawHUD(sctx);
     if (G.state !== 'play') drawScreen(sctx);
   }
+  if (G.opts && G.state === 'pause') drawOptions(sctx);
   Ach.drawToast(sctx);   // achievement unlocked: on top of everything
   if (G.mixDebug && Snd.ready) drawMixMeters(sctx);
   sctx.restore();
@@ -829,6 +876,7 @@ function loop(ts) {
   const dt = Math.min(0.1, (ts - last) / 1000 || 0.016); last = ts; acc += dt;
   Input.poll();
   Snd.loopsActive(G.state === 'play');
+  if (G.state === 'play' && LEVELS[G.level] && LEVELS[G.level].theme === 'miami') Snd.loopStart('waves', 'amb_waves', 0.3);   // Vice: surf bed (sfx2, ducked by the announcer)
   if (G.bot) { botControl(); if (G.frame % 30 === 0) document.title = `L${G.level + 1} stop${G.stopIdx} f${G.frame} ${G.state} hp${G.player ? Math.round(G.player.hp) : 0} sc${G.score} lives${G.lives}`; }
   if (Input.codeDown['KeyM'] && !G.mHeld && !G.codeEntry) { G.muted = Snd.toggleMute(); }
   G.mHeld = !!Input.codeDown['KeyM'];
@@ -850,6 +898,7 @@ function boot() {
       if (G.titlePanel) { if (['Escape', 'Enter', 'KeyL', 'KeyS', 'Backspace'].includes(e.code) || e.key === 'Escape') { G.titlePanel = null; Snd.sfx.ui(); Input.clear(); } }
       else if (!G.codeEntry && !G.cheatGo && e.code === 'KeyL' && !e.repeat) openTitlePanel('board');
       else if (!G.codeEntry && !G.cheatGo && e.code === 'KeyS' && !e.repeat) openTitlePanel('ach');
+      else if (!G.codeEntry && !G.cheatGo && !G.opts && e.code === 'KeyO' && !e.repeat) openOptions('title');
       else codeKey(e);
     }
     if (e.code === 'KeyF' && !e.repeat && !G.codeEntry) { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); }

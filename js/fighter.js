@@ -92,6 +92,17 @@ const MV = {
   rushk:  { name: 'RUSH KICK', st: 3, ac: 6, rc: 14, dmg: 12, x0: -2, x1: 44, z0: 8, z1: 56, kb: 8.5, lift: 4.6, hs: 6, shake: 5, w: 2, lunge: 5.6, pw: 'rushk', tip: 'fF', arc: true, sfx: 0.7 },
   rushn:  { name: 'RUSH KNEE', st: 3, ac: 6, rc: 14, dmg: 14, x0: 0, x1: 38, z0: 10, z1: 68, kb: 7, lift: 6, hs: 8, shake: 6, w: 3, lunge: 6, pw: 'rushn', tip: 'fF', fin: true, sfx: 1.1 }
 };
+// ---- clinch (muay thai plum): walk into an enemy to grab it, then knees / throw (see Player.updateClinch)
+const CLINCH = {
+  grabFrames: 6,            // frames of walking into a close enemy before the grab (a hurt enemy: 2)
+  hold: 110, holdHeavy: 70, // the enemy breaks free after this many frames
+  gap: 4,                   // px between the two bodies while locked
+  knee:  { name: 'GENOU', st: 4, ac: 2, rc: 11, dmg: 8, x0: 0, x1: 30, z0: 14, z1: 60, kb: 0, stun: 40, hs: 5, shake: 3, w: 2, pw: 'knee', tip: 'fF', sfx: 1.1, clinch: true },
+  knee3: { name: 'KHAO LOI', st: 5, ac: 3, rc: 16, dmg: 14, x0: 0, x1: 34, z0: 14, z1: 70, kb: 5, lift: 7.5, hs: 10, shake: 7, w: 3, pw: 'knee', tip: 'fF', fin: true, sfx: 1.2, clinch: true },
+  throwMv: { name: 'PROJECTION', dmg: 14, x0: 0, x1: 30, z0: 20, z1: 70, kb: 9.5, lift: 4.2, hs: 9, shake: 7, w: 3, knock: true, fin: true },
+  impactMv: { name: 'STRIKE!', dmg: 12, x0: 0, x1: 20, z0: 0, z1: 70, kb: 6, lift: 5.5, hs: 7, shake: 6, w: 3, knock: true },
+  throwT: { w: 11, s: 3, r: 15 }
+};
 const CHAIN = { punch: [MV.jab, MV.cross, MV.elbow], kick: [MV.teep, MV.round, MV.head], knee: [MV.knee, MV.knee2, MV.knee3] };
 const CROUCHATK = { punch: MV.upper, kick: MV.lowk, knee: MV.rknee };
 const AIRATK = { punch: MV.airp, kick: MV.airk, knee: MV.airn };
@@ -119,6 +130,7 @@ class Player extends Fighter {
     this.chainStep = -1; this.chainTimer = 0; this.dashT = 0; this.dashWin = 0; this.dashDX = 1; this.dashDY = 0;
     this.iframes = 0; this.invul = 0; this.cancelBonus = 0; this.airAtk = 0; this.landLag = 0; this.dashCd = 0;
     this.airDash = false; this.dead = false; this.stunT = 0; this.bounced = false; this.specialT = 0; this.lastCancel = 0;
+    this.clinchE = null; this.clinchT = 0; this.clinchKnees = 0; this.grabT = 0; this.grabE = null; this.throwT = 0; this.throwDir = 1;
   }
   get crouching() { return this.state === 'crouch'; }
   get hurtHeight() {
@@ -149,6 +161,8 @@ class Player extends Fighter {
       case 'dash': this.updateDash(); break;
       case 'attack': this.updateAttack(); break;
       case 'special': this.updateSpecial(); break;
+      case 'clinch': this.updateClinch(); break;
+      case 'throw': this.updateThrow(); break;
       case 'hurt':
         this.vx *= 0.86; this.vy *= 0.86;
         if (--this.stunT <= 0) this.state = 'idle';
@@ -216,9 +230,100 @@ class Player extends Fighter {
     if (crouch) { this.state = 'crouch'; this.vx *= 0.6; this.vy *= 0.6; if (ax) this.facing = ax; }
     else if (ax || ay) {
       this.state = 'walk'; this.vx = ax * WALK; this.vy = ay * DEPTH; if (ax) this.facing = ax;
+      if (ax && this.tryGrab(ax)) return;
       this.walkPhase += 0.26;
       if (Math.floor(this.walkPhase * 1.2) % 6 === 0 && this.t % 10 === 0) FX.dust(this.x - this.facing * 4, this.y, 1);
     } else { this.state = 'idle'; this.vx *= 0.55; this.vy *= 0.55; }
+  }
+
+  // ----- clinch: walking into an enemy for a few frames grabs it (bosses can't be grabbed) -----
+  grabbable(e, ax) {
+    if (e.boss || e.dead || !e.hittable() || e.z > 1 || e.def.noGrab) return false;
+    if (!['move', 'hurt', 'recover'].includes(e.state)) return false;
+    const dx = (e.x - this.x) * ax;
+    return dx > 0 && dx < this.hw + e.hw + 9 && Math.abs(e.y - this.y) < 10;
+  }
+  tryGrab(ax) {
+    let best = null;
+    for (const e of G.enemies) if (this.grabbable(e, ax) && (!best || Math.abs(e.x - this.x) < Math.abs(best.x - this.x))) best = e;
+    if (!best) { this.grabT = 0; this.grabE = null; return false; }
+    this.grabT = this.grabE === best ? this.grabT + 1 : 1; this.grabE = best;
+    if (this.grabT < (best.state === 'hurt' ? 2 : CLINCH.grabFrames)) return false;
+    this.startClinch(best); return true;
+  }
+  startClinch(e) {
+    this.grabT = 0; this.grabE = null;
+    this.state = 'clinch'; this.clinchE = e; this.clinchT = 0; this.clinchKnees = 0; this.move = null; this.vx = this.vy = 0;
+    this.facing = sgn(e.x - this.x) || this.facing;
+    e.grab(this);
+    this.sqx = 0.92; this.sqy = 1.05;
+    Snd.sfx.grab(); FX.text('CLINCH!', e.x, e.y - e.hh - 6, { color: '#ffe44d', size: 10, glow: '#ff2fd0', life: 34 });
+    FX.addShake(1.5); Input.rumble(0.3, 0.2, 60);
+  }
+  placeHeld(e, k = 1) {   // keep the held enemy locked in front of the hero
+    const tx = this.x + this.facing * (this.hw + e.hw + CLINCH.gap);
+    e.x += (tx - e.x) * k; e.y += (this.y - e.y) * k; e.z = 0; e.vx = e.vy = e.vz = 0; e.facing = -this.facing;
+  }
+  releaseClinch(push) {
+    const e = this.clinchE; this.clinchE = null;
+    if (e && e.state === 'held') { e.letGo(); if (push) { e.vx = this.facing * 3.2; this.vx = -this.facing * 2; } }
+  }
+  updateClinch() {
+    const e = this.clinchE;
+    if (!e || e.dead || e.state !== 'held') { this.clinchE = null; this.state = 'idle'; return; }
+    const t = ++this.clinchT; this.vx = this.vy = 0;
+    this.placeHeld(e, 0.5);
+    const hold = e.def.armor ? CLINCH.holdHeavy : CLINCH.hold;   // the enemy struggles out after a while
+    if (t > hold) {
+      FX.text('ECHAPPE!', e.x, e.y - e.hh - 6, { color: '#ff9ae9', size: 9, life: 30 });
+      this.releaseClinch(true); this.state = 'idle'; e.cool = Math.min(e.cool, 16); return;
+    }
+    if (Input.peek('special') && this.meter >= 100) { Input.eat('special'); this.releaseClinch(true); return this.startSpecial(); }
+    if (Input.eat('jump')) { this.releaseClinch(true); return this.jump(Input.ax()); }
+    if (Input.peek('dash') && this.canDash()) { Input.eat('dash'); this.releaseClinch(true); return this.startDash(Input.ax(), Input.ay()); }
+    if (Input.eat('kick')) return this.startThrow(Input.ax() === -this.facing ? -1 : 1);
+    if (Input.eat('knee') || Input.eat('punch')) {
+      this.clinchKnees++;
+      const mv = this.clinchKnees >= 3 ? CLINCH.knee3 : CLINCH.knee;
+      this.state = 'attack'; this.move = mv; this.moveT = 0; this.moveHit = false; this.hitSet.clear(); this.trail.length = 0;
+      Snd.sfx.swing(mv.sfx); if (mv.fin) Snd.sfx.cry('kiai', G.hero);
+    }
+  }
+  // the clinch knee hits its target directly (no hitbox search); the enemy stays locked unless it is the 3rd (launching) knee
+  clinchStrike(mv) {
+    const e = this.clinchE; if (!e || e.state !== 'held') return;
+    this.hitSet.add(e); this.moveHit = true;
+    e.state = 'hurt';                       // takeHit sees a normal standing target
+    G.registerHit(this, e, mv, Math.round(mv.dmg * (this.cancelBonus > 0 ? 1.25 : 1)), !!mv.fin, false);
+    if (!e.dead && e.state === 'hurt' && !mv.fin) { e.grab(this); e.vx = 0; }
+    else this.clinchE = null;               // launched / K.O.: the clinch is over
+  }
+  // ----- projection: forward, or behind (hold the opposite direction): the hero turns and the enemy goes over the hip -----
+  startThrow(dir) {
+    const e = this.clinchE;
+    this.state = 'throw'; this.throwT = 0; this.throwDir = dir; this.vx = this.vy = 0;
+    this.throwX0 = e.x;
+    if (dir < 0) this.facing = -this.facing;   // turn around: the opponent is now behind and comes over
+    Snd.sfx.cry('kiai', G.hero); Snd.sfx.swing(1.3);
+  }
+  updateThrow() {
+    const e = this.clinchE, T = CLINCH.throwT, t = ++this.throwT; this.vx = this.vy = 0;
+    if (e && e.state === 'held') {
+      if (t <= T.w) {   // lift: the enemy rises along an arc over the hip, to the front side
+        const k = t / T.w, front = this.x + this.facing * (this.hw + e.hw + CLINCH.gap);
+        e.x = lerp(this.throwX0, front, easeInOut(k)); e.z = Math.sin(k * Math.PI * 0.85) * (this.throwDir < 0 ? 44 : 30) + k * 6; e.y = this.y;
+        e.facing = -this.facing; e.rot = -k * 1.2;
+      } else {          // release: big hit, the enemy becomes a projectile that strikes everything on its way
+        this.clinchE = null; e.letGo(); e.state = 'hurt';
+        const z = e.z;
+        G.registerHit(this, e, Object.assign({ dir: this.facing }, CLINCH.throwMv), CLINCH.throwMv.dmg, true, false);
+        e.z = Math.min(Math.max(z, 12), 22);   // flat and fast: the body flies at chest height, like a bowling ball
+        if (e.state === 'launched') e.thrown = { hit: new Set([e]), n: 0 };
+        Ach.unlock('throw');
+        FX.addShake(5); FX.dust(this.x, this.y, 8, this.facing);
+      }
+    }
+    if (t >= T.w + T.s + T.r) { this.state = 'idle'; this.clinchE = null; }
   }
 
   jump(ax, boost) {
@@ -299,6 +404,14 @@ class Player extends Fighter {
     else this.vx *= 0.7;
     if (!mv.air) this.vy *= 0.6;
     if (mv.air && t > rs && this.vz > 0) this.vz *= 0.8;
+    if (mv.clinch) {   // knee in the clinch: direct hit on the held enemy, then back to the clinch
+      if (this.clinchE) this.placeHeld(this.clinchE, 0.5);
+      if (t === mv.st) this.clinchStrike(mv);
+      const back = () => { this.move = null; this.state = this.clinchE && this.clinchE.state === 'held' ? 'clinch' : 'idle'; };
+      if (t >= rs + mv.rc) return back();
+      if (t > rs + 2 && this.clinchE && (Input.peek('knee') || Input.peek('punch') || Input.peek('kick'))) return back();   // link the next knee / the throw
+      return;
+    }
     // active frames: hit detection
     if (t >= mv.st && t < rs) {
       this.pushTrail(this.lastJ || computeJoints(POSES.stance), mv.tip);
@@ -408,6 +521,7 @@ class Player extends Fighter {
   // ----- receive damage -----
   hurtBy(dmg, dir, kb, lift, src) {
     if (!this.canBeHit()) return false;
+    if (this.clinchE) this.releaseClinch(false);
     dmg = Math.round(dmg * (G.dmgMul || 1));
     this.hp -= dmg; this.flash = 5; this.invul = 34; this.move = null; this.chainStep = -1; this.chainTimer = 0;
     this.spin = 0; this.trail.length = 0; this.cancelBonus = 0;
@@ -435,6 +549,8 @@ class Player extends Fighter {
         const p = Object.assign({}, POSES.spin_s); const k = clamp(this.specialT / 18, 0, 1);
         return lerpPose(POSES.stance, p, easeOut(k));
       }
+      case 'clinch': return POSES.knee_w || POSES.stance;
+      case 'throw': return this.throwT < CLINCH.throwT.w ? (POSES.knee_w || POSES.stance) : (POSES.cross_s || POSES.stance);
       case 'hurt': return (this.stunT > 8 ? POSES.hurt2 : POSES.hurt);
       case 'launched': return POSES.tumble;
       case 'down': return this.stunT > 34 ? lerpPose(POSES.tumble, POSES.down, 0.8) : POSES.down;

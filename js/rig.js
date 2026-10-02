@@ -24,6 +24,7 @@ const POSES = {
   down:     P(0, 15, -1.45, -.05, -6, 19, -12, 14, 22, 2,   18, 1),
   getup:    P(0, 18, .6, .1,    14, 27,   8, 23,   14, 1,   -8, 1),
   block:    P(-1, 24, .08, 0,   14, 52,  10, 50,   9, 1,   -9, 1),
+  held:     P(2, 22, .50, .40,  13, 36,  10, 38,   6, 1,  -13, 1),   // caught in the clinch: bent forward, head pulled down, hands on the hero's arms
   // ---- punches
   jab_w:    P(0, 25, .05, 0,     8, 49,   5, 46,   9, 1,   -9, 1),
   jab_s:    P(3, 25, .20, .05,  29, 50,   6, 46,  12, 1,  -10, 1),

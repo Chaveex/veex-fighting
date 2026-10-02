@@ -11,7 +11,7 @@ import base64, io, json, math, os, subprocess, sys
 import numpy as np
 from PIL import Image
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import hero6, hero_anim as HA, hero_pixel
+import hero6, hero_anim as HA, hero_pixel, roxy_pixel
 import asekit
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -32,6 +32,7 @@ def durations(name):
 
 def render_frame(pose, wind, name=''):
     if LOOK == 'veex': return hero_pixel.render(pose, wind, name)      # v9: hand-made 2D pixel art (tools/hero_pixel.py)
+    if LOOK == 'roxy': return roxy_pixel.render(pose, wind, name)      # v2: hand-made 2D pixel art (tools/roxy_pixel.py)
     return HERO.render(HA.solve(pose), wind)
 
 def render_all(only=None):
@@ -73,7 +74,7 @@ if __name__ == '__main__':
     aj = json.load(open(os.path.join(assets, STEM + '_ase.json')))
     sheet = Image.open(os.path.join(assets, STEM + '.png')).convert('RGBA')
     jf = {n: {'frame': aj['frames'][i]['frame'], 'duration': aj['frames'][i]['duration']} for i, (n, b, r) in enumerate(res)}
-    meta = {'app': ('veexing-force hero generator v9 (hand-made 2D pixel art from the photo, animation v7, aseprite export)' if LOOK == 'veex' else 'veexing-force hero generator v7 (3D skeleton -> pixel art, aseprite export)'), 'image': STEM + '.png', 'look': LOOK, 'size': {'w': sheet.width, 'h': sheet.height},
+    meta = {'app': ('veexing-force hero generator v9 (hand-made 2D pixel art from the photo, animation v7, aseprite export)' if LOOK in ('veex', 'roxy') else 'veexing-force hero generator v7 (3D skeleton -> pixel art, aseprite export)'), 'image': STEM + '.png', 'look': LOOK, 'size': {'w': sheet.width, 'h': sheet.height},
             'anchor': {'x': OX, 'y': OY}, 'scale': round(UNIT, 3), 'frameTags': [dict(t) for t in tags], 'anims': ANIMS}
     data = {'frames': jf, 'meta': meta}; json.dump(data, open(os.path.join(assets, STEM + '.json'), 'w'), indent=1)
     buf = io.BytesIO(); sheet.save(buf, 'PNG', optimize=True)

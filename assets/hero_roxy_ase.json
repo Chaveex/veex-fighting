@@ -510,7 +510,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 70
+    "duration": 167
    },
    {
     "filename": "hero_roxy 57.aseprite",
@@ -519,7 +519,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 60
+    "duration": 167
    },
    {
     "filename": "hero_roxy 58.aseprite",
@@ -546,7 +546,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 70
+    "duration": 60
    },
    {
     "filename": "hero_roxy 61.aseprite",
@@ -564,7 +564,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 60
+    "duration": 70
    },
    {
     "filename": "hero_roxy 63.aseprite",
@@ -582,7 +582,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 70
+    "duration": 60
    },
    {
     "filename": "hero_roxy 65.aseprite",
@@ -681,7 +681,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 60
+    "duration": 70
    },
    {
     "filename": "hero_roxy 76.aseprite",
@@ -690,7 +690,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 70
+    "duration": 60
    },
    {
     "filename": "hero_roxy 77.aseprite",
@@ -735,7 +735,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 60
+    "duration": 70
    },
    {
     "filename": "hero_roxy 82.aseprite",
@@ -744,7 +744,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 70
+    "duration": 60
    },
    {
     "filename": "hero_roxy 83.aseprite",
@@ -789,7 +789,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 60
+    "duration": 70
    },
    {
     "filename": "hero_roxy 88.aseprite",
@@ -798,7 +798,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 70
+    "duration": 60
    },
    {
     "filename": "hero_roxy 89.aseprite",
@@ -834,7 +834,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 60
+    "duration": 70
    },
    {
     "filename": "hero_roxy 93.aseprite",
@@ -852,7 +852,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 70
+    "duration": 60
    },
    {
     "filename": "hero_roxy 95.aseprite",
@@ -879,7 +879,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 60
+    "duration": 70
    },
    {
     "filename": "hero_roxy 98.aseprite",
@@ -897,7 +897,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 70
+    "duration": 60
    },
    {
     "filename": "hero_roxy 100.aseprite",
@@ -915,7 +915,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 60
+    "duration": 70
    },
    {
     "filename": "hero_roxy 102.aseprite",
@@ -942,7 +942,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 70
+    "duration": 60
    },
    {
     "filename": "hero_roxy 105.aseprite",
@@ -951,7 +951,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 60
+    "duration": 70
    },
    {
     "filename": "hero_roxy 106.aseprite",
@@ -978,7 +978,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 70
+    "duration": 60
    },
    {
     "filename": "hero_roxy 109.aseprite",
@@ -987,7 +987,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 60
+    "duration": 70
    },
    {
     "filename": "hero_roxy 110.aseprite",
@@ -1014,7 +1014,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 70
+    "duration": 60
    },
    {
     "filename": "hero_roxy 113.aseprite",
@@ -1023,7 +1023,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 60
+    "duration": 70
    },
    {
     "filename": "hero_roxy 114.aseprite",
@@ -1050,7 +1050,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 70
+    "duration": 60
    },
    {
     "filename": "hero_roxy 117.aseprite",
@@ -1059,7 +1059,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 60
+    "duration": 70
    },
    {
     "filename": "hero_roxy 118.aseprite",
@@ -1086,7 +1086,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 70
+    "duration": 60
    },
    {
     "filename": "hero_roxy 121.aseprite",
@@ -1095,7 +1095,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 60
+    "duration": 70
    },
    {
     "filename": "hero_roxy 122.aseprite",
@@ -1122,7 +1122,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 70
+    "duration": 60
    },
    {
     "filename": "hero_roxy 125.aseprite",
@@ -1131,7 +1131,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
-    "duration": 60
+    "duration": 70
    },
    {
     "filename": "hero_roxy 126.aseprite",
@@ -1150,6 +1150,69 @@
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
     "sourceSize": { "w": 128, "h": 128 },
     "duration": 70
+   },
+   {
+    "filename": "hero_roxy 128.aseprite",
+    "frame": { "x": 1024, "y": 1536, "w": 128, "h": 128 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
+    "sourceSize": { "w": 128, "h": 128 },
+    "duration": 60
+   },
+   {
+    "filename": "hero_roxy 129.aseprite",
+    "frame": { "x": 1152, "y": 1536, "w": 128, "h": 128 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
+    "sourceSize": { "w": 128, "h": 128 },
+    "duration": 70
+   },
+   {
+    "filename": "hero_roxy 130.aseprite",
+    "frame": { "x": 0, "y": 1664, "w": 128, "h": 128 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
+    "sourceSize": { "w": 128, "h": 128 },
+    "duration": 70
+   },
+   {
+    "filename": "hero_roxy 131.aseprite",
+    "frame": { "x": 128, "y": 1664, "w": 128, "h": 128 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
+    "sourceSize": { "w": 128, "h": 128 },
+    "duration": 70
+   },
+   {
+    "filename": "hero_roxy 132.aseprite",
+    "frame": { "x": 256, "y": 1664, "w": 128, "h": 128 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
+    "sourceSize": { "w": 128, "h": 128 },
+    "duration": 60
+   },
+   {
+    "filename": "hero_roxy 133.aseprite",
+    "frame": { "x": 384, "y": 1664, "w": 128, "h": 128 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
+    "sourceSize": { "w": 128, "h": 128 },
+    "duration": 70
+   },
+   {
+    "filename": "hero_roxy 134.aseprite",
+    "frame": { "x": 512, "y": 1664, "w": 128, "h": 128 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 128 },
+    "sourceSize": { "w": 128, "h": 128 },
+    "duration": 70
    }
  ],
  "meta": {
@@ -1157,7 +1220,7 @@
   "version": "1.3.18.6-3-ge5ed241eb-dev",
   "image": "hero_roxy.png",
   "format": "I8",
-  "size": { "w": 1280, "h": 1664 },
+  "size": { "w": 1280, "h": 1792 },
   "scale": "1",
   "frameTags": [
    { "name": "idle", "from": 0, "to": 7, "direction": "forward", "color": "#000000ff" },
@@ -1174,21 +1237,23 @@
    { "name": "fury", "from": 42, "to": 44, "direction": "forward", "color": "#000000ff" },
    { "name": "spin", "from": 45, "to": 52, "direction": "forward", "color": "#000000ff" },
    { "name": "fury_end", "from": 53, "to": 55, "direction": "forward", "color": "#000000ff" },
-   { "name": "jab", "from": 56, "to": 59, "direction": "forward", "color": "#000000ff" },
-   { "name": "cross", "from": 60, "to": 64, "direction": "forward", "color": "#000000ff" },
-   { "name": "elbow", "from": 65, "to": 72, "direction": "forward", "color": "#000000ff" },
-   { "name": "teep", "from": 73, "to": 77, "direction": "forward", "color": "#000000ff" },
-   { "name": "round", "from": 78, "to": 84, "direction": "forward", "color": "#000000ff" },
-   { "name": "knee", "from": 85, "to": 89, "direction": "forward", "color": "#000000ff" },
-   { "name": "upper", "from": 90, "to": 94, "direction": "forward", "color": "#000000ff" },
-   { "name": "low", "from": 95, "to": 99, "direction": "forward", "color": "#000000ff" },
-   { "name": "rknee", "from": 100, "to": 103, "direction": "forward", "color": "#000000ff" },
-   { "name": "airp", "from": 104, "to": 107, "direction": "forward", "color": "#000000ff" },
-   { "name": "airk", "from": 108, "to": 111, "direction": "forward", "color": "#000000ff" },
-   { "name": "airknee", "from": 112, "to": 115, "direction": "forward", "color": "#000000ff" },
-   { "name": "rushp", "from": 116, "to": 119, "direction": "forward", "color": "#000000ff" },
-   { "name": "rushk", "from": 120, "to": 123, "direction": "forward", "color": "#000000ff" },
-   { "name": "rushn", "from": 124, "to": 127, "direction": "forward", "color": "#000000ff" }
+   { "name": "clinch", "from": 56, "to": 57, "direction": "forward", "color": "#000000ff" },
+   { "name": "throw", "from": 58, "to": 62, "direction": "forward", "color": "#000000ff" },
+   { "name": "jab", "from": 63, "to": 66, "direction": "forward", "color": "#000000ff" },
+   { "name": "cross", "from": 67, "to": 71, "direction": "forward", "color": "#000000ff" },
+   { "name": "elbow", "from": 72, "to": 79, "direction": "forward", "color": "#000000ff" },
+   { "name": "teep", "from": 80, "to": 84, "direction": "forward", "color": "#000000ff" },
+   { "name": "round", "from": 85, "to": 91, "direction": "forward", "color": "#000000ff" },
+   { "name": "knee", "from": 92, "to": 96, "direction": "forward", "color": "#000000ff" },
+   { "name": "upper", "from": 97, "to": 101, "direction": "forward", "color": "#000000ff" },
+   { "name": "low", "from": 102, "to": 106, "direction": "forward", "color": "#000000ff" },
+   { "name": "rknee", "from": 107, "to": 110, "direction": "forward", "color": "#000000ff" },
+   { "name": "airp", "from": 111, "to": 114, "direction": "forward", "color": "#000000ff" },
+   { "name": "airk", "from": 115, "to": 118, "direction": "forward", "color": "#000000ff" },
+   { "name": "airknee", "from": 119, "to": 122, "direction": "forward", "color": "#000000ff" },
+   { "name": "rushp", "from": 123, "to": 126, "direction": "forward", "color": "#000000ff" },
+   { "name": "rushk", "from": 127, "to": 130, "direction": "forward", "color": "#000000ff" },
+   { "name": "rushn", "from": 131, "to": 134, "direction": "forward", "color": "#000000ff" }
   ]
  }
 }

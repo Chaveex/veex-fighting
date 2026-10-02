@@ -18,6 +18,8 @@ const ACH_DEFS = [
   ['kaboom', 'KABOOM', 'Faire exploser un cabriolet'],
   ['emp', 'COURT-CIRCUIT', 'Detruire un serveur'],
   ['zap', 'ELECTROCUTION', 'Pousser un ennemi sur une plaque electrifiee'],
+  ['throw', 'PROJECTION', 'Projeter un ennemi depuis le clinch'],
+  ['bowling', 'STRIKE', 'Faucher 2 ennemis avec un ennemi projete'],
   ['stage1', 'NEON DOWNTOWN', 'Finir le niveau 1'],
   ['stage2', 'GALAXY ARCADE', 'Finir le niveau 2'],
   ['stage3', 'SUNSET BOULEVARD', 'Finir le niveau 3'],

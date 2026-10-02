@@ -134,7 +134,7 @@ class PixelHero:
 
     # ---------------- skeleton (mirror of Hero6.build, joints only) ----------------
     def skeleton(self, P):
-        k, L = self.k, self.L; SW = 7.8
+        k, L = self.k, self.L; SW = getattr(self, 'SW', 7.8)
         yb, yu, yh = math.radians(P['yb']), math.radians(P['yb'] + P['twist']), math.radians(P['yh'])
         Wb = lambda v: rot_y(np.asarray(v, float) * k, yb); Wu = lambda v: rot_y(np.asarray(v, float) * k, yu)
         Vb = lambda v: rot_y(unit(v), yb)
@@ -233,7 +233,7 @@ def disc_hull(cv, centres, radii):
 MAPCODE = {'h': ('hair', 0), 'H': ('hair', None), 'D': ('hair', 2), 'X': ('hair', 3), 'B': ('hair', 3),
            's': ('skin', 0), 'S': ('skin', None), 'K': ('skin', 2), 'k': ('skin', 3), 'E': ('skin', 2), 'e': ('skin', 3),
            'W': ('white', 0), 'I': ('iris', 1), 'P': ('dark', 1), 'M': ('beard', 1), 'm': ('beard', 1), 'n': ('beard', 2),
-           'L': ('skin', 4), 'c': ('skin', 3)}
+           'L': ('skin', 4), 'c': ('skin', 3), 'R': ('pink', 1), 'r': ('pink', 2), 'l': ('lip', 1)}
 
 
 def grid(rows):
@@ -456,7 +456,7 @@ class Drawer(PixelHero):
             lvl[line] = np.maximum(lvl[line], 3)
         img = np.zeros((H, W, 4), np.uint8)
         for rid in np.unique(cv.ramp[filled]):
-            m = filled & (cv.ramp == rid); ramp = RAMPS[rid]
+            m = filled & (cv.ramp == rid); ramp = getattr(self, 'ramps', RAMPS)[rid]
             for lv in range(5):
                 mm = m & (lvl == lv)
                 if mm.any(): img[mm, :3] = ramp[lv]; img[mm, 3] = 255
