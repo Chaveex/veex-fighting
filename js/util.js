@@ -21,7 +21,7 @@ const easeInOut = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 const dist2 = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
 
 // ---------- input (keyboard + gamepad, with buffering) ----------
-const ACTIONS = ['left', 'right', 'up', 'down', 'jump', 'punch', 'kick', 'knee', 'dash', 'crouch', 'special', 'pause', 'confirm'];
+const ACTIONS = ['left', 'right', 'up', 'down', 'jump', 'punch', 'kick', 'knee', 'dash', 'crouch', 'special', 'pause', 'confirm', 'title'];
 const Input = {
   BUF: 12,
   map: {
@@ -29,11 +29,11 @@ const Input = {
     up: ['ArrowUp', 'KeyW'], down: ['ArrowDown', 'KeyS'],
     jump: ['Space', 'KeyU'], punch: ['KeyJ', 'KeyF'], kick: ['KeyK', 'KeyG'], knee: ['KeyL', 'KeyH'],
     dash: ['ShiftLeft', 'ShiftRight', 'KeyE', 'KeyO'], crouch: ['KeyC', 'ControlLeft', 'ControlRight', 'KeyX'],
-    special: ['KeyR', 'KeyI'], pause: ['Escape', 'KeyP'], confirm: ['Enter', 'Space', 'KeyJ']
+    special: ['KeyR', 'KeyI'], pause: ['Escape', 'KeyP'], confirm: ['Enter', 'Space', 'KeyJ'], title: ['KeyT']
   },
-  padMap: { jump: [0], knee: [1], punch: [2], kick: [3], crouch: [4, 6], dash: [5, 7], special: [10, 11, 8], pause: [9], confirm: [0, 9],
+  padMap: { jump: [0], knee: [1], punch: [2], kick: [3], crouch: [4, 6], dash: [5, 7], special: [10, 11, 8], pause: [9], confirm: [0, 9], title: [8],
             up: [12], down: [13], left: [14], right: [15] },
-  codeDown: {}, edge: {}, held: {}, buf: {}, padPrev: {}, usingPad: false,
+  codeDown: {}, edge: {}, held: {}, buf: {}, padPrev: {}, usingPad: false, padTap: {}, padBtnPrev: [],
   init() {
     ACTIONS.forEach(a => { this.held[a] = false; this.buf[a] = 0; this.edge[a] = false; this.padPrev[a] = false; });
     const prevent = new Set();
@@ -41,7 +41,7 @@ const Input = {
     addEventListener('keydown', e => {
       if (prevent.has(e.code)) e.preventDefault();
       if (e.repeat) return;
-      this.codeDown[e.code] = true;
+      this.codeDown[e.code] = true; this.usingPad = false;   // UI hints follow the last device used
       for (const a of ACTIONS) if (this.map[a].includes(e.code)) this.edge[a] = true;
     });
     addEventListener('keyup', e => { this.codeDown[e.code] = false; });
@@ -51,7 +51,8 @@ const Input = {
   poll() {
     let pad = null;
     if (navigator.getGamepads) for (const p of navigator.getGamepads()) if (p && p.connected) { pad = p; break; }
-    this.pad = pad;
+    this.pad = pad; this.padTap = {};
+    if (pad) pad.buttons.forEach((b, i) => { if (b.pressed && !this.padBtnPrev[i]) { this.padTap['b' + i] = true; this.usingPad = true; } this.padBtnPrev[i] = b.pressed; });
     for (const a of ACTIONS) {
       let h = this.map[a].some(c => this.codeDown[c]);
       let padH = false;
@@ -61,7 +62,7 @@ const Input = {
         if (a === 'right' && pad.axes[0] > 0.4) padH = true;
         if (a === 'up' && pad.axes[1] < -0.4) padH = true;
         if (a === 'down' && pad.axes[1] > 0.4) padH = true;
-        if (padH && !this.padPrev[a]) this.edge[a] = true;
+        if (padH && !this.padPrev[a]) { this.edge[a] = true; this.padTap[a] = true; }
         this.padPrev[a] = padH;
         if (padH) this.usingPad = true;
       }

@@ -39,17 +39,34 @@ function saveHero() { try { localStorage.setItem('veexHero', G.hero); } catch (e
 function saveBest() { try { if (G.score > G.best) { G.best = G.score; localStorage.setItem('veexBest', String(G.best)); } } catch (e) { /* ignore */ } }
 
 // ============ level flow ============
-// ---------- title-screen code entry: C opens a field, ENTER validates, ESC closes ----------
+// UI labels follow the device the player last touched
+const padUI = () => Input.usingPad;
+const K = (key, pad) => padUI() ? pad : key;
+// ---------- title-screen code entry: C (keyboard) / SELECT (pad) opens a field, ENTER / START validates, ESC / SELECT closes ----------
+// pad: up / down picks the letter, A or right adds it, B or left erases, START validates
 // NEON / INSERTCOIN / VICE / CYBER = start stage 1..4 | BOSS = toggle "start at the boss" | INVINCIBLE = god mode on/off
+const CODE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 const CHEATS = { NEON: 0, INSERTCOIN: 1, VICE: 2, CYBER: 3, BOSS: 'boss', INVINCIBLE: 'god' };
 function codeKey(e) {
   const ce = G.codeEntry;
-  if (!ce) { if (e.code === 'KeyC' && !e.repeat && !G.cheatGo) { G.codeEntry = { text: '', msg: '', col: '#fff', t: 0, shake: 0 }; Snd.sfx.ui(); Input.clear(); e.preventDefault(); } return; }
+  if (!ce) { if (e.code === 'KeyC' && !e.repeat && !G.cheatGo) { openCodeEntry(); e.preventDefault(); } return; }
   e.preventDefault();
   if (e.key === 'Escape') { G.codeEntry = null; Snd.sfx.ui(); Input.clear(); return; }
   if (e.key === 'Backspace') { ce.text = ce.text.slice(0, -1); return; }
   if (e.key === 'Enter') { submitCode(ce); return; }
   if (e.key.length === 1 && /[a-z0-9]/i.test(e.key) && ce.text.length < 12) ce.text += e.key.toUpperCase();
+}
+function openCodeEntry() { G.codeEntry = { text: '', msg: '', col: '#fff', t: 0, shake: 0, pick: 0 }; Snd.sfx.ui(); Input.clear(); }
+function padCode() {
+  const ce = G.codeEntry, tap = Input.padTap; Input.padTap = {};   // one read per frame (a frame may run several steps)
+  if (!ce || G.cheatGo) return;
+  const n = CODE_CHARS.length;
+  if (tap.up) { ce.pick = (ce.pick + n - 1) % n; Snd.sfx.ui(); }
+  if (tap.down) { ce.pick = (ce.pick + 1) % n; Snd.sfx.ui(); }
+  if ((tap.b0 || tap.right) && ce.text.length < 12) { ce.text += CODE_CHARS[ce.pick]; Snd.sfx.ui(); }
+  if (tap.b1 || tap.left) ce.text = ce.text.slice(0, -1);
+  if (tap.b9) submitCode(ce);
+  else if (tap.b8) { G.codeEntry = null; Snd.sfx.ui(); }
 }
 function submitCode(ce) {
   const v = CHEATS[ce.text];
@@ -72,10 +89,16 @@ function drawCodeEntry(c) {
   c.strokeStyle = '#ff2fd0'; c.lineWidth = 2; c.strokeRect(x - 1, y - 1, w + 2, h + 2); c.strokeStyle = '#27f0ff'; c.lineWidth = 1; c.strokeRect(x - 5.5, y - 5.5, w + 11, h + 11);
   drawText(c, 'ENTRER UN CODE', W / 2, y + 24, { size: 14, color: '#ffe44d', outline: OUT, align: 'center', italic: true, glow: '#ff2fd0' });
   c.fillStyle = '#05010f'; c.fillRect(x + 40 + sx, y + 38, w - 80, 26); c.strokeStyle = '#8b5cff'; c.strokeRect(x + 40.5 + sx, y + 38.5, w - 81, 25);
-  const cur = ce.t % 40 < 22 ? '_' : ' ';
+  const cur = padUI() ? (ce.t % 40 < 26 ? CODE_CHARS[ce.pick] : ' ') : (ce.t % 40 < 22 ? '_' : ' ');
   drawText(c, ce.text + cur, W / 2 + sx, y + 57, { size: 14, color: '#fff', outline: OUT, align: 'center' });
-  if (ce.msg) drawText(c, ce.msg, W / 2, y + 82, { size: 10, color: ce.col, outline: OUT, align: 'center', glow: ce.col });
-  drawText(c, 'ENTREE : VALIDER   -   ECHAP : RETOUR', W / 2, y + h - 10, { size: 9, color: '#27f0ff', outline: OUT, align: 'center' });
+  if (padUI()) {   // arrows over / under the letter being picked
+    c.font = `bold 14px ${FONT}`; const tw = c.measureText(ce.text + CODE_CHARS[ce.pick]).width, lw = c.measureText(CODE_CHARS[ce.pick]).width;
+    const ax = W / 2 + sx + tw / 2 - lw / 2;
+    drawText(c, '^', ax, y + 42, { size: 9, color: '#ffe44d', outline: OUT, align: 'center' });
+    drawText(c, 'v', ax, y + 72, { size: 9, color: '#ffe44d', outline: OUT, align: 'center' });
+  }
+  if (ce.msg) drawText(c, ce.msg, W / 2, y + 86, { size: 10, color: ce.col, outline: OUT, align: 'center', glow: ce.col });
+  drawText(c, K('ENTREE : VALIDER   -   ECHAP : RETOUR', 'HAUT/BAS : LETTRE  A : AJOUTER  B : EFFACER  START : VALIDER  SELECT : RETOUR'), W / 2, y + h - 10, { size: padUI() ? 8 : 9, color: '#27f0ff', outline: OUT, align: 'center' });
 }
 
 function startGame(li) {
@@ -98,7 +121,7 @@ function startLevel(li) {
   G.stats = { kills: 0, hits: 0, t0: 0, dmgTaken: 0 };
   G.levelStartScore = G.score; G.target = null;
   G.banner = { t: 0, title: L.name, sub: L.sub, kind: 'level' };
-  G.hint = { t: 0, text: L.hint };
+  G.hint = { t: 0, text: (padUI() && L.hintPad) || L.hint };
   G.state = 'play'; Input.clear();
   Snd.playMusic(L.music, false);
 }
@@ -334,7 +357,8 @@ function step() {
       }
       G.heroSwapT = (G.heroSwapT || 0) + 1;
       if (G.cheatGo) { if (--G.cheatGo.t <= 0) { const go = G.cheatGo; G.cheatGo = null; G.codeEntry = null; startGame(go.li); if (G.cheatBoss) jumpToStop(LEVELS[go.li].stops.length - 1); } break; }
-      if (G.codeEntry) { Input.clear(); break; }
+      if (G.codeEntry) { padCode(); Input.clear(); break; }
+      if (Input.eat('title') && !G.cheatGo) { openCodeEntry(); Input.padTap = {}; break; }
       if (Input.eat('confirm')) { Snd.resume(); Snd.sfx.select(); startGame(0); }
       break;
     case 'play':
@@ -345,7 +369,7 @@ function step() {
       break;
     case 'pause':
       if (Input.eat('pause') || Input.eat('confirm')) { G.state = 'play'; Input.clear(); Snd.sfx.ui(); }
-      if (Input.codeDown['KeyT']) { G.state = 'title'; Snd.stopMusic(); Input.clear(); }
+      if (Input.eat('title')) { G.state = 'title'; Snd.stopMusic(); Input.clear(); }
       break;
     case 'clear':
       FX.updateWorld();
@@ -358,7 +382,7 @@ function step() {
     case 'gameover':
       FX.updateWorld();
       if (G.menuT > 40 && Input.eat('confirm')) { G.score = G.levelStartScore; G.lives = 3; G.player = null; startLevel(G.level); }
-      if (G.menuT > 40 && Input.codeDown['KeyT']) { G.state = 'title'; Input.clear(); }
+      if (G.menuT > 40 && Input.eat('title')) { G.state = 'title'; Snd.stopMusic(); Input.clear(); }
       break;
     case 'victory':
       FX.updateWorld();
@@ -594,10 +618,11 @@ function drawTitle(c) {
   c.fillStyle = grad; c.fillText('FORCE', 0, 130 + bob);
   c.restore();
   drawText(c, 'MUAY THAI STREET FIGHTER  -  1986', lx, 150, { size: 11, color: '#27f0ff', outline: OUT, align: 'center', italic: true });
-  if (t % 60 < 40) drawText(c, 'PRESS  ENTER', lx, 178, { size: 18, color: '#fff', outline: '#ff2fd0', align: 'center', italic: true, glow: '#ff2fd0' });
-  drawText(c, 'C : ENTRER UN CODE', lx, 200, { size: 9, color: '#8b5cff', outline: OUT, align: 'center' });
+  if (t % 60 < 40) drawText(c, K('PRESS  ENTER', 'PRESS  START'), lx, 178, { size: 18, color: '#fff', outline: '#ff2fd0', align: 'center', italic: true, glow: '#ff2fd0' });
+  drawText(c, K('C : ENTRER UN CODE', 'SELECT : ENTRER UN CODE'), lx, 200, { size: 9, color: '#8b5cff', outline: OUT, align: 'center' });
   // controls
-  const rows = [['WASD / ZQSD / FLECHES', 'BOUGER'], ['J', 'POING'], ['K', 'PIED'], ['L', 'GENOU'], ['ESPACE', 'SAUT'], ['SHIFT', 'DASH (AIR AUSSI)'], ['C', 'SE BAISSER'], ['R', 'FURY (JAUGE PLEINE)']];
+  const rows = padUI() ? [['STICK / CROIX', 'BOUGER'], ['X', 'POING'], ['Y', 'PIED'], ['B', 'GENOU'], ['A', 'SAUT'], ['RB / RT', 'DASH (AIR AUSSI)'], ['LB / LT', 'SE BAISSER'], ['L3 / R3', 'FURY (JAUGE PLEINE)']]
+    : [['WASD / ZQSD / FLECHES', 'BOUGER'], ['J', 'POING'], ['K', 'PIED'], ['L', 'GENOU'], ['ESPACE', 'SAUT'], ['SHIFT', 'DASH (AIR AUSSI)'], ['C', 'SE BAISSER'], ['R', 'FURY (JAUGE PLEINE)']];
   const cx = 296, cy = 232;
   c.fillStyle = 'rgba(10,0,30,.72)'; c.fillRect(cx - 8, cy - 14, 352, 122);
   c.strokeStyle = '#8b5cff'; c.lineWidth = 1; c.strokeRect(cx - 8.5, cy - 14.5, 352, 122);
@@ -607,7 +632,7 @@ function drawTitle(c) {
     drawText(c, r[1], cx + col * 178 + (col ? 62 : 108), cy + row * 13, { size: 9, color: '#fff', outline: OUT });
   });
   drawText(c, 'ANNULE TES COUPS AVEC DASH / SAUT  -  ESQUIVE AU DERNIER MOMENT = RALENTI', cx + 168, cy + 62, { size: 9, color: '#27f0ff', outline: OUT, align: 'center' });
-  drawText(c, 'MANETTE OK  -  C : CODE  -  M : SON  -  F : PLEIN ECRAN', cx + 168, cy + 76, { size: 9, color: '#ff9ae9', outline: OUT, align: 'center' });
+  drawText(c, K('MANETTE OK  -  C : CODE  -  M : SON  -  F : PLEIN ECRAN', 'MANETTE CONNECTEE  -  START : JOUER  -  SELECT : CODE'), cx + 168, cy + 76, { size: 9, color: '#ff9ae9', outline: OUT, align: 'center' });
   drawText(c, 'HI-SCORE ' + String(G.best).padStart(8, '0'), cx + 168, cy + 96, { size: 10, color: '#fff', outline: OUT, align: 'center' });
   c.drawImage(vig, 0, 0);
 }
@@ -631,19 +656,23 @@ function drawScreen(c) {
   switch (G.state) {
     case 'title': drawTitle(c); break;
     case 'pause': {
-      drawPanel(c, 'PAUSE', [['DEPLACEMENT', 'WASD / ZQSD / FLECHES'], ['POING / PIED / GENOU', 'J / K / L'], ['SAUT  /  DASH', 'ESPACE  /  SHIFT'], ['SE BAISSER', 'C  (esquive les coups hauts)'],
-        ['FURY', 'R (jauge pleine)'], ['ANNULER UNE ATTAQUE', 'DASH ou SAUT apres un coup touche'], ['ESQUIVE PARFAITE', 'DASH au moment de l\'impact'], ['SON / PLEIN ECRAN', 'M / F']], 'ENTREE : REPRENDRE   -   T : TITRE');
+      drawPanel(c, 'PAUSE', padUI()
+        ? [['DEPLACEMENT', 'STICK / CROIX'], ['POING / PIED / GENOU', 'X / Y / B'], ['SAUT  /  DASH', 'A  /  RB - RT'], ['SE BAISSER', 'LB - LT  (esquive les coups hauts)'],
+          ['FURY', 'L3 / R3 (jauge pleine)'], ['ANNULER UNE ATTAQUE', 'DASH ou SAUT apres un coup touche'], ['ESQUIVE PARFAITE', 'DASH au moment de l\'impact'], ['PAUSE', 'START']]
+        : [['DEPLACEMENT', 'WASD / ZQSD / FLECHES'], ['POING / PIED / GENOU', 'J / K / L'], ['SAUT  /  DASH', 'ESPACE  /  SHIFT'], ['SE BAISSER', 'C  (esquive les coups hauts)'],
+          ['FURY', 'R (jauge pleine)'], ['ANNULER UNE ATTAQUE', 'DASH ou SAUT apres un coup touche'], ['ESQUIVE PARFAITE', 'DASH au moment de l\'impact'], ['SON / PLEIN ECRAN', 'M / F']],
+        K('ENTREE : REPRENDRE   -   T : TITRE', 'START / A : REPRENDRE   -   SELECT : TITRE'));
       break;
     }
     case 'clear': {
       const s = G.stats;
       drawPanel(c, 'STAGE CLEAR!', [['COMBO MAX', String(G.combo.max)], ['KO', String(s.kills)], ['ESQUIVES PARFAITES', String(G.combo.dodges)], ['CANCELS', String(G.combo.cancels)],
-        ['BONUS', String(G.clearBonus)], ['SCORE', String(G.score)]], G.menuT > 60 ? 'ENTREE : SUITE' : '');
+        ['BONUS', String(G.clearBonus)], ['SCORE', String(G.score)]], G.menuT > 60 ? K('ENTREE : SUITE', 'A : SUITE') : '');
       drawText(c, gradeFor(), W - 130, 200, { size: 64, color: '#ffe44d', outline: '#ff2fd0', italic: true, align: 'center', glow: '#ff2fd0', outlineW: 6 });
       break;
     }
     case 'gameover':
-      drawPanel(c, 'GAME OVER', [['SCORE', String(G.score)], ['COMBO MAX', String(G.combo.max)]], G.menuT > 40 ? 'ENTREE : REESSAYER   -   T : TITRE' : '');
+      drawPanel(c, 'GAME OVER', [['SCORE', String(G.score)], ['COMBO MAX', String(G.combo.max)]], G.menuT > 40 ? K('ENTREE : REESSAYER   -   T : TITRE', 'A : REESSAYER   -   SELECT : TITRE') : '');
       break;
     case 'victory': {
       c.fillStyle = 'rgba(0,0,0,.55)'; c.fillRect(0, 0, W, H);
@@ -652,7 +681,7 @@ function drawScreen(c) {
       drawText(c, heroLook().outro, W / 2, 148, { size: 12, color: '#27f0ff', outline: OUT, align: 'center', italic: true });
       drawText(c, 'SCORE FINAL  ' + String(G.score).padStart(8, '0'), W / 2, 200, { size: 22, color: '#ffe44d', outline: OUT, align: 'center', italic: true });
       drawText(c, 'MERCI D\'AVOIR JOUE', W / 2, 232, { size: 14, color: '#fff', outline: OUT, align: 'center' });
-      if (G.menuT > 120 && G.menuT % 60 < 40) drawText(c, 'ENTREE', W / 2, 280, { size: 14, color: '#fff', outline: '#ff2fd0', align: 'center', italic: true });
+      if (G.menuT > 120 && G.menuT % 60 < 40) drawText(c, K('ENTREE', 'A'), W / 2, 280, { size: 14, color: '#fff', outline: '#ff2fd0', align: 'center', italic: true });
       break;
     }
   }

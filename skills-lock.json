@@ -18,6 +18,12 @@
       "sourceType": "github",
       "skillPath": "plugins/game-development/skills/godot-gdscript-patterns/SKILL.md",
       "computedHash": "2c1033a49da376a6ebac9d45f9a25076660023b2e4448822b00188acf722ba9c"
+    },
+    "sound-effects": {
+      "source": "elevenlabs/skills",
+      "sourceType": "github",
+      "skillPath": "sound-effects/SKILL.md",
+      "computedHash": "f76a229156eaa302d0e64159f56055ce733ecf19da768398a6c5b1991ac1d940"
     }
   }
 }

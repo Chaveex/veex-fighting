@@ -56,7 +56,7 @@ function boomboxProp(c, j) {
 const LEVELS = [
   {
     name: 'NEON DOWNTOWN', props: [['bin', 540, 322], ['bin', 1020, 292], ['hydrant', 1240, 284], ['bin', 1440, 326], ['bin', 1580, 326], ['hydrant', 1980, 330], ['bin', 2150, 292], ['bin', 2620, 324]], vents: [[1180,322,150],[1800,292,200]], ventTiming: { off: 210, warn: 60, act: 55 }, sub: 'STAGE 1  -  LA RUE NE DORT JAMAIS', theme: 'city', width: 2700, music: 0,
-    hint: 'J POING  K PIED  L GENOU',
+    hint: 'J POING  K PIED  L GENOU', hintPad: 'X POING  Y PIED  B GENOU',
     stops: [
       { x: 260, waves: [['grunt', 'grunt'], ['grunt']] },
       { x: 860, waves: [['grunt', 'grunt', 'fast'], ['grunt', 'thrower']] },
