@@ -380,9 +380,14 @@ do
     end
     FLO:drawPixel(x, y, C(c))
   end end
-  for x = 0, WW - 1, 64 do rect(FLO, x, 318, x + 30, 319, C("#e8c88a")); hline(FLO, x, x + 30, 320, C("#8a6a5a")) end
+  for x = 0, WW - 1, 64 do if x + 30 < 1596 or x > 1724 then rect(FLO, x, 318, x + 30, 319, C("#e8c88a")); hline(FLO, x, x + 30, 320, C("#8a6a5a")) end end   -- no lane dash across the crosswalk
   -- crosswalk in front of the beach gap
-  for x = 1600, 1720, 12 do rect(FLO, x, CURB + 3, x + 6, HH - 1, C("#c8b8d0")); for y = CURB + 3, HH - 1 do if dith(x, y, 0.2) then px(FLO, x + 3, y, C("#a090b0")) end end end
+  -- zebra bars run along the road (horizontal), stacked across it; slightly wider toward the camera (perspective)
+  for y = CURB + 5, HH - 7, 11 do
+    local t = (y - CURB) / (HH - CURB); local bx0, bx1 = math.floor(1612 - t * 8), math.floor(1708 + t * 8); local bh = 5 + math.floor(t * 2)
+    rect(FLO, bx0, y, bx1, y + bh, C("#c8b8d0")); hline(FLO, bx0, bx1, y + bh, C("#8a7a9a"))
+    for yy = y, y + bh - 1 do for x = bx0, bx1 do if dith(x, yy, 0.12) then px(FLO, x, yy, C("#a090b0")) end end end
+  end
   -- sand drifting onto the sidewalk near the beach, palm shadows across the sidewalk
   for y = FLOOR, SW_END - 1 do for x = 1480, 1840 do if dith(x, y, 0.35 - math.abs(x - 1660) / 600) then px(FLO, x, y, C("#c8907a")) end end end
   for _, sx in ipairs({ 300, 862, 1216, 1478, 1842, 2420, 2826, 3120 }) do for y = FLOOR, SW_END - 1 do local off = (y - FLOOR) * 2; for k = 0, 4 do if dith(sx + off + k, y, 0.5) then px(FLO, sx + off + k, y, C("#4a2a52")) end end end end

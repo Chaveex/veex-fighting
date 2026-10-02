@@ -1,0 +1,163 @@
+{
+ "frames": {
+  "off_0": {
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 132,
+    "h": 46
+   },
+   "duration": 500
+  },
+  "off_1": {
+   "frame": {
+    "x": 132,
+    "y": 0,
+    "w": 132,
+    "h": 46
+   },
+   "duration": 500
+  },
+  "warn_0": {
+   "frame": {
+    "x": 264,
+    "y": 0,
+    "w": 132,
+    "h": 46
+   },
+   "duration": 90
+  },
+  "warn_1": {
+   "frame": {
+    "x": 396,
+    "y": 0,
+    "w": 132,
+    "h": 46
+   },
+   "duration": 90
+  },
+  "warn_2": {
+   "frame": {
+    "x": 528,
+    "y": 0,
+    "w": 132,
+    "h": 46
+   },
+   "duration": 90
+  },
+  "warn_3": {
+   "frame": {
+    "x": 660,
+    "y": 0,
+    "w": 132,
+    "h": 46
+   },
+   "duration": 90
+  },
+  "warn_4": {
+   "frame": {
+    "x": 792,
+    "y": 0,
+    "w": 132,
+    "h": 46
+   },
+   "duration": 90
+  },
+  "warn_5": {
+   "frame": {
+    "x": 0,
+    "y": 46,
+    "w": 132,
+    "h": 46
+   },
+   "duration": 90
+  },
+  "active_0": {
+   "frame": {
+    "x": 132,
+    "y": 46,
+    "w": 132,
+    "h": 46
+   },
+   "duration": 60
+  },
+  "active_1": {
+   "frame": {
+    "x": 264,
+    "y": 46,
+    "w": 132,
+    "h": 46
+   },
+   "duration": 60
+  },
+  "active_2": {
+   "frame": {
+    "x": 396,
+    "y": 46,
+    "w": 132,
+    "h": 46
+   },
+   "duration": 60
+  },
+  "active_3": {
+   "frame": {
+    "x": 528,
+    "y": 46,
+    "w": 132,
+    "h": 46
+   },
+   "duration": 60
+  },
+  "active_4": {
+   "frame": {
+    "x": 660,
+    "y": 46,
+    "w": 132,
+    "h": 46
+   },
+   "duration": 60
+  },
+  "active_5": {
+   "frame": {
+    "x": 792,
+    "y": 46,
+    "w": 132,
+    "h": 46
+   },
+   "duration": 60
+  }
+ },
+ "meta": {
+  "app": "aseprite (tools/ase/plate.lua)",
+  "image": "plate.png",
+  "size": {
+   "w": 924,
+   "h": 92
+  },
+  "anchor": {
+   "x": 6,
+   "y": 6
+  },
+  "scale": 1,
+  "frameTags": [
+   {
+    "name": "off",
+    "from": 0,
+    "to": 1,
+    "direction": 0
+   },
+   {
+    "name": "warn",
+    "from": 2,
+    "to": 7,
+    "direction": 0
+   },
+   {
+    "name": "active",
+    "from": 8,
+    "to": 13,
+    "direction": 0
+   }
+  ]
+ }
+}

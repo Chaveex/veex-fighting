@@ -1,0 +1,97 @@
+{
+ "frames": {
+  "logo_0": {
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 330,
+    "h": 128
+   },
+   "duration": 60
+  },
+  "logo_1": {
+   "frame": {
+    "x": 330,
+    "y": 0,
+    "w": 330,
+    "h": 128
+   },
+   "duration": 60
+  },
+  "logo_2": {
+   "frame": {
+    "x": 660,
+    "y": 0,
+    "w": 330,
+    "h": 128
+   },
+   "duration": 60
+  },
+  "logo_3": {
+   "frame": {
+    "x": 990,
+    "y": 0,
+    "w": 330,
+    "h": 128
+   },
+   "duration": 60
+  },
+  "logo_4": {
+   "frame": {
+    "x": 0,
+    "y": 128,
+    "w": 330,
+    "h": 128
+   },
+   "duration": 60
+  },
+  "logo_5": {
+   "frame": {
+    "x": 330,
+    "y": 128,
+    "w": 330,
+    "h": 128
+   },
+   "duration": 800
+  },
+  "logo_6": {
+   "frame": {
+    "x": 660,
+    "y": 128,
+    "w": 330,
+    "h": 128
+   },
+   "duration": 800
+  },
+  "logo_7": {
+   "frame": {
+    "x": 990,
+    "y": 128,
+    "w": 330,
+    "h": 128
+   },
+   "duration": 800
+  }
+ },
+ "meta": {
+  "app": "aseprite (tools/ase/logo.lua)",
+  "image": "logo.png",
+  "size": {
+   "w": 1320,
+   "h": 256
+  },
+  "anchor": {
+   "x": 165,
+   "y": 0
+  },
+  "scale": 1,
+  "frameTags": [
+   {
+    "name": "logo",
+    "from": 0,
+    "to": 7,
+    "direction": 0
+   }
+  ]
+ }
+}

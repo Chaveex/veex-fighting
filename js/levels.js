@@ -65,7 +65,7 @@ const LEVELS = [
     ]
   },
   {
-    name: 'GALAXY ARCADE', props: [['cabinet', 520, 292], ['cabinet', 1080, 292], ['bumper', 1290, 300], ['bumper', 1430, 326], ['cabinet', 1640, 326], ['bumper', 1900, 298], ['cabinet', 2340, 324], ['bumper', 2480, 296], ['bumper', 2720, 326]], vents: [[1220,300,150],[1800,322,120],[2580,322,220]], ventTiming: { off: 190, warn: 55, act: 60 }, sub: 'STAGE 2  -  INSERT COIN OR DIE', theme: 'arcade', width: 2900, music: 1,
+    name: 'GALAXY ARCADE', props: [['cabinet', 520, 292], ['cabinet', 1080, 292], ['bumper', 1290, 300], ['bumper', 1430, 326], ['cabinet', 1640, 326], ['bumper', 1900, 298], ['cabinet', 2340, 324], ['bumper', 2480, 296], ['bumper', 2720, 326]], vents: [], ventTiming: { off: 190, warn: 55, act: 60 }, sub: 'STAGE 2  -  INSERT COIN OR DIE', theme: 'arcade', width: 2900, music: 1,
     hint: 'ANNULE UNE ATTAQUE AVEC DASH OU SAUT !',
     stops: [
       { x: 260, waves: [['grunt', 'grunt', 'rusher'], ['fast', 'thrower']] },
@@ -75,7 +75,7 @@ const LEVELS = [
     ]
   },
   {
-    name: 'SUNSET BOULEVARD', props: [['ball', 540, 312], ['car', 1080, 326], ['ball', 1330, 326], ['ball', 1700, 300], ['car', 2000, 322], ['ball', 2250, 312], ['ball', 2700, 300], ['car', 2900, 326]], vents: [[1200,300,150],[1800,322,120],[2300,296,100],[2540,326,242]], ventTiming: { off: 170, warn: 50, act: 65 }, sub: 'STAGE 3  -  MIAMI HEAT 1987', theme: 'miami', width: 3100, music: 2,
+    name: 'SUNSET BOULEVARD', props: [['ball', 540, 312], ['car', 1080, 326], ['ball', 1330, 326], ['ball', 1700, 300], ['car', 2000, 322], ['ball', 2250, 312], ['ball', 2700, 300], ['car', 2900, 326]], vents: [[1200,300,150],[1800,322,120],[2300,296,100],[2540,326,242]], ventTiming: { off: 170, warn: 50, act: 65 }, ventsDormant: true, sub: 'STAGE 3  -  MIAMI HEAT 1987', theme: 'miami', width: 3100, music: 2,
     hint: 'ESQUIVE PARFAITE = RALENTI + FURY',
     stops: [
       { x: 280, waves: [['grunt', 'grunt', 'fast'], ['thrower', 'rusher']] },
@@ -86,7 +86,8 @@ const LEVELS = [
     ]
   },
   {
-    name: 'CYBER TOWER', props: [['conveyor', 960, 0, { n: 5, dir: 1 }], ['server', 1420, 298], ['conveyor', 1540, 0, { n: 5, dir: -1 }], ['server', 2060, 326], ['server', 2200, 296], ['conveyor', 2470, 0, { n: 6, dir: 1 }], ['server', 2900, 324]], vents: [[1180,300,120],[1740,322,100],[1900,290,240],[2400,310,140]], ventTiming: { off: 150, warn: 50, act: 70 }, sub: 'STAGE 4  -  LE SYNDICAT DE LA MACHINE', theme: 'cyber', width: 3300, music: 3,
+    name: 'CYBER TOWER', props: [['conveyor', 960, 0, { n: 5, dir: 1 }], ['server', 1420, 298], ['conveyor', 1540, 0, { n: 5, dir: -1 }], ['server', 2060, 326], ['server', 2200, 296], ['conveyor', 2470, 0, { n: 6, dir: 1 }], ['server', 2900, 324]], vents: [], ventTiming: { off: 150, warn: 50, act: 70 },
+    plates: [{ x: 1180, y: 308, delay: 120 }, { x: 1740, y: 270, delay: 100 }, { x: 1990, y: 270, delay: 200 }, { x: 2250, y: 308, delay: 60 }], plateTiming: { off: 160, warn: 55, act: 70 }, sub: 'STAGE 4  -  LE SYNDICAT DE LA MACHINE', theme: 'cyber', width: 3300, music: 3,
     hint: 'RENVOIE LES PROJECTILES AVEC TES COUPS !',
     stops: [
       { x: 280, waves: [['grunt', 'fast', 'thrower'], ['rusher', 'grunt', 'grunt']] },

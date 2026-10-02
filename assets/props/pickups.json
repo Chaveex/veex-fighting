@@ -161,6 +161,60 @@
     "h": 28
    },
    "duration": 100
+  },
+  "life_0": {
+   "frame": {
+    "x": 0,
+    "y": 84,
+    "w": 24,
+    "h": 28
+   },
+   "duration": 100
+  },
+  "life_1": {
+   "frame": {
+    "x": 24,
+    "y": 84,
+    "w": 24,
+    "h": 28
+   },
+   "duration": 100
+  },
+  "life_2": {
+   "frame": {
+    "x": 48,
+    "y": 84,
+    "w": 24,
+    "h": 28
+   },
+   "duration": 100
+  },
+  "life_3": {
+   "frame": {
+    "x": 72,
+    "y": 84,
+    "w": 24,
+    "h": 28
+   },
+   "duration": 100
+  },
+  "life_4": {
+   "frame": {
+    "x": 96,
+    "y": 84,
+    "w": 24,
+    "h": 28
+   },
+   "duration": 100
+  },
+  "life_5": {
+   "frame": {
+    "x": 120,
+    "y": 84,
+    "w": 24,
+    "h": 28
+   },
+   "duration": 100
   }
  },
  "meta": {
@@ -168,7 +222,7 @@
   "image": "pickups.png",
   "size": {
    "w": 144,
-   "h": 84
+   "h": 112
   },
   "anchor": {
    "x": 12,
@@ -192,6 +246,12 @@
     "name": "tape",
     "from": 12,
     "to": 17,
+    "direction": 0
+   },
+   {
+    "name": "life",
+    "from": 18,
+    "to": 23,
     "direction": 0
    }
   ]

@@ -287,6 +287,7 @@ class Player extends Fighter {
     this.chainTimer = 0;
     if (mv.pw === 'low' || mv.pw === 'upper' || mv.pw === 'rknee') this.sqy = 0.95;
     Snd.sfx.swing(mv.sfx || 1);
+    if (!mv.fin && Math.random() < 0.35) Snd.sfx.cry('atk', G.hero);   // a short effort breath on some strikes
     this.dashWin = 0;
   }
 
@@ -342,7 +343,7 @@ class Player extends Fighter {
     FX.text('CANCEL', this.x, this.y - this.z - 78, { color: '#27f0ff', size: 9, glow: '#27f0ff', life: 32 });
     FX.ring(this.x, this.y - this.z - 30, 3, 3.5, 12, '#fff', 1.5);
     Snd.sfx.cancel();
-    G.combo.cancels++;
+    G.combo.cancels++; if (G.combo.cancels === 10) Ach.unlock('cancel10');
     if (what === 'dash') { this.canceledDash = true; this.startDash(ax, ay, true); }
     else { this.jump(ax, 9.2 * 1.06); this.airAtk = 0; }
   }
@@ -356,6 +357,7 @@ class Player extends Fighter {
     if (this.cancelBonus > 0) dmg *= 1.25;
     const counter = e.isWinding();
     const crit = !!mv.fin || counter;
+    if (mv.fin) Snd.sfx.cry('kiai', G.hero);   // finisher: the hero shouts
     if (crit) dmg *= 1.4;
     if (e.juggle > 0) dmg *= Math.max(0.55, 1 - e.juggle * 0.08);
     dmg = Math.round(dmg);
@@ -364,6 +366,7 @@ class Player extends Fighter {
 
   // ----- special: Muay Thai fury -----
   startSpecial() {
+    Ach.unlock('fury'); Snd.sfx.cry('fury', G.hero);
     this.meter = 0; this.state = 'special'; this.specialT = 0; this.invul = 200; this.vx = 0; this.move = null;
     Snd.sfx.special(); FX.flashScreen(0.6, '#ff2fd0'); FX.freeze(10); FX.addShake(5); FX.punch(0.12, this.x - G.camX, this.y - 40);
     FX.text('MUAY THAI FURY!', this.x, this.y - 92, { color: '#ffe44d', size: 16, glow: '#ff2fd0', life: 70 });
@@ -411,6 +414,7 @@ class Player extends Fighter {
     G.combo.count = 0; G.combo.timer = 0; G.styleHurt();
     this.vx = dir * kb; this.vy = 0;
     this.facing = -dir || this.facing;
+    Snd.sfx.cry(this.hp <= 0 ? 'ko' : 'hurt', G.hero);
     if (this.hp <= 0) { this.hp = 0; this.vz = 7; this.state = 'launched'; this.bounced = false; this.vx = dir * 6; this.dead = true; this.invul = 9999; }
     else if (lift > 0 || this.z > 1) { this.vz = Math.max(lift, 3.5); this.state = 'launched'; this.bounced = false; this.invul = 60; }
     else { this.state = 'hurt'; this.stunT = 16; }

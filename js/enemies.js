@@ -298,7 +298,7 @@ class Enemy extends Fighter {
       const bm = new Beam(y, this.atk.st, 26, this.atk.dmg);
       G.beams.push(bm);
     }
-    Snd.sfx.warn();
+    Snd.sfx.laserWarn();
   }
   updWindup() {
     const a = this.atk, t = this.stT;
@@ -332,7 +332,7 @@ class Enemy extends Fighter {
       }
       case 'beam': {
         for (const b of G.beams) if (b.owner === undefined) { b.owner = this; }
-        Snd.sfx.laser(); FX.addShake(3);
+        Snd.sfx.laserFire(); FX.addShake(3);
         break;
       }
       case 'summon': {
@@ -421,6 +421,7 @@ class Enemy extends Fighter {
   takeHit(dir, mv, dmg, crit, counter) {
     this.hp -= dmg; this.flash = 4; this.shakeT = mv.hs || 3;
     const dead = this.hp <= 0;
+    if (!dead) Snd.sfx.enemyHurt(this);
     let stagger = true;
     const atking = this.state === 'windup' || this.state === 'attack';
     if (this.def.armor && atking && (this.atk && this.atk.armorAtk) && (mv.w || 1) < 3 && !dead) stagger = false;
@@ -630,6 +631,16 @@ class Projectile {
     // shadow
     if (this.z > 6) { c.fillStyle = 'rgba(6,0,20,.35)'; c.beginPath(); c.ellipse(x, this.y + 1, 7, 2.5, 0, 0, 6.3); c.fill(); }
     if (this.team === 'player') { c.globalCompositeOperation = 'lighter'; c.fillStyle = '#27f0ff'; c.globalAlpha = 0.5; c.beginPath(); c.arc(x, y, 12, 0, 6.3); c.fill(); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; }
+    // Aseprite sheet (assets/props/projectiles.aseprite, tools/ase/projectiles.lua); light kinds are drawn additively; canvas fallback below
+    const spr = typeof PropSprites !== 'undefined' && PropSprites.projectiles && PropSprites.projectiles.ready ? PropSprites.projectiles : null;
+    const PJ = { disc: [8, 2], case: [8, 3], ring: [4, 4], sonic: [4, 4], wave: [4, 4], bolt: [2, 3] }[k];
+    if (spr && PJ) {
+      const light = k !== 'disc' && k !== 'case', dir = this.vx < 0 ? -1 : 1;
+      if (light) c.globalCompositeOperation = 'lighter';
+      spr.draw(c, k + '_' + (Math.floor(this.t / PJ[1]) % PJ[0]), x, k === 'wave' ? y - 6 : y, dir);
+      c.globalCompositeOperation = 'source-over';
+      return;
+    }
     if (k === 'disc') {
       c.fillStyle = '#12081e'; c.beginPath(); c.arc(x, y, 8, 0, 6.3); c.fill();
       c.strokeStyle = '#4a3a6a'; c.lineWidth = 1; c.beginPath(); c.arc(x, y, 5.5, 0, 6.3); c.stroke(); c.beginPath(); c.arc(x, y, 3.5, 0, 6.3); c.stroke();
@@ -677,6 +688,21 @@ class Beam {
   }
   draw(c, camX) {
     const a = this.age, y = this.y;
+    // Aseprite tiles (tools/ase/projectiles.lua: beamwarn / beamfire, 32 px wide) repeated across the screen; canvas fallback below
+    const spr = typeof PropSprites !== 'undefined' && PropSprites.projectiles && PropSprites.projectiles.ready ? PropSprites.projectiles : null;
+    if (spr) {
+      c.globalCompositeOperation = 'lighter';
+      if (a <= this.warn) {
+        const k = a / this.warn; c.globalAlpha = 0.35 + 0.55 * k * (0.6 + 0.4 * Math.sin(a * 0.9));
+        for (let tx = 0; tx < W; tx += 32) spr.draw(c, 'beamwarn_' + ((a >> 2) % 4), tx + 32, y, 1);
+      } else {
+        const k = 1 - (a - this.warn) / this.dur;
+        for (let tx = 0; tx < W; tx += 32) spr.draw(c, 'beamfire_' + ((a >> 1) % 4), tx + 32, y, 1, { sqy: 0.35 + 0.65 * k });
+        if (a % 2 === 0) FX.sparks(camX + rand(W), y - rand(0, 6), -Math.PI / 2, 1.2, 1, 4, '#27f0ff', 12);
+      }
+      c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+      return;
+    }
     if (a <= this.warn) {
       const k = a / this.warn;
       c.fillStyle = `rgba(255,42,77,${0.1 + 0.25 * k * (0.6 + 0.4 * Math.sin(a * 0.9))})`;

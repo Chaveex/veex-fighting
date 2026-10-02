@@ -7,7 +7,7 @@ const wait = parseInt(process.argv[3] || '12', 10) * 1000;
 const shotPrefix = process.argv[4]; // optional: save screenshots to tools/<prefix>N.png
 const edge = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 const port = 9333 + Math.floor(Math.random() * 500);
-const proc = spawn(edge, ['--headless=new', '--disable-gpu', `--remote-debugging-port=${port}`, `--user-data-dir=${process.env.TEMP}/edge_cdp_${port}`, '--window-size=1280,720', `file:///F:/Dev/Claude/VeexingForce/index.html?${query}`], { stdio: 'ignore' });
+const proc = spawn(edge, ['--headless=new', '--disable-gpu', '--autoplay-policy=no-user-gesture-required', `--remote-debugging-port=${port}`, `--user-data-dir=${process.env.TEMP}/edge_cdp_${port}`, '--window-size=1280,720', `file:///F:/Dev/Claude/VeexingForce/index.html?${query}`], { stdio: 'ignore' });
 const get = (p) => new Promise((res, rej) => http.get({ host: '127.0.0.1', port, path: p }, r => { let d = ''; r.on('data', c => d += c); r.on('end', () => res(JSON.parse(d))); }).on('error', rej));
 (async () => {
   await new Promise(r => setTimeout(r, 3000));

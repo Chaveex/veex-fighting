@@ -110,7 +110,7 @@ spr.filename = out
 local L_obj = spr.layers[1]; L_obj.name = "objet"
 local L_steam = spr:newLayer(); L_steam.name = "vapeur"
 local L_fx = spr:newLayer(); L_fx.name = "eclat"
-for i = 2, NF * 3 do spr:newEmptyFrame() end
+for i = 2, NF * 4 do spr:newEmptyFrame() end
 for i = 1, #spr.frames do spr.frames[i].duration = 0.1 end
 
 local function blank() local im = Image(W, H, ColorMode.RGB); im:clear(pc.rgba(0, 0, 0, 0)); return im end
@@ -208,7 +208,36 @@ for f = 1, NF do
 end
 
 -- ================================================================ tags + save
+-- ================================================================ 1UP: green arcade token spinning on itself, "1UP" stamped on it
+local GLYPH = { ["1"] = { ".#.", "##.", ".#.", ".#.", "###" }, U = { "#.#", "#.#", "#.#", "#.#", "###" }, P = { "##.", "#.#", "##.", "#..", "#.." } }
+for f = 1, NF do
+  local fr = 3 * NF + f
+  local im = blank(); local cx, cy, R = 12, 15, 10
+  local sx = math.cos((f - 1) / NF * math.pi)                     -- spin: the coin gets thin, flips, comes back
+  local w = math.max(1.2, math.abs(sx) * R)
+  for y = cy - R, cy + R do for x = math.floor(cx - w - 1), math.ceil(cx + w + 1) do
+    local d = ((x + 0.5 - cx) / w) ^ 2 + ((y + 0.5 - cy) / R) ^ 2
+    if d <= 1 then
+      local col = d > 0.78 and "#1a0b2e" or (d > 0.6 and "#1e8a5a" or ((x + 0.5 - cx) * (sx >= 0 and 1 or -1) < -w * 0.3 and "#2ac87a" or "#3dffa0"))
+      if d > 0.6 and d <= 0.78 and (y < cy - R * 0.4) then col = "#7affc0" end      -- rim highlight
+      px(im, x, y, col)
+    end
+  end end
+  for x = math.floor(cx - w - 1), math.ceil(cx + w) do px(im, x, cy + R + 1, "#0a0414", 120) end
+  if sx > 0.95 then                                                -- stamp only when the coin faces us (unreadable when squeezed)
+    local s = "1UP"; local ox = cx - 5
+    for i = 1, 3 do local g = GLYPH[s:sub(i, i)]; for gy = 1, 5 do for gx = 1, 3 do if g[gy]:sub(gx, gx) == "#" then
+      local X = ox + (i - 1) * 4 + gx - 1; X = math.floor(cx + (X - cx) * (sx >= 0 and 1 or -1) * math.abs(sx) + 0.5)
+      px(im, X, cy - 2 + gy - 1, "#0a3a20")
+    end end end end
+  end
+  put(L_obj, fr, im)
+  local fx = blank()
+  if SPARK[f] > 0 then sparkle(fx, cx + 8, cy - 9, SPARK[f], "#3dffa0") end
+  put(L_fx, fr, fx)
+end
+
 local function tag(name, a, b) local t = spr:newTag(a, b); t.name = name end
-tag("soda", 1, NF); tag("pizza", NF + 1, 2 * NF); tag("tape", 2 * NF + 1, 3 * NF)
+tag("soda", 1, NF); tag("pizza", NF + 1, 2 * NF); tag("tape", 2 * NF + 1, 3 * NF); tag("life", 3 * NF + 1, 4 * NF)
 spr:saveAs(out)
 print("pickups: " .. #spr.frames .. " frames, " .. #spr.layers .. " layers, " .. #spr.tags .. " tags -> " .. out)

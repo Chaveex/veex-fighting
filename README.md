@@ -25,6 +25,8 @@ Choix sur l'écran titre avec **← / →** (mémorisé). `?hero=roxy` pour forc
 | Se baisser (esquive les coups hauts) | C | LB / LT |
 | Fury (jauge pleine) | R | L3 / R3 |
 | Pause / son / plein écran | Échap / M / F | Start |
+| Retour au titre (pause, game over) | T | Select |
+| Entrer un code (écran titre) | C | Select |
 
 Combos libres : enchaîne J/K/L dans n'importe quel ordre (3 coups max, le 3e est un finisher critique).
 Accroupi : J uppercut, K low kick (balayage), L genou remontant (launcher → jongle en l'air avec un saut).
@@ -49,7 +51,14 @@ bloom, scanlines, particules néon, afterimages de dash, wall splat, rang de sty
 
 Cycle : repos → **alerte** (couvercle qui tremble, lueur orange, filets de vapeur) → **jet** (dégâts + projection au sol) → refroidissement.
 Ça touche le héros **et** les ennemis qui sont dessus. Saute par-dessus, dash à travers (esquive parfaite) ou pousse les ennemis dessus.
-Placement : 2 / 3 / 4 / 4 bouches par niveau, uniquement dans les arènes de combat (jamais dans les couloirs, jamais dans l'arène du boss 4), sur les voies du haut ou du bas. Le cycle ne tourne que lorsqu'elles sont à l'écran et démarre après un délai calme (~6 s).
+Placement : 2 bouches au niveau 1, aucune au niveau 2 (salle d'arcade), 4 au niveau 3 mais en simple décor (sans vapeur), aucune au niveau 4, uniquement dans les arènes de combat (jamais dans les couloirs, jamais dans l'arène du boss 4), sur les voies du haut ou du bas. Le cycle ne tourne que lorsqu'elles sont à l'écran et démarre après un délai calme (~6 s).
+
+## Plaques électrifiées (niveau 4)
+
+Elles remplacent les bouches d'égout dans la tour : chaque plaque couvre la moitié haute **ou** basse de la rue sur ~120 px (toujours un passage pour la contourner).
+Cycle : éteinte → **charge** (joints cyan qui clignotent de plus en plus vite, grésillements) → **décharge** (~1,2 s : surface éclatante, arcs, dégâts + projection) → éteinte.
+Ça touche le héros **et** les ennemis qui ont les pieds dessus. Saute par-dessus, dash au moment de la décharge (esquive parfaite) ou pousse les ennemis dessus.
+4 plaques, dans les arènes 2 à 4, jamais sur les tapis roulants ni dans l'arène du boss.
 Asset : `assets/vent.aseprite` (vrai fichier Aseprite, 2 calques `base`/`steam`, tags `off` `warn` `burst` `active` `cool`).
 
 ## Éléments de niveau (2 signatures par niveau)
@@ -59,7 +68,7 @@ Asset : `assets/vent.aseprite` (vrai fichier Aseprite, 2 calques `base`/`steam`,
 | 1 Neon Downtown | **Poubelles** : 3 coups, laissent soda / pizza / mixtape | **Bouche d'incendie** : un coup l'ouvre, le jet projette les ennemis (contre le mur = splat). Refrappe-la de l'autre côté pour réorienter le jet |
 | 2 Galaxy Arcade | **Bornes d'arcade** : explosent en arc électrique (dégâts autour) et lâchent une mixtape Fury | **Bumpers** : renvoient les ennemis projetés (dégâts) et **ton dash** (rend une charge : enchaîne-les) |
 | 3 Sunset Boulevard | **Cabriolet rose** : 8 coups, prend feu à la fin, **explosion géante** (attention à toi aussi) | **Ballon de plage** : un coup et il rebondit en perçant les ennemis ; refrappe-le pour le relancer |
-| 4 Cyber Tower | **Serveurs** : détruits, ils lancent une **EMP** qui étourdit tous les ennemis à l'écran | **Tapis roulants** : ils entraînent héros et ennemis |
+| 4 Cyber Tower | **Serveurs** : détruits, ils lancent une **EMP** qui étourdit tous les ennemis à l'écran | **Tapis roulants** : ils entraînent héros et ennemis ; **plaques électrifiées** au sol |
 
 Les ennemis projetés qui percutent poubelles, bornes, cabriolets et serveurs les abîment aussi. Assets : `assets/props/*.aseprite` (calques, tags d'animation, un fichier par élément).
 `node tools/soak.js` avec `PROPS=1` lance un test de comportement de chaque élément.
@@ -72,6 +81,65 @@ Les ennemis projetés qui percutent poubelles, bornes, cabriolets et serveurs le
 ## Niveaux
 
 1. NEON DOWNTOWN (boss BIG BOOMER) 2. GALAXY ARCADE (LADY LASER) 3. SUNSET BOULEVARD (DON PASTEL) 4. CYBER TOWER (MR. CHROME)
+
+### Codes (écran titre)
+
+Sur l'écran titre, **C** (clavier) ou **SELECT** (manette) ouvre la fenêtre « ENTRER UN CODE ».
+Clavier : tape le code puis **Entrée** (Échap pour fermer). Manette : **haut / bas** choisit la lettre, **A** l'ajoute, **B** efface, **START** valide.
+
+| Code | Effet |
+|---|---|
+| `NEON` | lance le niveau 1, NEON DOWNTOWN |
+| `INSERTCOIN` | lance le niveau 2, GALAXY ARCADE |
+| `VICE` | lance le niveau 3, SUNSET BOULEVARD |
+| `CYBER` | lance le niveau 4, CYBER TOWER |
+| `BOSS` | active / désactive le départ directement au boss (à entrer **avant** un code de niveau) |
+| `INVINCIBLE` | active / désactive l'invincibilité |
+
+Exemple : `BOSS` puis `VICE` = combat direct contre DON PASTEL.
+
+## Succès et classement en ligne
+
+- **Succès** : 24 succès (K.O., combos, esquive parfaite, Fury, éléments de décor, fin de chaque niveau, sans dégâts, note S, ROXY, partie sans perdre de vie...).
+  Sauvegardés dans le navigateur. Liste sur l'écran titre : **S** (clavier) / **X** (manette). Une bannière s'affiche quand on en débloque un.
+- **Classement mondial** : après un game over ou la victoire, entre tes 3 initiales (clavier ou manette), le score part au classement.
+  Consultable sur l'écran titre : **L** / **Y**. Serveur : `netlify/functions/scores.mjs` (Netlify Functions + Netlify Blobs), déployé avec `npm run deploy`.
+- Une partie lancée avec un **code** (niveau, BOSS, INVINCIBLE) ne compte ni pour les succès ni pour le classement.
+- Test local du serveur : `npx netlify dev --dir dist --functions netlify/functions --port 8899` puis ouvrir le jeu avec `?api=http://localhost:8899/api/scores`.
+
+## Voix
+
+Générées avec ElevenLabs (`python tools/make_sfx.py` : modèle de bruitages pour les cris, synthèse vocale pour l'annonceur).
+Chaque famille a plusieurs prises : le jeu en tire une au hasard, jamais deux fois la même d'affilée (ajouter une prise `<famille>_x` suffit, sans toucher au code).
+
+- **Héros** (VEEX voix d'homme, ROXY voix de femme) : 5 kiai (coup final des combos), 4 souffles d'effort (sur un coup sur trois), 4 cris de douleur, 2 cris de K.O., 2 cris de Fury.
+- **Ennemis** : grognements quand ils sont touchés et cris de K.O., avec une voix selon l'ennemi : hommes, femmes (ROLLER GIRL, LADY LASER), robots (niveau 4) ; les boss sont plus graves.
+- **Annonceur** : FIGHT! (4 variantes), WARNING, K.O. sur les boss (3), STAGE CLEAR (3), PERFECT (3), GAME OVER (2), YOU WIN (2), et les notes de style A / S / SS / SSS (GNARLY! TUBULAR! MAXIMUM! LEGENDARY!).
+  Annonceur « barbare » : voix « George » en `eleven_v3` avec la consigne « deep barbarian warlord, gravelly, roaring » (la plus grave des voix gratuites mesurées : ~99 Hz),
+  répliques de combat d'une traite (« DOUBLE KILL! » ~1,2 s). Générée 15 % plus vite puis jouée à x0,85 : ~3 demi-tons plus grave au même débit.
+  Chaîne « proche du micro » : sèche, compressée, poitrine renforcée, un peu de grain, courte queue de réverbération d'arène (pas d'échos distincts).
+  Essais des autres voix : `assets/sfx/_audition/` ; changer `ANNOUNCER_VOICE` dans `tools/make_sfx.py` puis relancer le script.
+  Rythme : 1,5 s mini entre deux annonces mineures, PERFECT! au plus toutes les 6 s, notes de style au plus toutes les 8 s ; K.O. de boss et multi-kills prioritaires.
+  Multi-kills : K.O. enchaînés à moins de 2,5 s -> DOUBLE / TRIPLE / M-M-M-MULTI / M-M-M-MONSTER KILL / U-U-U-UNSTOPPABLE.
+  Voix sur mesure (Voice Design) : `python tools/design_announcer.py` (offre ElevenLabs payante requise).
+  Les annonces importantes passent par-dessus les mineures. La clé ElevenLabs doit avoir la permission `text_to_speech`.
+
+## Mixage audio
+
+`js/audio.js` (objet `MIX`) : quatre groupes sommés dans un master, calibrés en jeu (bot, niveaux 1 et 4) sur la crête au 95e centile.
+
+| Groupe | Contenu | Cible | Mesuré (N1 / N4) |
+|---|---|---|---|
+| Voix | annonceur, voix des héros et des ennemis | 0 à -3 dB | -2,2 / -1,6 |
+| SFX | coups, impacts, explosions, projectiles, dangers | -3 à -6 dB | -5,2 / -4,6 |
+| SFX 2 | interface, sauts / atterrissages, bonus, jingles, ambiances en boucle | -8 à -12 dB | -10,9 / -11,3 |
+| Musique | séquenceur synthwave | -12 à -18 dB | -15,4 / -17,2 |
+
+- **Headroom** : limiteur (seuil -3 dBFS, ratio 20) puis écrêteur brickwall : la sortie ne dépasse jamais **-1 dBFS**.
+- **SFX** : compresseur de glue avant le fader (les impacts empilés passaient +10 dB, maintenant -1,5 dB au pire).
+- **Ducking** : quand l'annonceur parle, la musique baisse de 7 dB et les SFX 2 de 4 dB, puis remontent.
+- **Vumètres** : ajouter `?mix=1` à l'URL affiche la crête de chaque groupe, le maximum maintenu et la zone cible.
+- Réglages : `MIX.fader` (niveaux cibles), `MIX.trim` (calibration), `MIX.ceiling`, `MIX.duck`.
 
 ## Dev
 

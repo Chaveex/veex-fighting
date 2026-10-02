@@ -368,14 +368,18 @@ def export(S):
 
 ASEPRITE = r'F:\Dev\Tooling\aseprite\build\bin\aseprite.exe'
 
-def build_pickups():
-    """soda / pizza / mixtape: drawn pixel by pixel IN Aseprite by tools/ase/pickups.lua (real .aseprite: layers objet / vapeur / eclat,
-    tags soda / pizza / tape), then exported by Aseprite. Frames are renamed <tag>_<i> for the game (js/enemies.js Pickup.draw)."""
+def build_ase(name, lua, cols, anchor, layer=None, extra=()):
+    """a sprite drawn IN Aseprite by tools/ase/<lua> (real .aseprite with layers / tags), exported by Aseprite.
+    Frames are renamed <tag>_<i> for the game. layer: export only that layer (a sprite whose layers the game blends differently)."""
     import subprocess
-    base = os.path.join(ROOT, 'assets', 'props', 'pickups'); fw = lambda p: p.replace(chr(92), '/')
-    for args in (['--script-param', 'out=' + fw(base + '.aseprite'), '--script', os.path.join(ROOT, 'tools', 'ase', 'pickups.lua')],
-                 [base + '.aseprite', '--sheet', base + '.png', '--data', base + '_ase.json', '--format', 'json-array', '--sheet-type', 'rows',
-                  '--sheet-columns', '6', '--list-tags', '--list-layers']):
+    base = os.path.join(ROOT, 'assets', 'props', name); src = os.path.join(ROOT, 'assets', 'props', lua.replace('.lua', '') + '.aseprite')
+    fw = lambda p: p.replace(chr(92), '/')
+    steps = []
+    if not os.path.exists(src + '.built'):
+        steps.append(['--script-param', 'out=' + fw(src), '--script-param', 'lib=' + fw(os.path.join(ROOT, 'tools', 'ase', 'bglib.lua'))] + list(extra) + ['--script', os.path.join(ROOT, 'tools', 'ase', lua)])
+    steps.append([src] + (['--layer', layer] if layer else []) + ['--sheet', base + '.png', '--data', base + '_ase.json', '--format', 'json-array', '--sheet-type', 'rows',
+                  '--sheet-columns', str(cols), '--list-tags'])
+    for args in steps:
         r = subprocess.run([ASEPRITE, '-b'] + args, capture_output=True, text=True, timeout=120)
         if r.returncode != 0: raise RuntimeError('aseprite failed: ' + r.stdout + r.stderr)
     aj = json.load(open(base + '_ase.json')); os.remove(base + '_ase.json'); jf = {}
@@ -383,11 +387,25 @@ def build_pickups():
         for i in range(t['from'], t['to'] + 1):
             fr = aj['frames'][i]; jf['%s_%d' % (t['name'], i - t['from'])] = {'frame': fr['frame'], 'duration': fr['duration']}
     sheet = Image.open(base + '.png').convert('RGBA')
-    data = {'frames': jf, 'meta': {'app': 'aseprite (tools/ase/pickups.lua)', 'image': 'pickups.png', 'size': {'w': sheet.width, 'h': sheet.height},
-                                   'anchor': {'x': 12, 'y': 26}, 'scale': 1,
+    data = {'frames': jf, 'meta': {'app': 'aseprite (tools/ase/%s)' % lua, 'image': name + '.png', 'size': {'w': sheet.width, 'h': sheet.height},
+                                   'anchor': {'x': anchor[0], 'y': anchor[1]}, 'scale': 1,
                                    'frameTags': [{'name': t['name'], 'from': t['from'], 'to': t['to'], 'direction': 0} for t in aj['meta']['frameTags']]}}
     json.dump(data, open(base + '.json', 'w'), indent=1)
     return sheet, data
+
+def build_pickups():
+    """soda / pizza / mixtape: drawn pixel by pixel IN Aseprite by tools/ase/pickups.lua (layers objet / vapeur / eclat, tags soda / pizza / tape)"""
+    return build_ase('pickups', 'pickups.lua', 6, (12, 26))
+
+def build_plate():
+    """electrified floor plate (stage 4), drawn IN Aseprite by tools/ase/plate.lua: layer 'plate' (steel) and 'light' (additive) are
+    exported as two sheets (plate / plate_light) because the game blends the light additively. Tags off / warn / active."""
+    src = os.path.join(ROOT, 'assets', 'props', 'plate.aseprite')
+    a = build_ase('plate', 'plate.lua', 7, (6, 6), layer='plate')
+    open(src + '.built', 'w').close()                 # the second export reuses the sprite drawn by the first
+    try: b = build_ase('plate_light', 'plate.lua', 7, (6, 6), layer='light')
+    finally: os.remove(src + '.built')
+    return a, b
 
 if __name__ == '__main__':
     os.makedirs(os.path.join(ROOT, 'assets', 'props'), exist_ok=True)
@@ -400,9 +418,12 @@ if __name__ == '__main__':
         buf = io.BytesIO(); sheet.save(buf, 'PNG', optimize=True)
         js.append("  %s: { img: 'data:image/png;base64,%s', json: %s }," % (S.name, base64.b64encode(buf.getvalue()).decode(), json.dumps(data)))
         previews.append((S.name, sheet)); print(S.name, len(S.frames), 'frames', info[2])
-    sheet, data = build_pickups(); buf = io.BytesIO(); sheet.save(buf, 'PNG', optimize=True)
-    js.append("  pickups: { img: 'data:image/png;base64,%s', json: %s }," % (base64.b64encode(buf.getvalue()).decode(), json.dumps(data)))
-    previews.append(('pickups', sheet)); print('pickups', len(data['frames']), 'frames (aseprite)')
+    pl, pll = build_plate()
+    for name, (sheet, data) in (('pickups', build_pickups()), ('plate', pl), ('plate_light', pll), ('projectiles', build_ase('projectiles', 'projectiles.lua', 8, (32, 24))),
+                                 ('title_bg', build_ase('title_bg', 'title_bg.lua', 4, (0, 0))), ('logo', build_ase('logo', 'logo.lua', 4, (165, 0)))):
+        buf = io.BytesIO(); sheet.save(buf, 'PNG', optimize=True)
+        js.append("  %s: { img: 'data:image/png;base64,%s', json: %s }," % (name, base64.b64encode(buf.getvalue()).decode(), json.dumps(data)))
+        previews.append((name, sheet)); print(name, len(data['frames']), 'frames (aseprite)')
     js.append('};'); open(os.path.join(ROOT, 'js', 'propSprites.js'), 'w').write('\n'.join(js) + '\n')
     W = max(s.width for _, s in previews) * 2; Hh = sum(s.height for _, s in previews) * 2 + 10 * len(previews)
     pv = Image.new('RGBA', (W, Hh), (60, 40, 110, 255)); y = 0

@@ -12,3 +12,8 @@ node_modules/
 # generated previews
 tools/*_preview*.png
 tools/pixel_preview.png
+
+# secrets (ElevenLabs API key read by tools/make_sfx.py)
+.elevenlabs_key
+*.key
+.env

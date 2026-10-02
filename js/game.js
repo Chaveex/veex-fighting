@@ -13,7 +13,10 @@ const RANKS = [
   { n: 'S', w: 'TUBULAR', t: 130 }, { n: 'SS', w: 'MAXIMUM!', t: 180 }, { n: 'SSS', w: 'LEGENDARY!!', t: 250 }
 ];
 G.rank = () => { let r = 0; for (let i = 1; i < RANKS.length; i++) if (G.sty.v >= RANKS[i].t) r = i; return r; };
-G.addStyle = n => { if (!n) return; G.sty.v = Math.min(300, G.sty.v + n); G.sty.idle = 0; };
+G.addStyle = n => {
+  if (!n) return; const r0 = G.rank(); G.sty.v = Math.min(300, G.sty.v + n); G.sty.idle = 0;
+  const r1 = G.rank(); if (r1 > r0 && r1 >= 4) Snd.sfx.announce(['rank_a', 'rank_s', 'rank_ss', 'rank_sss'][r1 - 4], 1);   // GNARLY / TUBULAR / MAXIMUM / LEGENDARY
+};
 G.styleHurt = () => { G.sty.v *= 0.35; };
 G.addScore = n => { G.score += Math.round(n * (1 + G.rank() * 0.25)); };
 G.tokenFree = () => G.tokens < G.maxTok;
@@ -32,6 +35,7 @@ let portraitImg = null;
 
 // ============ persistence ============
 function loadSave() {
+  Ach.load();
   try { G.best = parseInt(localStorage.getItem('veexBest') || '0', 10) || 0; } catch (e) { G.best = 0; }
   try { selectHero(localStorage.getItem('veexHero') || 'veex'); } catch (e) { selectHero('veex'); }
 }
@@ -56,6 +60,7 @@ function codeKey(e) {
   if (e.key === 'Enter') { submitCode(ce); return; }
   if (e.key.length === 1 && /[a-z0-9]/i.test(e.key) && ce.text.length < 12) ce.text += e.key.toUpperCase();
 }
+function openTitlePanel(kind) { G.titlePanel = kind; Snd.sfx.ui(); Input.clear(); Input.padTap = {}; if (kind === 'board') { Online.myRank = null; Online.load(); } }
 function openCodeEntry() { G.codeEntry = { text: '', msg: '', col: '#fff', t: 0, shake: 0, pick: 0 }; Snd.sfx.ui(); Input.clear(); }
 function padCode() {
   const ce = G.codeEntry, tap = Input.padTap; Input.padTap = {};   // one read per frame (a frame may run several steps)
@@ -101,15 +106,18 @@ function drawCodeEntry(c) {
   drawText(c, K('ENTREE : VALIDER   -   ECHAP : RETOUR', 'HAUT/BAS : LETTRE  A : AJOUTER  B : EFFACER  START : VALIDER  SELECT : RETOUR'), W / 2, y + h - 10, { size: padUI() ? 8 : 9, color: '#27f0ff', outline: OUT, align: 'center' });
 }
 
-function startGame(li) {
+function startGame(li, cheated) {
   G.lives = 3; G.score = 0; G.level = li; G.player = null; G.sty.v = 0; G.seenProps = {};
+  G.cheated = !!cheated || !!G.god; G.runDeaths = 0;   // codes / god mode: no achievements, no online ranking
   startLevel(li);
 }
 function startLevel(li) {
+  Snd.stopLoops();
   G.level = li; const L = LEVELS[li];
   G.enemies = []; G.projs = []; G.beams = []; G.pickups = []; G.spawnQ = []; G.tokens = 0;
   G.props = (L.props || []).map(p => makeProp(p[0], p[1], p[2], p[3]));
-  G.vents = L.vents.map(v => new SteamVent(v[0], v[1], Object.assign({ delay: v[2] || 0 }, L.ventTiming))); G.maxTok = li < 2 ? 2 : 3;
+  G.vents = L.vents.map(v => new SteamVent(v[0], v[1], Object.assign({ delay: v[2] || 0, dormant: !!L.ventsDormant }, L.ventTiming)))
+    .concat((L.plates || []).map(o => new ElectroPlate(o, L.plateTiming)));   // floor hazards: steam vents + electrified plates G.maxTok = li < 2 ? 2 : 3;
   G.hpMul = 1 + li * 0.1; G.dmgMul = 1 + li * 0.12;
   FX.reset(); BG.init(li);
   G.camX = 0; G.stopIdx = 0; G.locked = false; G.waveIdx = 0; G.frame = 0; G.boss = null; G.clearT = 0; G.deathT = 0; G.goT = 0;
@@ -120,7 +128,7 @@ function startLevel(li) {
   G.combo = { count: 0, timer: 0, max: 0, cancels: 0, dodges: 0 };
   G.stats = { kills: 0, hits: 0, t0: 0, dmgTaken: 0 };
   G.levelStartScore = G.score; G.target = null;
-  G.banner = { t: 0, title: L.name, sub: L.sub, kind: 'level' };
+  G.banner = { t: 0, title: L.name, sub: L.sub, kind: 'level' }; setTimeout(() => G.state === 'play' && Snd.sfx.announce('fight', 2), 1400);
   G.hint = { t: 0, text: (padUI() && L.hintPad) || L.hint };
   G.state = 'play'; Input.clear();
   Snd.playMusic(L.music, false);
@@ -143,7 +151,7 @@ function lockStop() {
   G.bounds = { minX: G.camX, maxX: G.camX + W };
   if (stop.boss) {
     const look = LOOKS[G.level][stop.boss];
-    G.banner = { t: 0, title: 'WARNING', sub: look.name, kind: 'boss' };
+    G.banner = { t: 0, title: 'WARNING', sub: look.name, kind: 'boss' }; Snd.sfx.announce('warning', 3);
     Snd.sfx.warn(); Snd.playMusic(L.music, true); FX.flashScreen(0.4, '#ff2a4d');
     const e = spawnEnemy(stop.boss, G.camX + W + 40, 300);
     e.facing = -1;
@@ -203,7 +211,12 @@ function finishLevel() {
   const p = G.player;
   const bonus = Math.round(p.hp * 20) + G.stats.kills * 10 + G.combo.max * 25 + G.combo.dodges * 100 + G.combo.cancels * 30;
   G.clearBonus = bonus; G.score += bonus; saveBest();
-  Snd.sfx.fanfare(); Input.clear();
+  Snd.sfx.fanfare(); Input.clear(); Snd.sfx.announce('stage_clear', 3);
+  Ach.unlock('stage' + (G.level + 1));
+  if (G.stats.dmgTaken === 0) Ach.unlock('flawless');
+  if (gradeFor() === 'S') Ach.unlock('rank_s');
+  if (G.hero === 'roxy') Ach.unlock('roxy');
+  if (G.level + 1 >= LEVELS.length && G.runDeaths === 0) Ach.unlock('legend');
 }
 
 // ============ combat hooks (juice lives here) ============
@@ -227,6 +240,7 @@ G.registerHit = function (att, e, mv, dmg, crit, counter) {
   Input.rumble(0.25 * power, 0.35 * power, 60 + power * 30);
   // combo + style + meter
   G.combo.count++; G.combo.timer = 110; G.combo.max = Math.max(G.combo.max, G.combo.count); G.stats.hits++;
+  if (G.combo.count === 20) Ach.unlock('combo20'); else if (G.combo.count === 50) Ach.unlock('combo50');
   let st = 5 + (crit ? 6 : 0) + (wasLaunched ? 4 : 0) + Math.min(6, G.combo.count * 0.4);
   G.addStyle(st);
   if (att === G.player) {
@@ -263,7 +277,10 @@ G.bossStagger = function (e) {
 };
 
 function onKill(e, dir, hx, hy) {
-  G.stats.kills++;
+  G.stats.kills++; Ach.unlock('first_ko'); Snd.sfx.enemyKO(e); if (e.boss) Snd.sfx.announce('ko', 3);
+  // multi-kills: K.O.s chained less than 2.5 s apart -> DOUBLE / TRIPLE / M-M-M-MULTI / M-M-M-MONSTER KILL / UNSTOPPABLE
+  G.mk = G.mk && G.frame - G.mk.t < 150 ? { n: G.mk.n + 1, t: G.frame } : { n: 1, t: G.frame };
+  if (G.mk.n >= 2 && !e.boss) Snd.sfx.announce('multi' + Math.min(6, G.mk.n), 2); Ach.add('kills', 100, 'ko_100');
   G.addScore(e.score); G.addStyle(14);
   FX.explosion(hx, hy, e.boss ? 1.6 : 0.8);
   FX.slow(e.boss ? 40 : 26, 0.28); FX.punch(0.08, hx - G.camX, hy); FX.aberr = Math.max(FX.aberr, 14);
@@ -293,6 +310,7 @@ G.onPlayerHit = function (src, a, dir) {
   p.shakeT = 6;
 };
 G.onPerfectDodge = function (p, src) {
+  Ach.unlock('perfect'); Snd.sfx.announce('perfect', 2);
   FX.slow(46, 0.3); FX.punch(0.05, p.x - G.camX, p.y - 40); FX.flashScreen(0.18, '#27f0ff');
   FX.text('PERFECT DODGE!', p.x, p.y - p.z - 90, { size: 13, color: '#27f0ff', glow: '#27f0ff', life: 60 });
   FX.ring(p.x, p.y - p.z - 30, 4, 5, 20, '#27f0ff', 3); FX.ring(p.x, p.y - p.z - 30, 2, 8, 24, '#fff', 1.5);
@@ -331,7 +349,8 @@ function worldTick() {
   // death handling
   if (p.state === 'dead') {
     if (++G.deathT > 110) {
-      if (G.lives > 0) respawn(); else { G.state = 'gameover'; G.menuT = 0; saveBest(); Snd.stopMusic(); Snd.sfx.over(); Input.clear(); }
+      G.runDeaths = (G.runDeaths || 0) + 1;
+      if (G.lives > 0) respawn(); else { G.state = 'gameover'; G.menuT = 0; saveBest(); Snd.stopMusic(); Snd.sfx.over(); Snd.sfx.announce('game_over', 3); Input.clear(); if (canRank()) startEntry('gameover'); }
     }
   }
 }
@@ -356,8 +375,11 @@ function step() {
         selectHero(HERO_ORDER[(i + d + HERO_ORDER.length) % HERO_ORDER.length]); saveHero(); Snd.resume(); Snd.sfx.ui(); G.heroSwapT = 0;
       }
       G.heroSwapT = (G.heroSwapT || 0) + 1;
-      if (G.cheatGo) { if (--G.cheatGo.t <= 0) { const go = G.cheatGo; G.cheatGo = null; G.codeEntry = null; startGame(go.li); if (G.cheatBoss) jumpToStop(LEVELS[go.li].stops.length - 1); } break; }
+      if (G.cheatGo) { if (--G.cheatGo.t <= 0) { const go = G.cheatGo; G.cheatGo = null; G.codeEntry = null; startGame(go.li, true); if (G.cheatBoss) jumpToStop(LEVELS[go.li].stops.length - 1); } break; }
       if (G.codeEntry) { padCode(); Input.clear(); break; }
+      if (G.titlePanel) { const tp = Input.padTap; if (tp.b1 || tp.b9 || tp.b0 || (G.titlePanel === 'board' ? tp.b3 : tp.b2)) { G.titlePanel = null; Snd.sfx.ui(); } Input.clear(); break; }
+      if (Input.padTap.b3) { openTitlePanel('board'); break; }
+      if (Input.padTap.b2) { openTitlePanel('ach'); break; }
       if (Input.eat('title') && !G.cheatGo) { openCodeEntry(); Input.padTap = {}; break; }
       if (Input.eat('confirm')) { Snd.resume(); Snd.sfx.select(); startGame(0); }
       break;
@@ -376,7 +398,7 @@ function step() {
       if (G.menuT > 60 && Input.eat('confirm')) {
         Snd.sfx.select();
         if (G.level + 1 < LEVELS.length) startLevel(G.level + 1);
-        else { G.state = 'victory'; G.menuT = 0; Snd.playMusic(2, false); Input.clear(); }
+        else { G.state = 'victory'; G.menuT = 0; Snd.playMusic(2, false); Snd.sfx.announce('you_win', 3); Input.clear(); }
       }
       break;
     case 'gameover':
@@ -384,9 +406,11 @@ function step() {
       if (G.menuT > 40 && Input.eat('confirm')) { G.score = G.levelStartScore; G.lives = 3; G.player = null; startLevel(G.level); }
       if (G.menuT > 40 && Input.eat('title')) { G.state = 'title'; Snd.stopMusic(); Input.clear(); }
       break;
+    case 'entry': FX.updateWorld(); stepEntry(); break;
+    case 'board': FX.updateWorld(); stepBoard(); break;
     case 'victory':
       FX.updateWorld();
-      if (G.menuT > 120 && Input.eat('confirm')) { G.state = 'title'; Snd.stopMusic(); Input.clear(); }
+      if (G.menuT > 120 && Input.eat('confirm')) { if (canRank()) startEntry('title'); else { G.state = 'title'; Snd.stopMusic(); Input.clear(); } }
       break;
   }
 }
@@ -586,7 +610,9 @@ function drawSynthBg(c, t, sunX, horizon) {
 
 function drawTitle(c) {
   const t = G.menuT;
-  drawSynthBg(c, t, 440, 214);
+  // Aseprite title art (tools/ase/title_bg.lua, logo.lua -> PropSprites.title_bg / logo); procedural fallback
+  const TS = typeof PropSprites !== 'undefined' ? PropSprites : {}, tbg = TS.title_bg && TS.title_bg.ready ? TS.title_bg : null, tlogo = TS.logo && TS.logo.ready ? TS.logo : null;
+  if (tbg) tbg.draw(c, 'bg_' + ((t >> 3) % 8), 0, 0, 1); else drawSynthBg(c, t, 440, 214);
   // portrait
   const px = 26, py = 30, pw = 170, ph = 255;
   c.fillStyle = OUT; c.fillRect(px - 6, py - 6, pw + 12, ph + 12);
@@ -610,6 +636,10 @@ function drawTitle(c) {
   if (HERO_ORDER.length > 1) drawText(c, '<  CHOISIS TON HEROS  >', px + pw / 2, py + ph + 38, { size: 9, color: t % 60 < 40 ? '#27f0ff' : '#ff9ae9', outline: OUT, align: 'center' });
   // logo
   const lx = 420, bob = Math.sin(t * 0.05) * 2;
+  if (tlogo) {   // chrome logo: glint frames 0..4 quick, then a long rest (frame durations live in the sheet)
+    const ph = t % 150, f = ph < 25 ? Math.floor(ph / 5) : 5 + Math.floor((ph - 25) / 42);
+    tlogo.draw(c, 'logo_' + Math.min(7, f), lx, 18 + bob, 1);
+  } else {
   const grad = c.createLinearGradient(0, 40, 0, 130); grad.addColorStop(0, '#fff8a0'); grad.addColorStop(0.5, '#ffb02f'); grad.addColorStop(0.55, '#ff2f9a'); grad.addColorStop(1, '#8b2fff');
   c.save(); c.translate(lx, 0); c.transform(1, 0, -0.12, 1, 0, 0);
   drawText(c, 'VEEXING', 0, 78 + bob, { size: 60, color: '#fff', outline: OUT, align: 'center', outlineW: 8, glow: '#ff2fd0', glowBlur: 14 });
@@ -617,9 +647,10 @@ function drawTitle(c) {
   drawText(c, 'FORCE', 0, 130 + bob, { size: 60, color: '#fff', outline: OUT, align: 'center', outlineW: 8, glow: '#27f0ff', glowBlur: 14 });
   c.fillStyle = grad; c.fillText('FORCE', 0, 130 + bob);
   c.restore();
+  }
   drawText(c, 'MUAY THAI STREET FIGHTER  -  1986', lx, 150, { size: 11, color: '#27f0ff', outline: OUT, align: 'center', italic: true });
   if (t % 60 < 40) drawText(c, K('PRESS  ENTER', 'PRESS  START'), lx, 178, { size: 18, color: '#fff', outline: '#ff2fd0', align: 'center', italic: true, glow: '#ff2fd0' });
-  drawText(c, K('C : ENTRER UN CODE', 'SELECT : ENTRER UN CODE'), lx, 200, { size: 9, color: '#8b5cff', outline: OUT, align: 'center' });
+  drawText(c, K('C : CODE   -   L : CLASSEMENT   -   S : SUCCES', 'SELECT : CODE   -   Y : CLASSEMENT   -   X : SUCCES'), lx, 200, { size: 9, color: '#8b5cff', outline: OUT, align: 'center' });
   // controls
   const rows = padUI() ? [['STICK / CROIX', 'BOUGER'], ['X', 'POING'], ['Y', 'PIED'], ['B', 'GENOU'], ['A', 'SAUT'], ['RB / RT', 'DASH (AIR AUSSI)'], ['LB / LT', 'SE BAISSER'], ['L3 / R3', 'FURY (JAUGE PLEINE)']]
     : [['WASD / ZQSD / FLECHES', 'BOUGER'], ['J', 'POING'], ['K', 'PIED'], ['L', 'GENOU'], ['ESPACE', 'SAUT'], ['SHIFT', 'DASH (AIR AUSSI)'], ['C', 'SE BAISSER'], ['R', 'FURY (JAUGE PLEINE)']];
@@ -655,6 +686,8 @@ function gradeFor() {
 function drawScreen(c) {
   switch (G.state) {
     case 'title': drawTitle(c); break;
+    case 'entry': drawEntry(c); break;
+    case 'board': drawBoard(c); break;
     case 'pause': {
       drawPanel(c, 'PAUSE', padUI()
         ? [['DEPLACEMENT', 'STICK / CROIX'], ['POING / PIED / GENOU', 'X / Y / B'], ['SAUT  /  DASH', 'A  /  RB - RT'], ['SE BAISSER', 'LB - LT  (esquive les coups hauts)'],
@@ -712,16 +745,35 @@ function render() {
 
 // HUD, menus and floating texts are drawn at screen resolution so they stay crisp
 const VIEW = { sc: 1, ox: 0, oy: 0 };
+// audio mixer meters (?mix=1): bus peak + hold, target band, master ceiling
+function drawMixMeters(c) {
+  Snd.meterTick(); const m = Snd.meter();
+  const rows = [['VOIX', 'voice', 0, -3], ['SFX', 'sfx', -3, -6], ['SFX 2', 'sfx2', -8, -12], ['MUSIQUE', 'music', -12, -18], ['MASTER', 'master', -1, -1]];
+  const x0 = W - 168, y0 = 150, w = 120, toX = d => x0 + 40 + w * (1 - Math.min(60, Math.max(0, -d)) / 60);
+  c.fillStyle = 'rgba(5,1,15,.82)'; c.fillRect(x0 - 6, y0 - 16, 172, rows.length * 16 + 22);
+  drawText(c, 'MIXER  (dBFS)', x0, y0 - 4, { size: 8, color: '#27f0ff', outline: OUT });
+  rows.forEach(([label, k, hi, lo], i) => {
+    const y = y0 + 6 + i * 16, v = m[k];
+    drawText(c, label, x0, y + 7, { size: 7, color: '#fff', outline: OUT });
+    c.fillStyle = '#1a1030'; c.fillRect(x0 + 40, y, w, 8);
+    c.fillStyle = 'rgba(61,255,160,.25)'; c.fillRect(toX(lo), y, Math.max(2, toX(hi) - toX(lo)), 8);
+    c.fillStyle = v.peak > hi ? '#ff2a4d' : v.peak >= lo ? '#3dffa0' : '#27f0ff'; c.fillRect(x0 + 40, y + 2, Math.max(0, toX(v.peak) - x0 - 40), 4);
+    c.fillStyle = '#ffe44d'; c.fillRect(toX(v.hold), y, 1, 8);
+    drawText(c, v.hold > -100 ? v.hold.toFixed(1) : '-inf', x0 + 164, y + 7, { size: 7, color: '#fff', outline: OUT, align: 'right' });
+  });
+}
 function overlay() {
   sctx.save();
   sctx.translate(VIEW.ox, VIEW.oy); sctx.scale(VIEW.sc, VIEW.sc);
   sctx.imageSmoothingEnabled = true;
-  if (G.state === 'title') { drawTitle(sctx); drawCodeEntry(sctx); }
+  if (G.state === 'title') { drawTitle(sctx); drawCodeEntry(sctx); if (G.titlePanel === 'board') { drawBoardPanel(sctx, 'CLASSEMENT MONDIAL'); drawText(sctx, K('L / ECHAP : RETOUR', 'B / Y : RETOUR'), W / 2, H - 22, { size: 10, color: '#27f0ff', outline: OUT, align: 'center' }); } if (G.titlePanel === 'ach') Ach.drawList(sctx); }
   else {
     FX.drawText(sctx, Math.round(G.camX));
     if (G.state === 'play' || G.state === 'pause' || G.state === 'clear' || G.state === 'gameover') drawHUD(sctx);
     if (G.state !== 'play') drawScreen(sctx);
   }
+  Ach.drawToast(sctx);   // achievement unlocked: on top of everything
+  if (G.mixDebug && Snd.ready) drawMixMeters(sctx);
   sctx.restore();
 }
 
@@ -776,6 +828,7 @@ function loop(ts) {
   requestAnimationFrame(loop);
   const dt = Math.min(0.1, (ts - last) / 1000 || 0.016); last = ts; acc += dt;
   Input.poll();
+  Snd.loopsActive(G.state === 'play');
   if (G.bot) { botControl(); if (G.frame % 30 === 0) document.title = `L${G.level + 1} stop${G.stopIdx} f${G.frame} ${G.state} hp${G.player ? Math.round(G.player.hp) : 0} sc${G.score} lives${G.lives}`; }
   if (Input.codeDown['KeyM'] && !G.mHeld && !G.codeEntry) { G.muted = Snd.toggleMute(); }
   G.mHeld = !!Input.codeDown['KeyM'];
@@ -786,13 +839,19 @@ function loop(ts) {
 
 function boot() {
   const q = new URLSearchParams(location.search);
-  G.bot = q.has('bot'); G.god = q.has('god');
+  G.bot = q.has('bot'); G.god = q.has('god'); G.mixDebug = q.has('mix');   // ?mix=1 : bus meters on screen
   Input.init(); loadSave(); resize();
   addEventListener('resize', resize);
   addEventListener('blur', () => { if (G.state === 'play') { G.state = 'pause'; } });
   addEventListener('keydown', e => {
     Snd.resume();
-    if (G.state === 'title' && e.key) codeKey(e);
+    if (G.state === 'entry' && e.key) entryKey(e);
+    if (G.state === 'title' && e.key) {
+      if (G.titlePanel) { if (['Escape', 'Enter', 'KeyL', 'KeyS', 'Backspace'].includes(e.code) || e.key === 'Escape') { G.titlePanel = null; Snd.sfx.ui(); Input.clear(); } }
+      else if (!G.codeEntry && !G.cheatGo && e.code === 'KeyL' && !e.repeat) openTitlePanel('board');
+      else if (!G.codeEntry && !G.cheatGo && e.code === 'KeyS' && !e.repeat) openTitlePanel('ach');
+      else codeKey(e);
+    }
     if (e.code === 'KeyF' && !e.repeat && !G.codeEntry) { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); }
   });
   addEventListener('pointerdown', () => Snd.resume());
@@ -803,7 +862,7 @@ function boot() {
     if (q.has('sheet')) G.state = 'sheet';
     if (q.has('hero')) selectHero(q.get('hero'));
     if (q.has('level')) {
-      startGame(clamp(parseInt(q.get('level'), 10) - 1, 0, LEVELS.length - 1));
+      startGame(clamp(parseInt(q.get('level'), 10) - 1, 0, LEVELS.length - 1), true);
       if (q.has('stop')) jumpToStop(parseInt(q.get('stop'), 10));
     }
     requestAnimationFrame(loop);

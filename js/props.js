@@ -31,6 +31,7 @@ FX.debris = function (x, y, dir, n, cols, spd = 5) {
 // damage + throw an enemy, credited like a normal KO
 function envHit(e, dir, dmg, label, o) {
   o = o || {};
+  const ach = { 'JET!': 'jet', 'TILT!': 'tilt', 'STRIKE!': 'strike', 'ZZZAP!': 'zap' }[label]; if (ach) Ach.unlock(ach);
   e.takeHit(dir, { kb: o.kb || 3.5, lift: o.lift || 6.5, w: o.w || 3, hs: 6, shake: 5, knock: true, stun: o.stun }, dmg, false, false);
   FX.impact(e.x, e.y - e.z - 30, dir, 2, false); Snd.sfx.hit(2); FX.freeze(o.freeze || 5); FX.addShake(4);
   FX.text(String(dmg), e.x + rand(-5, 5), e.y - e.z - 60, { size: 11, color: o.col || '#ffc85a', glow: o.glow || '#ff8a3a', life: 40 });
@@ -101,13 +102,13 @@ class Bin extends Prop {
   onHit(att, mv, dir, dmg) {
     this.hp -= dmg || 1; this.flash = 4; this.wob = 10;
     FX.sparks(this.x, this.y - 24, dir > 0 ? 0 : Math.PI, 2, 8, 6, pick(['#fff', '#c8cee0', '#ffe44d']), 14); FX.debris(this.x, this.y - 20, dir, 3, ['#8088a8', '#c8cee0', '#4d5278'], 4);
-    Snd.sfx.clang(); FX.freeze(3); FX.addShake(2);
-    if (this.hp <= 0) this.destroy(dir);
+    FX.freeze(3); FX.addShake(2);
+    if (this.hp <= 0) this.destroy(dir); else Snd.sfx.binHit();
   }
   destroy(dir) {
-    this.dead = true; this.remove = true;
+    this.dead = true; this.remove = true; Ach.add('bins', 10, 'bins10');
     FX.debris(this.x, this.y - 24, dir, 16, ['#8088a8', '#c8cee0', '#4d5278', '#ff2fd0', '#27f0ff'], 7); FX.smoke(this.x, this.y - 12, 5, '#8a8aa0', 4); FX.ring(this.x, this.y - 22, 4, 4, 14, '#fff', 2);
-    FX.addShake(4); Snd.sfx.clang(); Snd.sfx.hit(2);
+    FX.addShake(4); Snd.sfx.binBreak();
     const p = G.player; let kind = pick(['soda', 'soda', 'pizza', 'tape']);
     if (p && p.hp < 40) kind = 'pizza';
     if (Math.random() < 0.8) dropPickup(this.x, this.y, kind);
@@ -121,18 +122,21 @@ class Hydrant extends Prop {
   frameName() { return this.state === 'idle' ? 'hyd0' : 'hyd1'; }
   onHit(att, mv, dir) {
     if (this.state === 'spent') return;
-    this.flash = 4; this.wob = 8; this.dir = dir || this.dir; Snd.sfx.clang(); FX.freeze(3); FX.addShake(2);
+    this.flash = 4; this.wob = 8; this.dir = dir || this.dir; Snd.sfx.hydrantHit(); FX.freeze(3); FX.addShake(2);
     if (this.state === 'idle') {
       this.state = 'gush'; this.gushT = 210; FX.text('SPLASH!', this.x, this.y - 52, { size: 10, color: '#7fe4ff', glow: '#27f0ff', life: 34 });
-      FX.ring(this.x, this.y - 30, 4, 5, 16, '#7fe4ff', 2); Snd.sfx.splash();
+      FX.ring(this.x, this.y - 30, 4, 5, 16, '#7fe4ff', 2); Snd.sfx.hydrantBurst();
     } else this.gushT = Math.min(260, this.gushT + 50);   // hit it again from the other side to re-aim the jet
   }
   inJet(f) { const dx = (f.x - this.x) * this.dir; return dx > 4 && dx < 104 && Math.abs(f.y - this.y) < 17 && f.z < 46; }
   update() {
     this.tick();
     if (this.state !== 'gush') return;
-    if (--this.gushT <= 0) { this.state = 'spent'; return; }
-    if (this.gushT % 22 === 0) Snd.sfx.hiss(2);
+    const key = 'hydrant' + this.x;
+    if (--this.gushT <= 0) { this.state = 'spent'; Snd.loopStop(key, 0.6); return; }
+    // water jet loop, quieter when the hydrant is far from the middle of the screen; synth hiss if the clip is missing
+    if (Snd.loopStart(key, 'hydrant_jet', 0.55)) Snd.loopVol(key, 0.55 * clamp(1 - Math.abs(this.x - (G.camX + W / 2)) / 520, 0.08, 1) * (this.gushT < 40 ? this.gushT / 40 : 1));
+    else if (this.gushT % 22 === 0) Snd.sfx.hiss(2);
     if (this.t % 2 === 0) FX.sparks(this.x + this.dir * (14 + rand(90)), this.y - rand(6, 26), -Math.PI / 2, 1.4, 1, 3, pick(['#7fe4ff', '#ffffff', '#4fb8ff']), 12, 1.2);
     const p = G.player;
     if (p && !p.dead && this.inJet(p) && p.state !== 'dash' && p.state !== 'launched' && p.state !== 'down') p.x += this.dir * 1.3;      // the hero is only carried
@@ -163,17 +167,20 @@ class Cabinet extends Prop {
   update() {
     this.tick(); if (this.dead) { if (this.t % 26 === 0) FX.smoke(this.x, this.y - 60, 1, '#6a6a80', 3); return; }
     this.thrownCheck(1);
-    if (this.hp <= 1 && this.t % 14 === 0) { FX.sparks(this.x + rand(-8, 8), this.y - rand(20, 50), rand(6.3), 6.3, 4, 5, pick(['#27f0ff', '#ff2fd0', '#ffe44d']), 12, 1.2); Snd.sfx.hiss(0.6); }
+    // nearly broken: the faulty electric buzz plays ~2.5 s once (started in onHit) then fades out; it is not a loop
+    if (this.buzzT > 0 && --this.buzzT === 0) Snd.loopStop('cab' + this.x, 0.6);
+    if (this.hp <= 1 && this.t % 14 === 0) FX.sparks(this.x + rand(-8, 8), this.y - rand(20, 50), rand(6.3), 6.3, 4, 5, pick(['#27f0ff', '#ff2fd0', '#ffe44d']), 12, 1.2);
   }
   onHit(att, mv, dir, dmg) {
     if (this.dead) return;
-    this.hp -= dmg || 1; this.flash = 3; this.hitT = 5; this.wob = 8; FX.freeze(3); FX.addShake(2.5); Snd.sfx.clang(); Snd.sfx.zap(0.4);
+    this.hp -= dmg || 1; this.flash = 3; this.hitT = 5; this.wob = 8; FX.freeze(3); FX.addShake(2.5); if (this.hp > 0) Snd.sfx.cabHit();
+    if (this.hp === 1 && !this.buzzT) { if (Snd.loopStart('cab' + this.x, 'cab_buzz', 0.2)) this.buzzT = 150; else Snd.sfx.hiss(0.6); }
     FX.sparks(this.x, this.y - 34, dir > 0 ? 0 : Math.PI, 2.2, 10, 6, pick(['#27f0ff', '#ff2fd0', '#ffe44d']), 16, 1.5);
     if (this.hp <= 0) this.destroy(dir);
   }
   destroy(dir) {
-    this.dead = true; this.hp = 0;
-    FX.flashScreen(0.4, '#9ff8ff'); FX.addShake(8); FX.freeze(6); Snd.sfx.zap(1); Snd.sfx.boom();
+    this.dead = true; this.hp = 0; Ach.unlock('electro');
+    FX.flashScreen(0.4, '#9ff8ff'); FX.addShake(8); FX.freeze(6); Snd.loopStop('cab' + this.x, 0.15); this.buzzT = 0; Snd.sfx.cabBreak();
     for (let i = 0; i < 3; i++) FX.ring(this.x, this.y - 34, 4 + i * 3, 5 + i * 2, 16 + i * 5, ['#27f0ff', '#ff2fd0', '#fff'][i], 3 - i * 0.6);
     for (let i = 0; i < 26; i++) { const a = rand(6.3); FX.add({ type: 'spark', x: this.x, y: this.y - 34, vx: Math.cos(a) * rand(3, 9), vy: Math.sin(a) * rand(2, 8) - 1, life: rand(14, 30), color: pick(['#27f0ff', '#ff2fd0', '#ffe44d', '#fff']), size: 2, g: 0.12, drag: 0.94 }); }
     FX.debris(this.x, this.y - 40, dir, 14, ['#3f2b78', '#27f0ff', '#ff2fd0', '#14102a'], 7); FX.text('ELECTRO!', this.x, this.y - 84, { size: 13, color: '#9ff8ff', glow: '#27f0ff', life: 50 });
@@ -187,7 +194,7 @@ class Bumper extends Prop {
   constructor(x, y) { super('bumper', x, y); this.hw = 13; this.hh = 30; }
   breakable() { return true; }
   frameName() { return this.hitT > 0 ? 'bmp_hit' + (this.hitT > 4 ? 0 : 1) : 'bmp' + (Math.floor(this.t / 8) % 3); }
-  bump(fx) { this.hitT = 9; this.wob = 6; Snd.sfx.boing(); FX.ring(this.x, this.y - 24, 4, 4, 12, '#ff9ae9', 2); FX.sparks(this.x, this.y - 26, rand(6.3), 6.3, 8, 6, pick(['#ffe44d', '#fff', '#ff2fd0']), 12, 1.5); }
+  bump(fx) { this.hitT = 9; this.wob = 6; Snd.sfx.bumper(); FX.ring(this.x, this.y - 24, 4, 4, 12, '#ff9ae9', 2); FX.sparks(this.x, this.y - 26, rand(6.3), 6.3, 8, 6, pick(['#ffe44d', '#fff', '#ff2fd0']), 12, 1.5); }
   onHit(att, mv, dir) { if (att) { this.bump(); FX.text('DING!', this.x, this.y - 48, { size: 9, color: '#ffe44d', life: 26 }); } }
   update() {
     this.tick();
@@ -221,20 +228,20 @@ class Car extends Prop {
     this.tick(); if (this.dead) { if (this.t % 18 === 0) FX.smoke(this.x + 30, this.y - 32, 1, '#5a5a68', 3); return; }
     this.thrownCheck(1);
     if (this.hp <= 2) {
-      if (!this.warned) { this.warned = true; FX.text('ATTENTION!', this.x, this.y - 70, { size: 10, color: '#ff8a3a', glow: '#ff2a4d', life: 50 }); }
-      if (this.t % 20 === 0) Snd.sfx.warn();
+      if (!this.warned) { this.warned = true; this.alarm = Snd.sfx.carAlarm(); FX.text('ATTENTION!', this.x, this.y - 70, { size: 10, color: '#ff8a3a', glow: '#ff2a4d', life: 50 }); }
+      if (!this.alarm && this.t % 20 === 0) Snd.sfx.warn();   // synth beep only if the alarm clip is missing
       if (this.t % 4 === 0) FX.sparks(this.x + 34 + rand(-8, 8), this.y - 34, -Math.PI / 2, 1.2, 1, 3, pick(['#ffc85a', '#ff8a3a']), 14, 1.5);
     }
   }
   onHit(att, mv, dir, dmg) {
     if (this.dead) return;
-    this.hp -= dmg || 1; this.flash = 3; this.wob = 8; Snd.sfx.clang(); Snd.sfx.hit(2); FX.freeze(3); FX.addShake(3);
+    this.hp -= dmg || 1; this.flash = 3; this.wob = 8; if (this.hp > 0) Snd.sfx.carHit(); FX.freeze(3); FX.addShake(3);
     FX.sparks(this.x + dir * -20, this.y - 30, dir > 0 ? Math.PI : 0, 2, 10, 6, pick(['#fff', '#ffc85a', '#ff5fb0']), 16); FX.debris(this.x, this.y - 34, dir, 4, ['#ff5fb0', '#c8d0e8', '#fff4f8'], 5);
     if (this.hp <= 0) this.destroy(dir);
   }
   destroy(dir) {
-    this.dead = true; this.hp = 0;
-    FX.flashScreen(0.85, '#fff0c0'); FX.addShake(16); FX.freeze(10); FX.slow(26, 0.3); Snd.sfx.boom(); Snd.sfx.boom();
+    this.dead = true; this.hp = 0; Ach.unlock('kaboom');
+    FX.flashScreen(0.85, '#fff0c0'); FX.addShake(16); FX.freeze(10); FX.slow(26, 0.3); Snd.sfx.carExplode();
     FX.explosion(this.x, this.y - 30, 2.2); FX.explosion(this.x + 24, this.y - 24, 1.4); FX.explosion(this.x - 24, this.y - 24, 1.4);
     for (let i = 0; i < 3; i++) FX.ring(this.x, this.y - 20, 6, 8 + i * 3, 24 + i * 6, ['#fff', '#ffc85a', '#ff5fb0'][i], 4 - i);
     FX.debris(this.x, this.y - 30, dir, 26, ['#ff5fb0', '#c8d0e8', '#fff4f8', '#ff8a3a', '#22202e'], 10);
@@ -257,11 +264,11 @@ class Ball extends Prop {
     let tgt = null, bd = 1e9;
     for (const e of G.enemies) if (!e.dead && (e.x - this.x) * dir > 0) { const d = Math.abs(e.x - this.x); if (d < bd) { bd = d; tgt = e; } }
     this.vx = dir * 7.8; this.vy = tgt ? clamp((tgt.y - this.y) * 0.05, -1.2, 1.2) : 0; this.vz = Math.max(this.vz, 5); this.z = Math.max(this.z, 4);
-    this.bounces = 0; this.life = 0; this.cd.clear(); this.sq = 5; Snd.sfx.boing(); FX.freeze(2); FX.addShake(2);
+    this.bounces = 0; this.life = 0; this.cd.clear(); this.sq = 5; Snd.sfx.ballKick(); FX.freeze(2); FX.addShake(2);
     FX.ring(this.x, this.y - this.z - 10, 3, 4, 12, '#fff', 2);
   }
   pop() {
-    this.state = 'gone'; this.respawn = 700; Snd.sfx.pop();
+    this.state = 'gone'; this.respawn = 700; Snd.sfx.ballPop();
     for (let i = 0; i < 24; i++) { const a = rand(6.3); FX.add({ type: 'spark', x: this.x, y: this.y - this.z - 10, vx: Math.cos(a) * rand(1, 6), vy: Math.sin(a) * rand(1, 6) - 1, life: rand(20, 40), color: pick(['#ff3a4a', '#ffffff', '#2f6bff', '#ffd42a']), size: 2.5, g: 0.16, drag: 0.95 }); }
   }
   update() {
@@ -278,7 +285,7 @@ class Ball extends Prop {
     this.x += this.vx; this.y = clamp(this.y + this.vy, LANE_MIN, LANE_MAX); this.vx *= 0.997; this.life++;
     const b = G.bounds;
     if (this.x < b.minX + 10 || this.x > b.maxX - 10) {
-      this.x = clamp(this.x, b.minX + 10, b.maxX - 10); this.vx = -this.vx * 0.92; this.bounces++; this.sq = 4; Snd.sfx.boing();
+      this.x = clamp(this.x, b.minX + 10, b.maxX - 10); this.vx = -this.vx * 0.92; this.bounces++; this.sq = 4; Snd.sfx.ballBounce();
       FX.sparks(this.x, this.y - this.z - 10, this.vx > 0 ? 0 : Math.PI, 2, 8, 5, '#fff', 12); FX.addShake(1.5);
     }
     if (this.bounces >= 6 || this.life > 460 || Math.abs(this.vx) < 1.4) { this.pop(); return; }
@@ -315,17 +322,20 @@ class Server extends Prop {
   update() {
     this.tick(); if (this.dead) { if (this.t % 30 === 0) FX.smoke(this.x, this.y - 64, 1, '#6a6a80', 3); return; }
     this.thrownCheck(1);
-    if (this.hp <= 2 && this.t % 12 === 0) { FX.sparks(this.x + rand(-8, 8), this.y - rand(20, 56), rand(6.3), 6.3, 4, 5, pick(['#27f0ff', '#ff2a4d', '#ffe44d']), 12, 1.2); Snd.sfx.hiss(0.6); }
+    // nearly destroyed: the fault alarm plays ~2.5 s once (started in onHit) then fades out; not a loop
+    if (this.faultT > 0 && --this.faultT === 0) Snd.loopStop('srv' + this.x, 0.6);
+    if (this.hp <= 2 && this.t % 12 === 0) FX.sparks(this.x + rand(-8, 8), this.y - rand(20, 56), rand(6.3), 6.3, 4, 5, pick(['#27f0ff', '#ff2a4d', '#ffe44d']), 12, 1.2);
   }
   onHit(att, mv, dir, dmg) {
     if (this.dead) return;
-    this.hp -= dmg || 1; this.flash = 3; this.hitT = 5; this.wob = 8; FX.freeze(3); FX.addShake(2.5); Snd.sfx.clang(); Snd.sfx.zap(0.4);
+    this.hp -= dmg || 1; this.flash = 3; this.hitT = 5; this.wob = 8; FX.freeze(3); FX.addShake(2.5); if (this.hp > 0) Snd.sfx.srvHit();
+    if (this.hp > 0 && this.hp <= 2 && !this.faultT && !this.faulted) { this.faulted = true; if (Snd.loopStart('srv' + this.x, 'srv_fault', 0.16)) this.faultT = 150; else Snd.sfx.hiss(0.6); }
     FX.sparks(this.x, this.y - 40, dir > 0 ? 0 : Math.PI, 2.2, 10, 6, pick(['#27f0ff', '#ff2a4d', '#ffe44d']), 16, 1.5);
     if (this.hp <= 0) this.destroy(dir);
   }
   destroy(dir) {
-    this.dead = true; this.hp = 0;
-    FX.flashScreen(0.6, '#27f0ff'); FX.addShake(9); FX.freeze(6); FX.slow(20, 0.35); Snd.sfx.zap(1); Snd.sfx.special();
+    this.dead = true; this.hp = 0; Ach.unlock('emp');
+    FX.flashScreen(0.6, '#27f0ff'); FX.addShake(9); FX.freeze(6); FX.slow(20, 0.35); Snd.loopStop('srv' + this.x, 0.15); this.faultT = 0; Snd.sfx.srvCrash();
     for (let i = 0; i < 4; i++) FX.ring(this.x, this.y - 40, 6, 7 + i * 3, 22 + i * 6, ['#27f0ff', '#fff', '#3dffa0', '#ff2fd0'][i], 3);
     FX.debris(this.x, this.y - 40, dir, 16, ['#2a3050', '#27f0ff', '#3dffa0', '#10142a'], 8);
     FX.text('SYSTEM CRASH!', this.x, this.y - 88, { size: 14, color: '#9ff8ff', glow: '#27f0ff', life: 70 });

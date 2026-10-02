@@ -1,0 +1,97 @@
+{
+ "frames": {
+  "bg_0": {
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 640,
+    "h": 360
+   },
+   "duration": 100
+  },
+  "bg_1": {
+   "frame": {
+    "x": 640,
+    "y": 0,
+    "w": 640,
+    "h": 360
+   },
+   "duration": 100
+  },
+  "bg_2": {
+   "frame": {
+    "x": 1280,
+    "y": 0,
+    "w": 640,
+    "h": 360
+   },
+   "duration": 100
+  },
+  "bg_3": {
+   "frame": {
+    "x": 1920,
+    "y": 0,
+    "w": 640,
+    "h": 360
+   },
+   "duration": 100
+  },
+  "bg_4": {
+   "frame": {
+    "x": 0,
+    "y": 360,
+    "w": 640,
+    "h": 360
+   },
+   "duration": 100
+  },
+  "bg_5": {
+   "frame": {
+    "x": 640,
+    "y": 360,
+    "w": 640,
+    "h": 360
+   },
+   "duration": 100
+  },
+  "bg_6": {
+   "frame": {
+    "x": 1280,
+    "y": 360,
+    "w": 640,
+    "h": 360
+   },
+   "duration": 100
+  },
+  "bg_7": {
+   "frame": {
+    "x": 1920,
+    "y": 360,
+    "w": 640,
+    "h": 360
+   },
+   "duration": 100
+  }
+ },
+ "meta": {
+  "app": "aseprite (tools/ase/title_bg.lua)",
+  "image": "title_bg.png",
+  "size": {
+   "w": 2560,
+   "h": 720
+  },
+  "anchor": {
+   "x": 0,
+   "y": 0
+  },
+  "scale": 1,
+  "frameTags": [
+   {
+    "name": "bg",
+    "from": 0,
+    "to": 7,
+    "direction": 0
+   }
+  ]
+ }
+}
