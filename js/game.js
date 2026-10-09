@@ -443,8 +443,12 @@ function step() {
       if (G.menuT > 60 && Input.eat('confirm')) {
         Snd.sfx.select();
         if (G.level + 1 < LEVELS.length) startLevel(G.level + 1);
-        else { G.state = 'victory'; G.menuT = 0; Snd.playMusic(2, false); Snd.sfx.announce('you_win', 3); Input.clear(); }
+        else { G.state = 'ending'; G.menuT = 0; End.reset(); Snd.playMusic(2, false); Input.clear(); }
       }
+      break;
+    case 'ending':
+      FX.updateWorld(); End.step();
+      if (End.t >= End.len || (End.t > 90 && Input.eat('confirm'))) { G.state = 'victory'; G.menuT = 0; Snd.sfx.announce('you_win', 3); Input.clear(); }
       break;
     case 'gameover':
       FX.updateWorld();
@@ -750,6 +754,9 @@ function drawScreen(c) {
       drawText(c, gradeFor(), W - 130, 200, { size: 64, color: '#ffe44d', outline: '#ff2fd0', italic: true, align: 'center', glow: '#ff2fd0', outlineW: 6 });
       break;
     }
+    case 'ending':
+      if (End.t > 90 && End.t < End.len - 60) drawText(c, K('ENTREE : PASSER', 'A : PASSER'), W - 12, H - 10, { size: 8, color: '#fff', outline: OUT, align: 'right' });
+      break;
     case 'gameover':
       drawPanel(c, 'GAME OVER', [['SCORE', String(G.score)], ['COMBO MAX', String(G.combo.max)]], G.menuT > 40 ? K('ENTREE : REESSAYER   -   T : TITRE', 'A : REESSAYER   -   SELECT : TITRE') : '');
       break;
@@ -784,6 +791,7 @@ function render() {
   const c = bc;
   if (G.state === 'sheet') { drawSheet(c); composite(); return; }
   if (G.state === 'title') { c.fillStyle = '#05010f'; c.fillRect(0, 0, W, H); composite(); overlay(); return; }
+  if (G.state === 'ending') { End.draw(c, G.hero); composite(); overlay(); return; }
   renderWorld(c);
   composite();
   overlay();
@@ -910,6 +918,7 @@ function boot() {
     document.getElementById('loading') && (document.getElementById('loading').style.display = 'none');
     if (q.has('sheet')) G.state = 'sheet';
     if (q.has('hero')) selectHero(q.get('hero'));
+    if (q.has('ending')) { G.state = 'ending'; G.menuT = 0; End.reset(); End.t = parseInt(q.get('ending'), 10) || 0; }   // dev: ?ending=<frame>
     if (q.has('level')) {
       startGame(clamp(parseInt(q.get('level'), 10) - 1, 0, LEVELS.length - 1), true);
       if (q.has('stop')) jumpToStop(parseInt(q.get('stop'), 10));

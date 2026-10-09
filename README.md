@@ -52,6 +52,11 @@ En l'air : J jab aérien, K dive kick, L genou volant. Pendant un dash : rush ho
 - Les ennemis lourds encaissent les coups légers pendant leurs attaques ; les boss ont une jauge de poise (STAGGER).
 - Coups hauts : baisse-toi. Coups bas et ondes de choc : saute ou dash.
 
+## Fin
+
+Après le boss de CYBER TOWER : cinématique de fin, le héros choisi (VEEX ou ROXY) part en moto dans un coucher de soleil façon Vice (`js/ending.js`, 100 % procédural).
+Entrée / A pour passer. Aperçu en dev : `?ending=<frame>&hero=roxy`.
+
 ## Juice
 
 Hit-stop, ralentis sur critiques/KO, screen shake directionnel, zoom punch, aberration chromatique,
