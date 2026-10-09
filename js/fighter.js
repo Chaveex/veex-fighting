@@ -119,12 +119,51 @@ const DASHATK = { punch: MV.rushp, kick: MV.rushk, knee: MV.rushn };
 })();
 const DASH_LEN = 13, DASH_SPEED = 8.8 * 1.15, WALK = 1.95 * 1.12, DEPTH = 1.3 * 1.08, JUMP_VZ = 8.6 * 1.06;
 
+// ============ two heroes, two ways to play ============
+// VEEX (le mullet): the bruiser. Tougher, every ground hit lands harder and knocks further, the clinch is his home (long hold, heavy knees,
+//   an 18-damage throw) - but his strings recover slowly.
+// ROXY (la tornade): rushdown / air. Fragile, quick on her feet, strings start and recover fast with more hitstun and juggle launchers,
+//   an extra air move, dashes that recharge fast and last longer, cancels that pay more, and a fury that fills faster: the TORNADO KICK
+//   (she leaps into a flat spin, rotor-leg out, many light hits, then a landing roundhouse; anims 'tornado*' in tools/hero_anim.py).
+// Animations are shared (same sprite timing tables), only the numbers differ: see Player (this.bal / this.mvs / this.cl) and HERO_LOOKS.trait.
+const HERO_BAL = {
+  veex: { hp: 110, walk: 1, depth: 1, jump: 1, grav: 1, drift: 1, airMax: 2, dashSpd: 1, dashRegen: 1 / 36, iframes: 11, chainWin: 14,
+          cancelMul: 1.25, cancelDash: 0.5, meterGain: 0.55, hitDash: 0.22, dodgeMeter: 14,
+          mv: { dmg: 1.1, air: 1, kb: 1.12, st: 1, rc: 1.05, stun: 0, lunge: 1, finLift: 0, hs: 1 },
+          fury: { pre: 'fury', tick: 8, dmg: 8, fin: 18 },
+          cl: { grab: 6, hold: 130, holdHeavy: 80, knee: 1.25, kneeSt: 4, throw: 1.3, throwT: { w: 11, s: 3, r: 15 } } },
+  roxy: { hp: 85, walk: 1.12, depth: 1.15, jump: 1.07, grav: 0.92, drift: 1.25, airMax: 3, dashSpd: 1.1, dashRegen: 1 / 24, iframes: 13, chainWin: 24,
+          cancelMul: 1.45, cancelDash: 0.9, meterGain: 0.75, hitDash: 0.3, dodgeMeter: 22,
+          mv: { dmg: 0.8, air: 1.2, kb: 0.9, st: 0.75, rc: 0.8, stun: 3, lunge: 1.15, finLift: 1.5, hs: 0 },
+          fury: { pre: 'tornado', tick: 6, dmg: 5, fin: 14 },
+          cl: { grab: 4, hold: 100, holdHeavy: 60, knee: 0.85, kneeSt: 3, throw: 0.9, throwT: { w: 8, s: 3, r: 11 } } }
+};
+const MOVESETS = {}, CLSETS = {};
+(function buildHeroSets() {
+  for (const hk in HERO_BAL) {
+    const b = HERO_BAL[hk], m = b.mv, set = {};
+    for (const k in MV) {
+      const o = Object.assign({}, MV[k]), isAir = !!o.air;
+      o.dmg = Math.max(1, Math.round(o.dmg * (isAir ? m.air : m.dmg)));
+      o.st = Math.max(2, Math.round(o.st * m.st)); o.rc = Math.max(5, Math.round(o.rc * m.rc));
+      o.kb *= m.kb; if (o.stun) o.stun += m.stun; if (o.lunge) o.lunge *= m.lunge; if (o.fin && o.lift) o.lift += m.finLift; if (o.hs) o.hs = Math.max(2, o.hs + m.hs);
+      set[k] = o;
+    }
+    MOVESETS[hk] = { CHAIN: { punch: [set.jab, set.cross, set.elbow], kick: [set.teep, set.round, set.head], knee: [set.knee, set.knee2, set.knee3] },
+      CROUCH: { punch: set.upper, kick: set.lowk, knee: set.rknee }, AIR: { punch: set.airp, kick: set.airk, knee: set.airn }, DASH: { punch: set.rushp, kick: set.rushk, knee: set.rushn } };
+    const c = b.cl, scale = (mv, st) => Object.assign({}, mv, { dmg: Math.max(1, Math.round(mv.dmg * c.knee)), st: st || mv.st });
+    CLSETS[hk] = Object.assign({}, CLINCH, { grabFrames: c.grab, hold: c.hold, holdHeavy: c.holdHeavy, knee: scale(CLINCH.knee, c.kneeSt), knee3: scale(CLINCH.knee3, c.kneeSt + 1),
+      throwMv: Object.assign({}, CLINCH.throwMv, { dmg: Math.round(CLINCH.throwMv.dmg * c.throw) }), throwT: c.throwT });
+  }
+})();
+
 // ============ the hero ============
 class Player extends Fighter {
   constructor(x, y) {
     super();
     this.x = x; this.y = y; this.style = HERO_STYLE;
-    this.hp = this.maxHp = 100; this.meter = 0; this.dashCharges = 3;
+    this.bal = HERO_BAL[G.hero] || HERO_BAL.veex; this.mvs = MOVESETS[G.hero] || MOVESETS.veex; this.cl = CLSETS[G.hero] || CLSETS.veex; this.gravMul = this.bal.grav;
+    this.hp = this.maxHp = this.bal.hp; this.meter = 0; this.dashCharges = 3;
     this.hw = Math.round(9 * PU * 0.92); this.hh = HERO_H;
     this.move = null; this.moveT = 0; this.moveHit = false; this.hitSet = new Set();
     this.chainStep = -1; this.chainTimer = 0; this.dashT = 0; this.dashWin = 0; this.dashDX = 1; this.dashDY = 0;
@@ -151,7 +190,7 @@ class Player extends Fighter {
     if (this.chainTimer > 0 && --this.chainTimer === 0) this.chainStep = -1;
     if (this.dashWin > 0) this.dashWin--;
     if (this.dashCd > 0) this.dashCd--;
-    if (this.dashCharges < 3) this.dashCharges = Math.min(3, this.dashCharges + 1 / 36);
+    if (this.dashCharges < 3) this.dashCharges = Math.min(3, this.dashCharges + this.bal.dashRegen);
     this.hh = this.hurtHeight;
     if (this.landLag > 0) this.landLag--;
 
@@ -229,7 +268,7 @@ class Player extends Fighter {
     for (const b of ['punch', 'kick', 'knee']) if (Input.eat(b)) return this.startAttack(b, ax);
     if (crouch) { this.state = 'crouch'; this.vx *= 0.6; this.vy *= 0.6; if (ax) this.facing = ax; }
     else if (ax || ay) {
-      this.state = 'walk'; this.vx = ax * WALK; this.vy = ay * DEPTH; if (ax) this.facing = ax;
+      this.state = 'walk'; this.vx = ax * WALK * this.bal.walk; this.vy = ay * DEPTH * this.bal.depth; if (ax) this.facing = ax;
       if (ax && this.tryGrab(ax)) return;
       this.walkPhase += 0.26;
       if (Math.floor(this.walkPhase * 1.2) % 6 === 0 && this.t % 10 === 0) FX.dust(this.x - this.facing * 4, this.y, 1);
@@ -248,7 +287,7 @@ class Player extends Fighter {
     for (const e of G.enemies) if (this.grabbable(e, ax) && (!best || Math.abs(e.x - this.x) < Math.abs(best.x - this.x))) best = e;
     if (!best) { this.grabT = 0; this.grabE = null; return false; }
     this.grabT = this.grabE === best ? this.grabT + 1 : 1; this.grabE = best;
-    if (this.grabT < (best.state === 'hurt' ? 2 : CLINCH.grabFrames)) return false;
+    if (this.grabT < (best.state === 'hurt' ? 2 : this.cl.grabFrames)) return false;
     this.startClinch(best); return true;
   }
   startClinch(e) {
@@ -273,7 +312,7 @@ class Player extends Fighter {
     if (!e || e.dead || e.state !== 'held') { this.clinchE = null; this.state = 'idle'; return; }
     const t = ++this.clinchT; this.vx = this.vy = 0;
     this.placeHeld(e, 0.5);
-    const hold = e.def.armor ? CLINCH.holdHeavy : CLINCH.hold;   // the enemy struggles out after a while
+    const hold = e.def.armor ? this.cl.holdHeavy : this.cl.hold;   // the enemy struggles out after a while
     if (t > hold) {
       FX.text('ECHAPPE!', e.x, e.y - e.hh - 6, { color: '#ff9ae9', size: 9, life: 30 });
       this.releaseClinch(true); this.state = 'idle'; e.cool = Math.min(e.cool, 16); return;
@@ -284,7 +323,7 @@ class Player extends Fighter {
     if (Input.eat('kick')) return this.startThrow(Input.ax() === -this.facing ? -1 : 1);
     if (Input.eat('knee') || Input.eat('punch')) {
       this.clinchKnees++;
-      const mv = this.clinchKnees >= 3 ? CLINCH.knee3 : CLINCH.knee;
+      const mv = this.clinchKnees >= 3 ? this.cl.knee3 : this.cl.knee;
       this.state = 'attack'; this.move = mv; this.moveT = 0; this.moveHit = false; this.hitSet.clear(); this.trail.length = 0;
       Snd.sfx.swing(mv.sfx); if (mv.fin) Snd.sfx.cry('kiai', G.hero);
     }
@@ -294,7 +333,7 @@ class Player extends Fighter {
     const e = this.clinchE; if (!e || e.state !== 'held') return;
     this.hitSet.add(e); this.moveHit = true;
     e.state = 'hurt';                       // takeHit sees a normal standing target
-    G.registerHit(this, e, mv, Math.round(mv.dmg * (this.cancelBonus > 0 ? 1.25 : 1)), !!mv.fin, false);
+    G.registerHit(this, e, mv, Math.round(mv.dmg * (this.cancelBonus > 0 ? this.bal.cancelMul : 1)), !!mv.fin, false);
     if (!e.dead && e.state === 'hurt' && !mv.fin) { e.grab(this); e.vx = 0; }
     else this.clinchE = null;               // launched / K.O.: the clinch is over
   }
@@ -307,7 +346,7 @@ class Player extends Fighter {
     Snd.sfx.cry('kiai', G.hero); Snd.sfx.swing(1.3);
   }
   updateThrow() {
-    const e = this.clinchE, T = CLINCH.throwT, t = ++this.throwT; this.vx = this.vy = 0;
+    const e = this.clinchE, T = this.cl.throwT, t = ++this.throwT; this.vx = this.vy = 0;
     if (e && e.state === 'held') {
       if (t <= T.w) {   // lift: the enemy rises along an arc over the hip, to the front side
         const k = t / T.w, front = this.x + this.facing * (this.hw + e.hw + CLINCH.gap);
@@ -316,7 +355,7 @@ class Player extends Fighter {
       } else {          // release: big hit, the enemy becomes a projectile that strikes everything on its way
         this.clinchE = null; e.letGo(); e.state = 'hurt';
         const z = e.z;
-        G.registerHit(this, e, Object.assign({ dir: this.facing }, CLINCH.throwMv), CLINCH.throwMv.dmg, true, false);
+        G.registerHit(this, e, Object.assign({ dir: this.facing }, this.cl.throwMv), this.cl.throwMv.dmg, true, false);
         e.z = Math.min(Math.max(z, 12), 22);   // flat and fast: the body flies at chest height, like a bowling ball
         if (e.state === 'launched') e.thrown = { hit: new Set([e]), n: 0 };
         Ach.unlock('throw');
@@ -327,17 +366,17 @@ class Player extends Fighter {
   }
 
   jump(ax, boost) {
-    this.vz = boost || JUMP_VZ; this.state = 'air'; this.airAtk = 0; this.vx = ax * WALK * 1.2 + this.vx * 0.3;
+    this.vz = (boost || JUMP_VZ) * this.bal.jump; this.state = 'air'; this.airAtk = 0; this.vx = ax * WALK * 1.2 + this.vx * 0.3;
     this.sqy = 1.22; this.sqx = 0.85; this.move = null;
     Snd.sfx.jump(); FX.dust(this.x, this.y, 4);
   }
 
   airControl() {
     const ax = Input.ax(), ay = Input.ay();
-    this.vx += (ax * 2.2 - this.vx) * 0.1; this.vy = ay * 1.0;
+    this.vx += (ax * 2.2 * this.bal.drift - this.vx) * 0.1; this.vy = ay * 1.0;
     if (ax) this.facing = ax;
     if (Input.peek('dash') && this.canDash()) { Input.eat('dash'); return this.startDash(ax, ay); }
-    for (const b of ['punch', 'kick', 'knee']) if (Input.peek(b) && this.airAtk < 2) { Input.eat(b); return this.startAttack(b, ax); }
+    for (const b of ['punch', 'kick', 'knee']) if (Input.peek(b) && this.airAtk < this.bal.airMax) { Input.eat(b); return this.startAttack(b, ax); }
   }
 
   startDash(ax, ay, cancel) {
@@ -345,7 +384,7 @@ class Player extends Fighter {
     if (!ax && !ay) dx = this.facing;
     const len = Math.hypot(dx, dy) || 1; dx /= len; dy /= len;
     this.dashCharges -= 1; this.state = 'dash'; this.dashT = 0; this.dashDX = dx; this.dashDY = dy;
-    this.iframes = 11; this.dashWin = 24; this.dashCd = 3; this.move = null; this.spin = 0;
+    this.iframes = this.bal.iframes; this.dashWin = 24; this.dashCd = 3; this.move = null; this.spin = 0;
     if (ax) this.facing = ax;
     this.airDash = this.z > 2;
     if (this.airDash) { this.vz = 0; this.airAtk = 0; }
@@ -357,7 +396,7 @@ class Player extends Fighter {
   }
   updateDash() {
     const t = this.dashT++;
-    const sp = DASH_SPEED * (1 - (t / DASH_LEN) * 0.4);
+    const sp = DASH_SPEED * this.bal.dashSpd * (1 - (t / DASH_LEN) * 0.4);
     this.vx = this.dashDX * sp; this.vy = this.dashDY * sp;
     if (this.airDash || this.z > 0) { this.vz = 0; }
     if (t % 2 === 0 && this.lastJ) this.ghosts.push({ j: this.lastJ, frame: this.curFrame, x: this.x, y: this.y - this.z, f: this.facing, life: 10, o: { sx: 1 } });
@@ -375,14 +414,14 @@ class Player extends Fighter {
   startAttack(btn, ax) {
     const air = this.z > 2;
     let mv, chained = false;
-    if (air) mv = AIRATK[btn];
-    else if (this.dashWin > 0) mv = DASHATK[btn];
-    else if (Input.held.crouch) mv = CROUCHATK[btn];
+    if (air) mv = this.mvs.AIR[btn];
+    else if (this.dashWin > 0) mv = this.mvs.DASH[btn];
+    else if (Input.held.crouch) mv = this.mvs.CROUCH[btn];
     else {
       let step = (this.chainTimer > 0 || this.state === 'attack') ? this.chainStep + 1 : 0;
       if (step > 2) step = 0;
       this.chainStep = step; chained = step > 0;
-      mv = CHAIN[btn][step];
+      mv = this.mvs.CHAIN[btn][step];
     }
     if (mv.air || air) this.airAtk++;
     this.facingAssist(ax);
@@ -443,7 +482,7 @@ class Player extends Fighter {
     if (t >= total) {
       if (mv.air) { this.state = 'air'; this.move = null; return; }
       this.state = 'idle'; this.move = null;
-      this.chainTimer = this.chainStep < 2 ? 16 : 0; if (this.chainStep >= 2) this.chainStep = -1;
+      this.chainTimer = this.chainStep < 2 ? this.bal.chainWin : 0; if (this.chainStep >= 2) this.chainStep = -1;
     }
   }
 
@@ -452,7 +491,7 @@ class Player extends Fighter {
     const hit = this.moveHit;
     this.cancelBonus = 26; this.chainTimer = 44; this.move = null;
     this.gain(3, 6);
-    if (hit) this.dashCharges = Math.min(3, this.dashCharges + 0.5);
+    if (hit) this.dashCharges = Math.min(3, this.dashCharges + this.bal.cancelDash);
     FX.text('CANCEL', this.x, this.y - this.z - 78, { color: '#27f0ff', size: 9, glow: '#27f0ff', life: 32 });
     FX.ring(this.x, this.y - this.z - 30, 3, 3.5, 12, '#fff', 1.5);
     Snd.sfx.cancel();
@@ -467,7 +506,7 @@ class Player extends Fighter {
   connect(e, mv) {
     this.moveHit = true;
     let dmg = mv.dmg;
-    if (this.cancelBonus > 0) dmg *= 1.25;
+    if (this.cancelBonus > 0) dmg *= this.bal.cancelMul;
     const counter = e.isWinding();
     const crit = !!mv.fin || counter;
     if (mv.fin) Snd.sfx.cry('kiai', G.hero);   // finisher: the hero shouts
@@ -481,17 +520,22 @@ class Player extends Fighter {
   startSpecial() {
     Ach.unlock('fury'); Snd.sfx.cry('fury', G.hero);
     this.meter = 0; this.state = 'special'; this.specialT = 0; this.invul = 200; this.vx = 0; this.move = null;
-    Snd.sfx.special(); FX.flashScreen(0.6, '#ff2fd0'); FX.freeze(10); FX.addShake(5); FX.punch(0.12, this.x - G.camX, this.y - 40);
-    FX.text('MUAY THAI FURY!', this.x, this.y - 92, { color: '#ffe44d', size: 16, glow: '#ff2fd0', life: 70 });
+    this.tornado = this.bal.fury.pre === 'tornado';
+    Snd.sfx.special(); FX.flashScreen(0.6, this.tornado ? '#27f0ff' : '#ff2fd0'); FX.freeze(10); FX.addShake(5); FX.punch(0.12, this.x - G.camX, this.y - 40);
+    FX.text(this.tornado ? 'TORNADO KICK!' : 'MUAY THAI FURY!', this.x, this.y - 92, { color: '#ffe44d', size: 16, glow: this.tornado ? '#27f0ff' : '#ff2fd0', life: 70 });
     FX.ring(this.x, this.y - 30, 4, 6, 24, '#ffe44d', 4);
   }
   updateSpecial() {
     const t = ++this.specialT;
     this.vx = 0; this.vy = 0;
+    if (this.tornado) {   // she leaps into the spin and floats there, then drops back down for the landing kick
+      this.gravMul = 0; this.vz = 0;
+      this.z = t < 20 ? 16 * easeOut(t / 20) : t < 76 ? 16 + Math.sin(t * 0.35) * 2 : Math.max(0, 16 * (1 - (t - 76) / 12));
+    }
     if (t > 20 && t < 76) {
-      if (t % 8 === 4) {
+      if (t % this.bal.fury.tick === this.bal.fury.tick >> 1) {
         this.hitSet.clear();
-        const pm = { x0: 0, x1: 76 * PU, both: true, lane: 40, z0: -10, z1: 90 * PU, dmg: 7, kb: 4.5, stun: 22, hs: 2, shake: 3, w: 2, lift: 0, name: 'FURY' };
+        const pm = { x0: 0, x1: 76 * PU, both: true, lane: 40, z0: -10, z1: 90 * PU, dmg: this.bal.fury.dmg, kb: this.tornado ? 5.5 : 4.5, stun: 22, hs: 2, shake: 3, w: 2, lift: this.tornado ? 1.5 : 0, name: this.tornado ? 'TORNADO' : 'FURY' };
         this.furyBlast(pm);
         FX.ring(this.x, this.y - 30, 6, 5, 14, pick(['#27f0ff', '#ff2fd0', '#ffe44d']), 3);
         Snd.sfx.hit(2);
@@ -500,12 +544,12 @@ class Player extends Fighter {
     }
     if (t === 80) {
       this.hitSet.clear();
-      this.furyBlast({ x0: 0, x1: 120 * PU, both: true, lane: 60, z0: -10, z1: 120 * PU, dmg: 16, kb: 10, lift: 8, hs: 10, shake: 10, w: 4, fin: true, name: 'FURY' });
-      FX.explosion(this.x, this.y - 30, 1.4); FX.flashScreen(0.8, '#fff'); FX.addShake(14); FX.slow(24, 0.3); FX.punch(0.16, this.x - G.camX, this.y - 30);
+      this.furyBlast({ x0: 0, x1: 120 * PU, both: true, lane: 60, z0: -10, z1: 120 * PU, dmg: this.bal.fury.fin, kb: this.tornado ? 12 : 10, lift: 8, hs: 10, shake: 10, w: 4, fin: true, name: this.tornado ? 'TORNADO' : 'FURY' });
+      FX.explosion(this.x, this.y - 30, this.tornado ? 0.9 : 1.4); FX.flashScreen(this.tornado ? 0.45 : 0.8, this.tornado ? '#bff' : '#fff'); FX.addShake(14); FX.slow(24, 0.3); FX.punch(0.16, this.x - G.camX, this.y - 30);
       FX.ring(this.x, this.y, 5, 9, 30, '#fff', 5); Snd.sfx.boom();
       Input.rumble(1, 1, 300);
     }
-    if (t >= 96) { this.state = 'idle'; this.invul = 20; }
+    if (t >= 96) { this.state = 'idle'; this.invul = 20; if (this.tornado) { this.gravMul = this.bal.grav; this.z = 0; this.vz = 0; } }
   }
   furyBlast(pm) {
     for (const pr of G.props) {
@@ -550,7 +594,7 @@ class Player extends Fighter {
         return lerpPose(POSES.stance, p, easeOut(k));
       }
       case 'clinch': return POSES.knee_w || POSES.stance;
-      case 'throw': return this.throwT < CLINCH.throwT.w ? (POSES.knee_w || POSES.stance) : (POSES.cross_s || POSES.stance);
+      case 'throw': return this.throwT < this.cl.throwT.w ? (POSES.knee_w || POSES.stance) : (POSES.cross_s || POSES.stance);
       case 'hurt': return (this.stunT > 8 ? POSES.hurt2 : POSES.hurt);
       case 'launched': return POSES.tumble;
       case 'down': return this.stunT > 34 ? lerpPose(POSES.tumble, POSES.down, 0.8) : POSES.down;
@@ -601,7 +645,13 @@ class Player extends Fighter {
     c.globalAlpha = 1;
     this.drawTrail(c, camX, this.cancelBonus > 0 ? '#27f0ff' : '#ff9ae9');
     if (this.cancelBonus > 0 && this.t % 3 === 0) FX.sparks(this.x, this.y - this.z - 30, rand(6.3), 6.3, 1, 3, '#27f0ff', 8, 1);
-    if (this.state === 'special') {
+    if (this.state === 'special' && this.tornado) {   // wind rings spiralling around the spin, neon cyan / pink
+      const cx = this.x - camX, cy = this.y - this.z - 30, st = this.specialT, k = Math.min(1, Math.max(0, st - 14) / 10) * (st > 76 ? Math.max(0, 1 - (st - 76) / 10) : 1);
+      c.globalCompositeOperation = 'lighter'; c.lineCap = 'round';
+      for (let i = 0; i < 6; i++) { const ph = st * 0.55 + i * 1.1; c.globalAlpha = 0.45 * k; c.strokeStyle = i % 2 ? '#27f0ff' : '#ff2fd0'; c.lineWidth = 1.5 + (i % 3);
+        c.beginPath(); c.ellipse(cx, cy - 16 + i * 8, 44 - i * 3, 8 + i, 0, ph, ph + 3.8); c.stroke(); }
+      c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+    } else if (this.state === 'special') {
       c.globalCompositeOperation = 'lighter'; c.globalAlpha = 0.5 + 0.3 * Math.sin(this.t);
       c.fillStyle = '#ff2fd0'; c.beginPath(); c.ellipse(this.x - camX, this.y - this.z - 30, 24 + this.specialT * 0.3, 40, 0, 0, 6.3); c.fill();
       c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';

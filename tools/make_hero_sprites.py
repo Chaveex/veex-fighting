@@ -23,7 +23,7 @@ JSVAR, JSFILE = ('HERO_SHEET', 'heroSprites.js') if LOOK == 'veex' else ('HERO_S
 FW = FH = HERO.FS
 OX, OY = HERO.OX, HERO.OY
 UNIT = HERO.k                       # game-wide scale factor (see js/util.js PU)
-frames, tags, ANIMS = HA.build()    # [(name, pose, wind)], [{name, from, to, direction}], {anim: {f, w, ph}}
+frames, tags, ANIMS = HA.build(LOOK)    # [(name, pose, wind)], [{name, from, to, direction}], {anim: {f, w, ph}}
 WEIGHT = {f: (a['w'][i], a['ph'][i]) for a in ANIMS.values() for i, f in enumerate(a['f'])}
 
 def durations(name):

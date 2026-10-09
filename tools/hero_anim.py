@@ -151,6 +151,18 @@ def build_anims():
              nf=(14, 1.5, 5), ff=(-13, 1.5, -4), nk=(1, 0.2, 0.6), fk=(1, 0.2, -0.3))
     A['fury_end'] = [F('0', SLAM, 0.55, 'r'), F('1', mix(SLAM, G, 0.5, hy=20), 0.25, 'r'), F('2', mix(SLAM, G, 0.85), 0.2, 'r')]
 
+    # --- ROXY's FURY: TORNADO KICK (anims 'tornado' / 'tornado_spin' / 'tornado_end', only built into her sheet): coil low -> leap into a flat spin,
+    #     one leg stretched out like a rotor blade (limbs in the pelvis frame, the whole body turns) -> landing roundhouse -> guard
+    COIL = P(hy=16, pitch=0.42, hp=4, yb=-10, twist=-34, yh=40, nh=(8, 40, 6), fh=(5, 36, -6), ne=(0.3, -1, 0.6), fe=(0.3, -1, -0.3),
+             nf=(10, 1.5, 4.5), ff=(-12, 1.5, -3.5), nk=(1, 0.3, 0.5))
+    A['tornado'] = [F('0', COIL, 0.5, 'w'),
+                    F('1', P(hy=30, pitch=-0.1, hp=-6, yb=-40, yh=30, twist=-18, nh=(4, 52, 12), fh=(3, 50, -14), ne=(0.2, -1, 0.4), fe=(0.2, -1, -0.4),
+                             nf=(6, 14, 4), nk=(1, 0.8, 0.4), ff=(-6, 14, -3.5), fk=(1, 0.7, -0.1)), 0.5, 'w')]
+    A['tornado_spin'] = [F(str(i), tornado_pose(i * 45), 2) for i in range(8)]
+    TEND = P(hx=-2, hy=27, pitch=-0.4, yb=-55, twist=-16, yh=44, hp=0, ff=(40, 40, 4), fk=(0, 1, 0.6), fh=(-16, 36, -8), fe=(0, -1, -0.2),
+             nh=(12, 56, 9), nf=(4, 1.5, 3), nk=(1, 0.2, 0.4))
+    A['tornado_end'] = [F('0', TEND, 0.5, 'r'), F('1', mix(TEND, G, 0.5, hy=24), 0.3, 'r'), F('2', mix(TEND, G, 0.85), 0.2, 'r')]
+
     # --- CLINCH (muay thai plum): both hands locked behind the opponent's neck, forearms on the collarbones, hips in, weight forward
     CL = P(hx=2, hy=24.5, pitch=0.22, hp=8, nh=(22, 55, 6), fh=(20, 55, -1), ne=(0.2, -1, 0.7), fe=(0.2, -1, -0.3),
            nf=(12, 1.5, 4), ff=(-9, 1.5, -3.5))
@@ -173,6 +185,13 @@ def spin_pose(a):
     return dict(hx=0.0, hy=27.0, pitch=0.04, twist=0.0, yb=yb, yh=yb + 24, hp=-4, hr=0,
                 nh=(1, 47, 28), fh=(1, 47, -28), ne=(0.2, -1, 0.3), fe=(0.2, -1, -0.3),
                 nf=(5, 1.5, 6), ff=(-4, 6, -5), nk=(1, 0.2, 0.4), fk=(1, 0.6, -0.3), loc=VEC)
+
+def tornado_pose(a):
+    """flat spin with the rear leg out like a rotor: arms balance on the other side, the standing leg tucks up under the hips"""
+    yb = 30 + a
+    return dict(hx=0.0, hy=31.0, pitch=-0.14, twist=0.0, yb=yb, yh=yb + 22, hp=-4, hr=0,
+                nh=(0, 50, 20), fh=(0, 46, 26), ne=(0.2, -1, 0.3), fe=(0.2, -1, -0.3),
+                nf=(3, 14, 5), nk=(1, 0.9, 0.4), ff=(2, 33, -34), fk=(1, 0.5, -0.2), loc=VEC)
 
 def moves():
     M = {}
@@ -298,10 +317,11 @@ def expand(anim_name, frames):
         out.append(('%s_%s' % (anim_name, nm), pose, w, ph, wind))
     return out
 
-def build():
+def build(look=None):
     """-> frames [(name, pose, wind)], tags [{name, from, to, direction}], anims {name: {f, w, ph}} (the table js/sprites.js reads)"""
     frames, tags, table = [], [], {}
     for an, fr in build_anims().items():
+        if an.startswith('tornado') and look not in (None, 'roxy'): continue   # ROXY-only animations
         start = len(frames); ex = expand(an, fr)
         for fn, pose, w, ph, wind in ex: frames.append((fn, pose, wind))
         tags.append({'name': an, 'from': start, 'to': len(frames) - 1, 'direction': 0})

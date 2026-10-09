@@ -92,13 +92,14 @@ HeroSheet.prototype.frameFor = function (p) {
     }
     case 'special': {
       const t = p.specialT;
-      if (t < 20) return this.at('fury', 'w', t / 20);
-      if (t < 76) return this.loop('spin', t - 20);
-      return this.at('fury_end', 'r', (t - 76) / 20);
+      const tn = p.tornado && this.anim('tornado');   // ROXY: tornado kick (leap + flat spin with the leg out + landing roundhouse)
+      if (t < 20) return this.at(tn ? 'tornado' : 'fury', 'w', t / 20);
+      if (t < 76) return this.loop(tn ? 'tornado_spin' : 'spin', t - 20);
+      return this.at(tn ? 'tornado_end' : 'fury_end', 'r', (t - 76) / 20);
     }
     case 'clinch': return this.anim('clinch') ? this.loop('clinch', p.clinchT) : 'knee_w0';
     case 'throw': {
-      const T = CLINCH.throwT, t = p.throwT;
+      const T = (p.cl || CLINCH).throwT, t = p.throwT;
       if (!this.anim('throw')) return t < T.w ? 'knee_w0' : 'cross_s0';
       if (t < T.w) return this.at('throw', 'w', t / T.w);
       if (t < T.w + T.s) return this.at('throw', 's', (t - T.w) / T.s);
@@ -115,9 +116,9 @@ HeroSheet.prototype.frameFor = function (p) {
 
 // playable heroes: same moveset, own sheet / portrait / texts (tools/make_hero_sprites.py [veex|roxy])
 const HERO_LOOKS = {
-  veex: { name: 'VEEX', tag: 'VEEX  -  LE MULLET', outro: 'VEEX REMONTE SUR SA MOTO, LE MULLET AU VENT...',
+  veex: { name: 'VEEX', tag: 'VEEX  -  LE MULLET', trait: ['POIDS LOURD  -  110 PV', 'FURY : MUAY THAI FURY - CLINCH COSTAUD'], outro: 'VEEX REMONTE SUR SA MOTO, LE MULLET AU VENT...',
           sheet: new HeroSheet(typeof HERO_SHEET !== 'undefined' ? HERO_SHEET : null), portrait: null },
-  roxy: { name: 'ROXY', tag: 'ROXY  -  LA TORNADE', outro: 'ROXY REMONTE SUR SES ROLLERS, LA QUEUE DE CHEVAL AU VENT...',
+  roxy: { name: 'ROXY', tag: 'ROXY  -  LA TORNADE', trait: ['TORNADE  -  85 PV  -  VITE ET AERIENNE', 'FURY : COUP DE PIED TOURNOYANT'], outro: 'ROXY REMONTE SUR SES ROLLERS, LA QUEUE DE CHEVAL AU VENT...',
           sheet: new HeroSheet(typeof HERO_SHEET_ROXY !== 'undefined' ? HERO_SHEET_ROXY : null), portrait: null }
 };
 const HERO_ORDER = Object.keys(HERO_LOOKS).filter(k => HERO_LOOKS[k].sheet.data);

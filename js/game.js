@@ -284,8 +284,8 @@ G.registerHit = function (att, e, mv, dmg, crit, counter) {
   let st = 5 + (crit ? 6 : 0) + (wasLaunched ? 4 : 0) + Math.min(6, G.combo.count * 0.4);
   G.addStyle(st);
   if (att === G.player) {
-    att.meter = Math.min(100, att.meter + dmg * 0.55);
-    att.dashCharges = Math.min(3, att.dashCharges + 0.22);
+    att.meter = Math.min(100, att.meter + dmg * att.bal.meterGain);
+    att.dashCharges = Math.min(3, att.dashCharges + att.bal.hitDash);
   }
   G.addScore(dmg * 4);
   // labels
@@ -355,7 +355,7 @@ G.onPerfectDodge = function (p, src) {
   FX.text('PERFECT DODGE!', p.x, p.y - p.z - 90, { size: 13, color: '#27f0ff', glow: '#27f0ff', life: 60 });
   FX.ring(p.x, p.y - p.z - 30, 4, 5, 20, '#27f0ff', 3); FX.ring(p.x, p.y - p.z - 30, 2, 8, 24, '#fff', 1.5);
   Snd.sfx.dodge();
-  p.meter = Math.min(100, p.meter + 14); p.dashCharges = 3; p.iframes = Math.max(p.iframes, 8);
+  p.meter = Math.min(100, p.meter + p.bal.dodgeMeter); p.dashCharges = 3; p.iframes = Math.max(p.iframes, 8);
   G.combo.dodges++; G.addStyle(12); G.addScore(120);
   Input.rumble(0.2, 0.5, 80);
 };
@@ -682,7 +682,8 @@ function drawTitle(c) {
   c.strokeStyle = '#ff2fd0'; c.lineWidth = 3; c.strokeRect(px - 3, py - 3, pw + 6, ph + 6);
   c.strokeStyle = '#27f0ff'; c.lineWidth = 1; c.strokeRect(px - 7, py - 7, pw + 14, ph + 14);
   drawText(c, look.tag, px + pw / 2, py + ph + 22, { size: 12, color: '#ffe44d', outline: OUT, align: 'center', italic: true });
-  if (HERO_ORDER.length > 1) drawText(c, '<  CHOISIS TON HEROS  >', px + pw / 2, py + ph + 38, { size: 9, color: t % 60 < 40 ? '#27f0ff' : '#ff9ae9', outline: OUT, align: 'center' });
+  if (look.trait) { drawText(c, look.trait[0], px + pw / 2, py + ph + 36, { size: 8, color: '#fff', outline: OUT, align: 'center' }); drawText(c, look.trait[1], px + pw / 2, py + ph + 46, { size: 7, color: '#c8b8ff', outline: OUT, align: 'center' }); }
+  if (HERO_ORDER.length > 1) drawText(c, '<  CHOISIS TON HEROS  >', px + pw / 2, py + ph + 58, { size: 9, color: t % 60 < 40 ? '#27f0ff' : '#ff9ae9', outline: OUT, align: 'center' });
   // logo
   const lx = 420, bob = Math.sin(t * 0.05) * 2;
   if (tlogo) {   // chrome logo: glint frames 0..4 quick, then a long rest (frame durations live in the sheet)

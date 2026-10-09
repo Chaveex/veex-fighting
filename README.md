@@ -9,7 +9,19 @@ Double-clic sur `index.html` (Edge / Chrome / Firefox). Manette supportée (avec
 
 ## Héros
 
-Deux héros jouables, même boxe thaï, même moveset : **VEEX** (le mullet) et **ROXY** (la tornade : queue de cheval, coupe-vent turquoise, jambières).
+Deux héros jouables, mêmes animations et mêmes touches, mais deux façons de jouer (`HERO_BAL` dans `js/fighter.js`) :
+
+| | **VEEX** (le mullet) : poids lourd | **ROXY** (la tornade) : rushdown / aérien |
+|---|---|---|
+| PV | 110 | 85 |
+| Coups au sol | +10 % de dégâts, plus de recul, récupération un peu lente | -20 % de dégâts, démarrage 25 % plus rapide, récupération -20 %, plus de stun, finishers qui lancent plus haut |
+| Combos | fenêtre de chaîne courte (14 f) | fenêtre large (24 f) |
+| Air | 2 attaques, saut normal | 3 attaques, saut plus haut et flottant, +20 % de dégâts en l'air |
+| Dash | 3 charges, recharge normale | recharge 1,5x plus rapide, 13 f d'invincibilité (11 pour VEEX), plus rapide |
+| Cancels | +25 % de dégâts, rend 0,5 dash | +45 % de dégâts, rend 0,9 dash |
+| Clinch | prise lente (6 f) mais tient 130 f, genoux +25 %, projection 18 dégâts | prise rapide (4 f), tient 100 f, genoux -15 % mais plus rapides, projection 13 dégâts plus vive |
+| Fury | MUAY THAI FURY : tourbillon de frappes lourdes (8 / 18 dégâts), jauge normale | **COUP DE PIED TOURNOYANT** : elle bondit dans une vrille à plat, jambe tendue comme une pale (9 frappes légères de 5), puis un roundhouse à l'atterrissage (14) ; jauge qui se remplit plus vite, esquive parfaite = +22 jauge |
+
 Choix sur l'écran titre avec **← / →** (mémorisé). `?hero=roxy` pour forcer en dev.
 
 ## Contrôles
