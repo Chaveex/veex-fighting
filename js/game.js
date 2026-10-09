@@ -443,7 +443,7 @@ function step() {
       if (G.menuT > 60 && Input.eat('confirm')) {
         Snd.sfx.select();
         if (G.level + 1 < LEVELS.length) startLevel(G.level + 1);
-        else { G.state = 'ending'; G.menuT = 0; End.reset(); Snd.playMusic(2, false); Input.clear(); }
+        else { G.state = 'ending'; G.menuT = 0; End.reset(); Snd.playMusic(4, false); Input.clear(); }
       }
       break;
     case 'ending':
@@ -665,12 +665,12 @@ function drawTitle(c) {
   // portrait
   const px = 26, py = 30, pw = 170, ph = 255;
   c.fillStyle = OUT; c.fillRect(px - 6, py - 6, pw + 12, ph + 12);
-  const look = heroLook(), pimg = look.portrait || portraitImg;
+  const look = heroLook(), pimg = look.photo || look.portrait || portraitImg, isPhoto = G.hero === 'veex' || pimg === look.photo;
   if (pimg) {
     c.save(); c.beginPath(); c.rect(px, py, pw, ph); c.clip();
     c.fillStyle = '#28145a'; c.fillRect(px, py, pw, ph);
     const glitch = t % 200 < 6 || (G.heroSwapT || 99) < 10;
-    if (G.hero === 'veex') { c.imageSmoothingEnabled = true; c.drawImage(pimg, px, py, pw, ph); }
+    if (isPhoto) { c.imageSmoothingEnabled = true; c.drawImage(pimg, px, py, pw, ph); }
     else {   // pixel portrait: keep the pixels crisp and the aspect ratio
       c.imageSmoothingEnabled = false; const s = Math.min(pw / pimg.width, ph / pimg.height), w = pimg.width * s, h = pimg.height * s;
       c.drawImage(pimg, px + (pw - w) / 2, py + (ph - h) / 2, w, h);
@@ -918,7 +918,9 @@ function boot() {
     document.getElementById('loading') && (document.getElementById('loading').style.display = 'none');
     if (q.has('sheet')) G.state = 'sheet';
     if (q.has('hero')) selectHero(q.get('hero'));
-    if (q.has('ending')) { G.state = 'ending'; G.menuT = 0; End.reset(); End.t = parseInt(q.get('ending'), 10) || 0; }   // dev: ?ending=<frame>
+    if (q.has('ending')) { G.state = 'ending'; G.menuT = 0; End.reset(); End.t = parseInt(q.get('ending'), 10) || 0;   // dev: ?ending=<frame>; browsers only allow audio after a gesture, so the music starts on the first click / key
+      const startEndingMusic = () => { Snd.resume(); if (G.state === 'ending') Snd.playMusic(4, false); removeEventListener('pointerdown', startEndingMusic); removeEventListener('keydown', startEndingMusic); };
+      addEventListener('pointerdown', startEndingMusic); addEventListener('keydown', startEndingMusic); }
     if (q.has('level')) {
       startGame(clamp(parseInt(q.get('level'), 10) - 1, 0, LEVELS.length - 1), true);
       if (q.has('stop')) jumpToStop(parseInt(q.get('stop'), 10));

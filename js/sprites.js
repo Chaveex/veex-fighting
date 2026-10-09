@@ -129,6 +129,8 @@ function loadHeroSprites() {
     const L = HERO_LOOKS[k]; L.sheet.load();
     const src = k === 'veex' ? (typeof ASSETS !== 'undefined' && ASSETS.portrait) : L.sheet.data && L.sheet.data.portrait;
     if (src) { const im = new Image(); im.onload = () => { L.portrait = im; }; im.src = src; }
+    const photo = k !== 'veex' && typeof ASSETS !== 'undefined' && ASSETS['portrait_' + k];   // real title photo (public/<hero>.png); the pixel portrait stays for the HUD
+    if (photo) { const im = new Image(); im.onload = () => { L.photo = im; }; im.src = photo; }
   }
 }
 

@@ -368,22 +368,24 @@ const Snd = (() => {
     { name: 'neon', bpm: 116, root: 45, prog: [0, -4, -2, -5], arp: [0, 7, 12, 7], lead: [12, 15, 19, 15, 12, 10, 12, 7] },
     { name: 'arcade', bpm: 126, root: 47, prog: [0, -2, -4, -2], arp: [0, 3, 7, 12], lead: [19, 17, 15, 12, 15, 17, 19, 22] },
     { name: 'miami', bpm: 108, root: 48, major: true, prog: [0, 5, -3, 7], arp: [0, 4, 7, 12], lead: [16, 19, 21, 19, 16, 14, 12, 16] },
-    { name: 'cyber', bpm: 132, root: 43, prog: [0, 0, -2, 1], arp: [0, 3, 7, 10], lead: [15, 14, 12, 10, 12, 14, 15, 19] }
+    { name: 'cyber', bpm: 132, root: 43, prog: [0, 0, -2, 1], arp: [0, 3, 7, 10], lead: [15, 14, 12, 10, 12, 14, 15, 19] },
+    // ending cutscene (index 4): played once, 16 bars, sunset ride - see scheduleEnding
+    { name: 'ending', ending: true, bpm: 96, root: 48 }
   ];
   const M = { on: false, song: null, boss: false, step: 0, next: 0, timer: 0, gainMul: 1 };
 
-  function kick(t) {
+  function kick(t, v = 1) {
     const o = ctx.createOscillator(), g = ctx.createGain();
     o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.12);
-    g.gain.setValueAtTime(0.9, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+    g.gain.setValueAtTime(0.9 * v, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
     o.connect(g); g.connect(musBus); o.start(t); o.stop(t + 0.25);
   }
-  function snare(t) {
-    noise({ f: 1800, dur: 0.16, vol: 0.5, q: 0.6, dest: musBus, when: t - ctx.currentTime });
-    tone({ type: 'triangle', f: 210, f2: 120, dur: 0.1, vol: 0.35, dest: musBus, when: t - ctx.currentTime });
+  function snare(t, v = 1) {
+    noise({ f: 1800, dur: 0.16, vol: 0.5 * v, q: 0.6, dest: musBus, when: t - ctx.currentTime });
+    tone({ type: 'triangle', f: 210, f2: 120, dur: 0.1, vol: 0.35 * v, dest: musBus, when: t - ctx.currentTime });
   }
-  function hat(t, open) {
-    noise({ f: 8000, dur: open ? 0.16 : 0.04, vol: open ? 0.14 : 0.1, q: 0.5, ftype: 'highpass', dest: musBus, when: t - ctx.currentTime });
+  function hat(t, open, v = 1) {
+    noise({ f: 8000, dur: open ? 0.16 : 0.04, vol: (open ? 0.14 : 0.1) * v, q: 0.5, ftype: 'highpass', dest: musBus, when: t - ctx.currentTime });
   }
   function bassNote(t, n, len) {
     const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
@@ -400,18 +402,53 @@ const Snd = (() => {
     o.connect(f); o2.connect(f); f.connect(g); g.connect(musBus);
     o.start(t); o2.start(t); o.stop(t + len + 0.02); o2.stop(t + len + 0.02);
   }
-  function pad(t, root, len, major) {
+  function pad(t, root, len, major, v = 1) {
     [0, major ? 4 : 3, 7].forEach(iv => {
       const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
       o.type = 'sawtooth'; o.frequency.value = midi(root + 12 + iv) * (1 + (Math.random() - 0.5) * 0.004);
       f.type = 'lowpass'; f.frequency.value = 900;
-      g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.045, t + len * 0.3); g.gain.linearRampToValueAtTime(0.0001, t + len);
+      g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.045 * v, t + len * 0.3); g.gain.linearRampToValueAtTime(0.0001, t + len);
       o.connect(f); f.connect(g); g.connect(musBus); o.start(t); o.stop(t + len + 0.05);
     });
   }
 
+
+  // ---- ending theme: 16 bars @ 96 BPM in C major, played once. Pads + arpeggio, drums from bar 3, a vibrato "sax" lead from bar 5, final chord rings out ----
+  const END_PROG = [[0, 1], [7, 1], [9, 0], [5, 1], [0, 1], [7, 1], [5, 1], [7, 1], [9, 0], [5, 1], [0, 1], [7, 1], [9, 0], [5, 1], [7, 1], [0, 1]];   // [root offset, major]
+  const END_LEAD = [   // [step in 64-step phrase, semitones above C4, length in steps]; phrases A (bars 5-8), B (9-12), C (13-16)
+    [[0, 19, 6], [6, 21, 2], [8, 24, 8], [16, 23, 6], [22, 21, 2], [24, 19, 8], [32, 21, 6], [38, 24, 2], [40, 28, 8], [48, 26, 6], [54, 24, 2], [56, 23, 8]],
+    [[0, 24, 6], [6, 28, 2], [8, 31, 8], [16, 29, 6], [22, 28, 2], [24, 24, 8], [32, 28, 6], [38, 26, 2], [40, 24, 8], [48, 26, 8], [56, 23, 8]],
+    [[0, 24, 8], [8, 21, 8], [16, 24, 8], [24, 29, 8], [32, 26, 8], [40, 23, 8], [48, 24, 16]]
+  ];
+  function saxNote(t, n, len, vol) {
+    const o = ctx.createOscillator(), o2 = ctx.createOscillator(), lfo = ctx.createOscillator(), lg = ctx.createGain(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    o.type = 'sawtooth'; o2.type = 'square'; o.frequency.value = midi(n); o2.frequency.value = midi(n) * 0.998;
+    lfo.frequency.value = 5.4; lg.gain.setValueAtTime(0, t); lg.gain.linearRampToValueAtTime(7, t + Math.min(0.5, len * 0.8));   // vibrato (cents) blooms on long notes
+    lfo.connect(lg); lg.connect(o.detune); lg.connect(o2.detune);
+    f.type = 'lowpass'; f.Q.value = 2.5; f.frequency.setValueAtTime(900, t); f.frequency.linearRampToValueAtTime(2300, t + 0.07); f.frequency.linearRampToValueAtTime(1500, t + len);
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.045); g.gain.setValueAtTime(vol * 0.85, t + len * 0.8); g.gain.linearRampToValueAtTime(0.0001, t + len);
+    o.connect(f); o2.connect(f); f.connect(g); g.connect(musBus);
+    for (const x of [o, o2, lfo]) { x.start(t); x.stop(t + len + 0.05); }
+  }
+  function scheduleEnding(t, step) {
+    const bar = Math.floor(step / 16), i = step % 16;
+    if (bar >= 16) { M.on = false; return; }
+    const sixteenth = 60 / M.song.bpm / 4, [ro, maj] = END_PROG[bar], root = M.song.root + ro, last = bar === 15;
+    if (i === 0) pad(t, root, sixteenth * (last ? 40 : 16), !!maj, 2.4);
+    if (bar >= 1 && bar < 15) {   // half-time groove
+      if (i === 0 || i === 8) kick(t, 1); if (i === 8) snare(t, 0.9); if (i % 2 === 0) hat(t, i % 8 === 6, 0.7);
+    }
+    if (i % 4 === 0) bassNote(t, root - 12, sixteenth * (last ? 12 : 3.4));
+    if (!last || i < 4) synthNote(t, root + 12 + [0, maj ? 4 : 3, 7, 12][(i >> 1) % 4] , sixteenth * 1.6, 0.1, 'triangle', 2200);
+    if (bar >= 4) {   // lead
+      const ph = END_LEAD[Math.min(2, Math.floor((bar - 4) / 4))], s = (bar - 4) % 4 * 16 + i;
+      for (const [st, n, len] of ph) if (st === s) saxNote(t, M.song.root + 12 + n, sixteenth * len * (st + len >= 64 || len === 16 ? 1.5 : 0.95), 0.15);
+    }
+  }
+
   function scheduleStep(t, step) {
     const s = M.song, boss = M.boss;
+    if (s.ending) return scheduleEnding(t, step);
     const bar = Math.floor(step / 16) % 4, i = step % 16;
     const root = s.root + s.prog[bar];
     const sixteenth = 60 / (s.bpm + (boss ? 10 : 0)) / 4;

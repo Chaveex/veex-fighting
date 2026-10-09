@@ -76,54 +76,40 @@ function drawBackdrop(c, t, scroll) {
   c.fillStyle = 'rgba(255,255,255,.35)'; for (let x = -gap; x < W + gap; x += gap) c.fillRect(x - off * 0.8 + 20, 286, 28, 1);
 }
 
-function limb(c, pts, w, col) {
-  c.lineCap = 'round'; c.lineJoin = 'round';
-  c.strokeStyle = OUT; c.lineWidth = w + 3; c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) c.lineTo(pts[i][0], pts[i][1]); c.stroke();
-  c.strokeStyle = col; c.lineWidth = w; c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) c.lineTo(pts[i][0], pts[i][1]); c.stroke();
+// ---- the bike: hand-drawn in Aseprite (tools/make_ending_bike.py -> assets/ending/bike*.aseprite -> js/endingBike.js)
+const _bike = {};
+function bikeArt() {
+  if (typeof ENDING_BIKE === 'undefined') return null;
+  if (!_bike.meta) { _bike.meta = ENDING_BIKE.meta; for (const k of ['body_pink', 'body_cyan', 'under', 'wheel']) { const im = new Image(); im.onload = () => { _bike[k + '_ok'] = true; }; im.src = ENDING_BIKE[k]; _bike[k] = im; } }
+  return _bike.body_pink_ok && _bike.body_cyan_ok && _bike.under_ok && _bike.wheel_ok ? _bike : null;
+}
+function artWheel(c, B, cx, cy, rot) {
+  const n = B.meta.wheelFrames, f = Math.floor((((rot % (Math.PI * 2 / 5)) + Math.PI * 2 / 5) % (Math.PI * 2 / 5)) / (Math.PI * 2 / 5) * n) % n, ws = B.meta.wheel;
+  c.drawImage(B.wheel, f * ws, 0, ws, ws, Math.round(cx - ws / 2 + 0.5), Math.round(cy - ws / 2 + 0.5), ws, ws);
 }
 
-function wheel(c, x, y, r, rot) {
-  c.fillStyle = '#0c0418'; c.beginPath(); c.arc(x, y, r, 0, 6.3); c.fill();
-  c.strokeStyle = '#27f0ff'; c.lineWidth = 1.5; c.beginPath(); c.arc(x, y, r - 3, 0, 6.3); c.stroke();   // neon rim
-  c.strokeStyle = '#8a7ab0'; c.lineWidth = 1;
-  for (let i = 0; i < 5; i++) { const a = rot + i * 1.2566; c.beginPath(); c.moveTo(x, y); c.lineTo(x + Math.cos(a) * (r - 3), y + Math.sin(a) * (r - 3)); c.stroke(); }
-}
-
-// bike faces right; (bx, by) = rear tyre contact point. The rider sprite is pinned to the bike with RIDE_PIN: seat = hips, bar = fists, peg = feet
-// (offsets from the sprite anchor, measured on the pose targets in tools/make_ride_sprites.py: px = 1.26 * target).
+// bike faces right; (bx, by) = rear tyre contact point. The rider sprite is pinned to the bike with RIDE_PIN (hips on the seat, fists on the grip, feet on the pegs;
+// offsets measured on the pose targets in tools/make_ride_sprites.py: px = 1.26 * target).
 function drawBike(c, bx, by, t, scroll, hero, wheelie, boost) {
-  const R = 16, jacket = hero === 'roxy' ? '#27f0ff' : '#ff2fd0';
-  const head = [bx + 52, by - 47], fax = [bx + 64, by - R], grip = [bx + 56, by - 53];
+  const B = bikeArt();
   c.save();
   c.translate(bx, by); c.rotate(-wheelie); c.translate(-bx, -by);   // pivot on the rear wheel
   // ground shadow + tail light trail + headlight beam
   c.fillStyle = 'rgba(0,0,0,.35)'; c.beginPath(); c.ellipse(bx + 32, by + 1, 54, 5, 0, 0, 6.3); c.fill();
   c.globalCompositeOperation = 'lighter';
   const tl = c.createLinearGradient(bx - 90, 0, bx - 6, 0); tl.addColorStop(0, 'rgba(255,42,77,0)'); tl.addColorStop(1, 'rgba(255,42,77,.7)');
-  c.fillStyle = tl; c.fillRect(bx - 90 - (boost ? 60 : 0), by - 33, 84 + (boost ? 60 : 0), 3);
+  c.fillStyle = tl; c.fillRect(bx - 90 - (boost ? 60 : 0), by - 36, 84 + (boost ? 60 : 0), 3);
   const hb = c.createLinearGradient(bx + 66, 0, bx + 230, 0); hb.addColorStop(0, 'rgba(255,240,180,.35)'); hb.addColorStop(1, 'rgba(255,240,180,0)');
   c.fillStyle = hb; c.beginPath(); c.moveTo(bx + 64, by - 44); c.lineTo(bx + 240, by - 66); c.lineTo(bx + 240, by + 8); c.lineTo(bx + 64, by - 36); c.fill();
   c.globalCompositeOperation = 'source-over';
-  const rot = scroll * 0.18, rw = [bx, by - R], fw = [bx + 64, by - R];
-  wheel(c, rw[0], rw[1], R, rot); wheel(c, fw[0], fw[1], R, rot);
-  // exhaust, swingarm, frame, engine
-  limb(c, [[bx + 24, by - 14], [bx - 12, by - 22]], 5, '#c8c0e0'); limb(c, [[bx - 12, by - 22], [bx - 15, by - 23]], 5, '#ff7a3a');
-  limb(c, [rw, [bx + 22, by - 24]], 4, '#2b1850');
-  limb(c, [[bx + 24, by - 24], [bx + 40, by - 40], head], 3, '#2b1850');
-  c.fillStyle = OUT; c.fillRect(bx + 19, by - 32, 22, 17); c.fillStyle = '#7a6aa8'; c.fillRect(bx + 21, by - 30, 18, 13);
-  c.fillStyle = '#c8c0e0'; for (let i = 0; i < 4; i++) c.fillRect(bx + 22 + i * 4, by - 29, 2, 11); c.fillStyle = '#2b1850'; c.fillRect(bx + 21, by - 19, 18, 2);
-  // fork + wheel hub
-  limb(c, [head, fax], 4, '#d8d0f0');
-  // seat, tail
-  limb(c, [[bx - 3, by - 34], [bx + 20, by - 37]], 7, '#1a0c3a'); c.fillStyle = 'rgba(255,255,255,.25)'; c.fillRect(bx + 2, by - 38, 14, 1);
-  c.fillStyle = OUT; c.fillRect(bx - 9, by - 38, 7, 6); c.fillStyle = '#ff2a4d'; c.fillRect(bx - 8, by - 37, 5, 3);
-  // tank (glossy)
-  c.fillStyle = OUT; c.beginPath(); c.ellipse(bx + 35, by - 43, 17, 8.5, -0.12, 0, 6.3); c.fill();
-  c.fillStyle = jacket; c.beginPath(); c.ellipse(bx + 35, by - 43, 14.5, 6, -0.12, 0, 6.3); c.fill();
-  c.fillStyle = 'rgba(255,255,255,.6)'; c.fillRect(bx + 26, by - 47, 12, 1.5);
-  // headlight bucket + handlebar riser (the fists land on the grip)
-  c.fillStyle = OUT; c.beginPath(); c.arc(bx + 59, by - 42, 6, 0, 6.3); c.fill(); c.fillStyle = '#fffbe0'; c.beginPath(); c.arc(bx + 60, by - 42, 4, 0, 6.3); c.fill();
-  limb(c, [head, [bx + 53, by - 52], grip], 3, '#d8d0f0'); limb(c, [grip, [bx + 51, by - 54]], 4, '#1a0c3a');
+  if (B) {
+    const m = B.meta, rot = scroll * 0.18;
+    c.imageSmoothingEnabled = false;
+    artWheel(c, B, bx, by - 16, rot); artWheel(c, B, bx + 64, by - 16, rot);
+    c.drawImage(hero === 'roxy' ? B.body_cyan : B.body_pink, bx - m.ox, by - m.oy);
+    c.globalCompositeOperation = 'lighter'; c.globalAlpha = 0.55 + 0.15 * Math.sin(t * 0.2); c.drawImage(B.under, bx - m.ox, by - m.oy); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+    c.imageSmoothingEnabled = true;
+  }
   // rider: dedicated seated pose (tools/make_ride_sprites.py -> assets/hero_ride*.aseprite), same pixel-art renderer as the fight sprites
   const rs = rideSheet(hero);
   if (rs && rs.ready) {

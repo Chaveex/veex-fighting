@@ -55,7 +55,7 @@ En l'air : J jab aérien, K dive kick, L genou volant. Pendant un dash : rush ho
 ## Fin
 
 Après le boss de CYBER TOWER : cinématique de fin, le héros choisi (VEEX ou ROXY) part en moto dans un coucher de soleil façon Vice (`js/ending.js`, 100 % procédural).
-Entrée / A pour passer. Aperçu en dev : `?ending=<frame>&hero=roxy`.
+Musique dédiée (thème synthétisé de 16 mesures, `scheduleEnding` dans `js/audio.js`, jouée une fois). Entrée / A pour passer. Aperçu en dev : `?ending=<frame>&hero=roxy`.
 
 ## Juice
 
