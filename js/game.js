@@ -700,22 +700,34 @@ function drawTitle(c) {
   }
   drawText(c, 'MUAY THAI STREET FIGHTER  -  1986', lx, 150, { size: 11, color: '#27f0ff', outline: OUT, align: 'center', italic: true });
   if (t % 60 < 40) drawText(c, K('PRESS  ENTER', 'PRESS  START'), lx, 178, { size: 18, color: '#fff', outline: '#ff2fd0', align: 'center', italic: true, glow: '#ff2fd0' });
-  drawText(c, K('C : CODE   -   L : CLASSEMENT   -   S : SUCCES   -   O : OPTIONS', 'SELECT : CODE  -  Y : CLASSEMENT  -  X : SUCCES  -  LB : OPTIONS'), lx, 200, { size: 9, color: '#8b5cff', outline: OUT, align: 'center' });
-  // controls
-  const rows = padUI() ? [['STICK / CROIX', 'BOUGER'], ['X', 'POING'], ['Y', 'PIED'], ['B', 'GENOU'], ['A', 'SAUT'], ['RB / RT', 'DASH (AIR AUSSI)'], ['LB / LT', 'SE BAISSER'], ['L3 / R3', 'FURY (JAUGE PLEINE)']]
-    : [['WASD / ZQSD / FLECHES', 'BOUGER'], ['J', 'POING'], ['K', 'PIED'], ['L', 'GENOU'], ['ESPACE', 'SAUT'], ['SHIFT', 'DASH (AIR AUSSI)'], ['C', 'SE BAISSER'], ['R', 'FURY (JAUGE PLEINE)']];
-  const cx = 296, cy = 232;
-  c.fillStyle = 'rgba(10,0,30,.72)'; c.fillRect(cx - 8, cy - 14, 352, 122);
-  c.strokeStyle = '#8b5cff'; c.lineWidth = 1; c.strokeRect(cx - 8.5, cy - 14.5, 352, 122);
-  rows.forEach((r, i) => {
-    const col = i % 2, row = Math.floor(i / 2);
-    drawText(c, r[0], cx + col * 178, cy + row * 13, { size: 9, color: '#ffe44d', outline: OUT });
-    drawText(c, r[1], cx + col * 178 + (col ? 62 : 108), cy + row * 13, { size: 9, color: '#fff', outline: OUT });
+  // menu shortcuts: key chips on one row
+  const chip = (x, y, key, label) => {   // x = slot centre
+    c.font = `bold 9px ${FONT}`; const kw = Math.ceil(c.measureText(key).width) + 8, lw = Math.ceil(c.measureText(label).width), tot = kw + 4 + lw, x0 = Math.round(x - tot / 2);
+    c.fillStyle = '#28145a'; c.fillRect(x0, y - 10, kw, 13); c.strokeStyle = '#27f0ff'; c.lineWidth = 1; c.strokeRect(x0 + 0.5, y - 9.5, kw - 1, 12);
+    drawText(c, key, x0 + kw / 2, y, { size: 9, color: '#ffe44d', outline: OUT, align: 'center' });
+    drawText(c, label, x0 + kw + 4, y, { size: 9, color: '#fff', outline: OUT });
+  };
+  const pad = padUI(), mx = 232, mw = 376, mc = mx + mw / 2;
+  [[pad ? 'SELECT' : 'C', 'CODE'], [pad ? 'Y' : 'L', 'CLASSEMENT'], [pad ? 'X' : 'S', 'SUCCES'], [pad ? 'LB' : 'O', 'OPTIONS']]
+    .forEach((m, i) => chip(mx + mw / 8 + i * mw / 4, 198, m[0], m[1]));
+  // controls panel
+  const rows = pad ? [['STICK / CROIX', 'BOUGER'], ['X', 'POING'], ['Y', 'PIED'], ['B', 'GENOU'], ['A', 'SAUT'], ['RB / RT', 'DASH'], ['LB / LT', 'SE BAISSER'], ['L3 / R3', 'FURY']]
+    : [['FLECHES / ZQSD', 'BOUGER'], ['J', 'POING'], ['K', 'PIED'], ['L', 'GENOU'], ['ESPACE', 'SAUT'], ['SHIFT', 'DASH'], ['C', 'SE BAISSER'], ['R', 'FURY']];
+  const py0 = 212, ph0 = 140;
+  c.fillStyle = 'rgba(10,0,30,.78)'; c.fillRect(mx, py0, mw, ph0);
+  c.strokeStyle = '#8b5cff'; c.lineWidth = 1; c.strokeRect(mx + 0.5, py0 + 0.5, mw - 1, ph0 - 1);
+  drawText(c, 'COMMANDES', mc, py0 + 14, { size: 10, color: '#ff9ae9', outline: OUT, align: 'center', italic: true });
+  c.fillStyle = '#8b5cff'; c.fillRect(mx + 10, py0 + 19, mw - 20, 1);
+  rows.forEach((r, i) => {   // column-major: movement + attacks left, jump / dash / crouch / fury right
+    const col = i < 4 ? 0 : 1, row = i % 4, x = mx + 14 + col * 184, y = py0 + 34 + row * 13;
+    drawText(c, r[0], x, y, { size: 9, color: '#ffe44d', outline: OUT });
+    drawText(c, r[1], x + 168 - (col ? 8 : 0), y, { size: 9, color: '#fff', outline: OUT, align: 'right' });
   });
-  drawText(c, K('FONCE DANS UN ENNEMI = CLINCH  :  L GENOUX  -  K PROJECTION (+ ARRIERE : DERRIERE TOI)', 'FONCE DANS UN ENNEMI = CLINCH  :  B GENOUX  -  Y PROJECTION (+ ARRIERE : DERRIERE TOI)'), cx + 168, cy + 54, { size: 9, color: '#ffe44d', outline: OUT, align: 'center' });
-  drawText(c, 'ANNULE TES COUPS AVEC DASH / SAUT  -  ESQUIVE AU DERNIER MOMENT = RALENTI', cx + 168, cy + 66, { size: 9, color: '#27f0ff', outline: OUT, align: 'center' });
-  drawText(c, K('MANETTE OK  -  C : CODE  -  M : SON  -  F : PLEIN ECRAN', 'MANETTE CONNECTEE  -  START : JOUER  -  SELECT : CODE'), cx + 168, cy + 79, { size: 9, color: '#ff9ae9', outline: OUT, align: 'center' });
-  drawText(c, 'HI-SCORE ' + String(G.best).padStart(8, '0'), cx + 168, cy + 96, { size: 10, color: '#fff', outline: OUT, align: 'center' });
+  c.fillStyle = '#8b5cff'; c.fillRect(mx + 10, py0 + 90, mw - 20, 1);
+  drawText(c, K('CLINCH : FONCE DANS UN ENNEMI, PUIS L GENOUX  /  K PROJECTION', 'CLINCH : FONCE DANS UN ENNEMI, PUIS B GENOUX  /  Y PROJECTION'), mc, py0 + 103, { size: 9, color: '#ffe44d', outline: OUT, align: 'center' });
+  drawText(c, 'DASH / SAUT APRES UN COUP = CANCEL   -   DASH A L\'IMPACT = RALENTI', mc, py0 + 115, { size: 9, color: '#27f0ff', outline: OUT, align: 'center' });
+  drawText(c, 'HI-SCORE ' + String(G.best).padStart(8, '0'), mc, py0 + 133, { size: 10, color: '#fff', outline: OUT, align: 'center' });
+  if (!pad) drawText(c, 'M : SON   F : PLEIN ECRAN', mx + mw - 10, py0 + 133, { size: 8, color: '#8b5cff', outline: OUT, align: 'right' });
   c.drawImage(vig, 0, 0);
 }
 
