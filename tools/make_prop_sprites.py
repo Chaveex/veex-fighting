@@ -354,7 +354,7 @@ def make_conveyor():
     S.tag('belt', i0, i0 + 3); return S
 
 # ======================================================================= export
-SHEETS = [make_bin, make_hydrant, make_cabinet, make_bumper, make_car, make_ball, make_server, make_conveyor]
+SHEETS = [make_hydrant, make_cabinet, make_bumper, make_car, make_ball, make_server, make_conveyor]
 
 def export(S):
     cols = 8; rows = (len(S.frames) + cols - 1) // cols
@@ -393,6 +393,14 @@ def build_ase(name, lua, cols, anchor, layer=None, extra=()):
     json.dump(data, open(base + '.json', 'w'), indent=1)
     return sheet, data
 
+def build_bin():
+    """L1 trash can, drawn IN Aseprite by tools/ase/bin.lua (plain steel, no stickers). One frame per tag: bin0 / bin1 / bin2 / lid."""
+    sheet, data = build_ase('bin', 'bin.lua', 4, (16, 40))
+    data['frames'] = {k.rsplit('_', 1)[0]: v for k, v in data['frames'].items()}
+    data['meta']['frameTags'] = [{'name': 'state', 'from': 0, 'to': 2, 'direction': 0}]
+    json.dump(data, open(os.path.join(ROOT, 'assets', 'props', 'bin.json'), 'w'), indent=1)
+    return sheet, data
+
 def build_pickups():
     """soda / pizza / mixtape: drawn pixel by pixel IN Aseprite by tools/ase/pickups.lua (layers objet / vapeur / eclat, tags soda / pizza / tape)"""
     return build_ase('pickups', 'pickups.lua', 6, (12, 26))
@@ -419,7 +427,7 @@ if __name__ == '__main__':
         js.append("  %s: { img: 'data:image/png;base64,%s', json: %s }," % (S.name, base64.b64encode(buf.getvalue()).decode(), json.dumps(data)))
         previews.append((S.name, sheet)); print(S.name, len(S.frames), 'frames', info[2])
     pl, pll = build_plate()
-    for name, (sheet, data) in (('pickups', build_pickups()), ('plate', pl), ('plate_light', pll), ('projectiles', build_ase('projectiles', 'projectiles.lua', 8, (32, 24))),
+    for name, (sheet, data) in (('bin', build_bin()), ('pickups', build_pickups()), ('plate', pl), ('plate_light', pll), ('projectiles', build_ase('projectiles', 'projectiles.lua', 8, (32, 24))),
                                  ('title_bg', build_ase('title_bg', 'title_bg.lua', 4, (0, 0))), ('logo', build_ase('logo', 'logo.lua', 4, (165, 0)))):
         buf = io.BytesIO(); sheet.save(buf, 'PNG', optimize=True)
         js.append("  %s: { img: 'data:image/png;base64,%s', json: %s }," % (name, base64.b64encode(buf.getvalue()).decode(), json.dumps(data)))

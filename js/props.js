@@ -107,7 +107,7 @@ class Bin extends Prop {
   }
   destroy(dir) {
     this.dead = true; this.remove = true; Ach.add('bins', 10, 'bins10');
-    FX.debris(this.x, this.y - 24, dir, 16, ['#8088a8', '#c8cee0', '#4d5278', '#ff2fd0', '#27f0ff'], 7); FX.smoke(this.x, this.y - 12, 5, '#8a8aa0', 4); FX.ring(this.x, this.y - 22, 4, 4, 14, '#fff', 2);
+    FX.debris(this.x, this.y - 24, dir, 16, ['#8088a8', '#c8cee0', '#4d5278', '#eef0fa', '#656d90'], 7); FX.smoke(this.x, this.y - 12, 5, '#8a8aa0', 4); FX.ring(this.x, this.y - 22, 4, 4, 14, '#fff', 2);
     FX.addShake(4); Snd.sfx.binBreak();
     const p = G.player; let kind = pick(['soda', 'soda', 'pizza', 'tape']);
     if (p && p.hp < 40) kind = 'pizza';

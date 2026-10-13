@@ -38,10 +38,10 @@
   }
  },
  "meta": {
-  "app": "veexing-force prop generator",
+  "app": "aseprite (tools/ase/bin.lua)",
   "image": "bin.png",
   "size": {
-   "w": 256,
+   "w": 128,
    "h": 44
   },
   "anchor": {
