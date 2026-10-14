@@ -9,7 +9,7 @@ Principe : rétention par **maîtrise et fierté**, pas par culpabilité.
 | Idée | Pourquoi ça accroche | Coût |
 |---|---|---|
 | ✅ **Mode Arcade Endless / Tower** : vagues infinies, difficulté qui monte, score seul rival | Classement mondial déjà là, raison de revenir | Faible, réutilise les arènes |
-| **Run quotidienne (seed du jour)** : mêmes modificateurs pour tous, classement du jour | Rituel quotidien, comparaison sociale, 1 tentative = tension | Faible, Netlify Blobs déjà là |
+| ✅ **Run quotidienne (seed du jour)** : mêmes modificateurs pour tous, classement du jour | Rituel quotidien, comparaison sociale, 1 tentative = tension | Faible, Netlify Blobs déjà là |
 | **Modificateurs de run** (cartouches arcade) : « Verre cassé » (1 PV, x3 score), « Dash infini », « Gravité lune », « Ennemis rapides » | Mêmes niveaux, expérience neuve, risque/récompense choisi | Moyen |
 | ✅ **Rang S par niveau + médailles** (temps, sans dégâts, style) sur la carte des niveaux | Collection visible, « il me manque juste le S du niveau 3 » | Faible |
 

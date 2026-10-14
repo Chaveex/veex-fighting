@@ -79,6 +79,8 @@ Sur l'écran titre, **haut / bas** (croix de la manette) choisit le mode, **Entr
   Les ennemis gagnent +5 % de PV et +2,5 % de dégâts par vague (plafonnés à x3 / x2), de nouveaux types apparaissent (BREAKER vague 2, DJ vague 3, SKATER vague 4, lourds vague 5).
   Entre les vagues : bonus de vague (`vague x 60`), soda / pizza selon les PV ; après un boss : pizza + mixtape, et **1UP toutes les 10 vagues**.
   Record (vague + score) sauvegardé ; classement en ligne **séparé** (L au titre puis gauche / droite pour passer d'ARCADE à ENDLESS).
+- **QUOTIDIEN** : l'ENDLESS avec la graine du jour (UTC) : mêmes vagues et mêmes 2 modificateurs pour tout le monde (VERRE CASSE, BLINDES, FOULE, UNE VIE, BOSS RUSH, SANS SOINS).
+  Essais illimités (même graine, on peut s'entraîner), le meilleur du jour compte ; classement en ligne **par jour**.
 
 **Médailles** (panneau **B** au titre, **RB** manette) : 3 par niveau, 12 en tout, sauvegardées avec le meilleur rang, score et temps.
 
@@ -159,7 +161,7 @@ Exemple : `BOSS` puis `VICE` = combat direct contre DON PASTEL.
 
 - **Succès** : 28 succès (K.O., combos, esquive parfaite, Fury, éléments de décor, fin de chaque niveau, sans dégâts, note S, ROXY, partie sans perdre de vie...).
   Sauvegardés dans le navigateur. Liste sur l'écran titre : **S** (clavier) / **X** (manette). Une bannière s'affiche quand on en débloque un.
-- **Classement mondial** (deux tableaux : ARCADE et ENDLESS) : après un game over ou la victoire, entre tes 3 initiales (clavier ou manette), le score part au classement.
+- **Classement mondial** (trois tableaux : ARCADE, ENDLESS et QUOTIDIEN) : après un game over ou la victoire, entre tes 3 initiales (clavier ou manette), le score part au classement.
   Consultable sur l'écran titre : **L** / **Y**. Serveur : `netlify/functions/scores.mjs` (Netlify Functions + Netlify Blobs), déployé avec `npm run deploy`.
 - Une partie lancée avec un **code** (niveau, BOSS, INVINCIBLE) ne compte ni pour les succès ni pour le classement.
 - Test local du serveur : `npx netlify dev --dir dist --functions netlify/functions --port 8899` puis ouvrir le jeu avec `?api=http://localhost:8899/api/scores`.
@@ -213,9 +215,9 @@ Niveau 3 (Vice) : nappe de vagues en boucle (`amb_waves`), sur le bus secondaire
 
 ## Dev
 
-- `?endless=1` lance l'ENDLESS (`&wave=10` commence à la vague 10), `?mode=endless` présélectionne le mode au titre, `?panel=medals|ach|board` ouvre un panneau du titre.
+- `?endless=1` lance l'ENDLESS (`&wave=10` commence à la vague 10), `?daily=1` (`&day=2026-01-01` pour une autre graine) lance la run du jour, `?mode=endless|daily` présélectionne le mode au titre, `?panel=medals|ach|board` ouvre un panneau du titre.
 - `?level=3` démarre au niveau 3, `&stop=2` saute à la 3e zone, `&bot=1` autoplay, `&god=1` invincible, `?sheet=1` planche de poses.
-- `node tools/soak.js <niveau> <stop|-1> <steps>` : test de logique sans navigateur (bot, `NOGOD=1` pour mourir, `ENDLESS=1 WAVE=9` pour l'ENDLESS).
+- `node tools/soak.js <niveau> <stop|-1> <steps>` : test de logique sans navigateur (bot, `NOGOD=1` pour mourir, `ENDLESS=1 WAVE=9` pour l'ENDLESS, `DAILY=1 DAY=2026-10-14` pour la run du jour).
 - `python tools/make_prop_sprites.py` régénère les 8 éléments de niveau (`assets/props/`, `js/propSprites.js`) ; `tools/asekit.py` écrit les vrais fichiers `.aseprite`.
 - `python tools/make_vent_sprites.py` régénère la bouche d'égout (`assets/vent.aseprite|png|json`, `js/ventSprites.js`).
 - `python tools/build_enemy_sheets.py` : les 24 ennemis / boss sont des **modèles 3D rendus en pixel art** (même moteur que le héros : `tools/enemy3d.py`, `render3d.py`), finis par le vrai Aseprite (`assets/enemies/*.aseprite|png|json`, `js/enemySprites.js`). `tools/make_enemy_sprites.py` ne sert plus que de bibliothèque (roster, poses).

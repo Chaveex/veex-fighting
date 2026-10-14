@@ -35,13 +35,14 @@ vm.createContext(sandbox);
 const files = [...fs.readFileSync(path.join(root, 'index.html'), 'utf8').matchAll(/<script src="js\/([\w]+)\.js">/g)].map(m => m[1]);   // same scripts, same order as the page
 let code = files.map(f => fs.readFileSync(path.join(root, 'js', f + '.js'), 'utf8')).join('\n;\n');
 // expose top-level consts of interest & the game loop helpers
-code += `\n;globalThis.__api = { makeProp, startLevel, SpriteSheet, G, step, startGame, Endless, Medals, LEVELS, Input, botControl, FX, worldTick, render };`;
+code += `\n;globalThis.__api = { makeProp, startLevel, SpriteSheet, G, step, startGame, Endless, Medals, Daily, LEVELS, Input, botControl, FX, worldTick, render };`;
 try { vm.runInContext(code, sandbox, { filename: 'game-bundle.js' }); } catch (e) { console.error('BOOT ERROR', e); process.exit(1); }
 const A = sandbox.__api;
 A.__reset = () => { CALLS = 0; };
 A.__check = () => { if (CALLS > MAXC) MAXC = CALLS; };
 A.G.bot = true; A.G.god = !process.env.NOGOD;
-if (process.env.ENDLESS) { A.Endless.start(); if (process.env.WAVE) A.G.endless.wave = parseInt(process.env.WAVE, 10) - 1; } else A.startGame(level - 1);   // ENDLESS=1 [WAVE=n]
+if (process.env.DAILY) { if (process.env.DAY) A.Daily.forceDay = process.env.DAY; process.env.ENDLESS = '1'; }
+if (process.env.ENDLESS) { A.Endless.start(!!process.env.DAILY); if (process.env.WAVE) A.G.endless.wave = parseInt(process.env.WAVE, 10) - 1; } else A.startGame(level - 1);   // ENDLESS=1 [WAVE=n]
 if (stopArg >= 0 && !process.env.ENDLESS) {
   const st = A.LEVELS[level - 1].stops[stopArg];
   A.G.stopIdx = stopArg; A.G.camX = Math.max(0, st.x - 160); A.G.player.x = A.G.camX + 120; A.G.banner = null;

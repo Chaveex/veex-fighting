@@ -7,7 +7,7 @@ const G = {
   combo: { count: 0, timer: 0, max: 0, cancels: 0, dodges: 0 }, sty: { v: 0, idle: 0 },
   target: null, targetT: 0, boss: null, banner: null, goT: 0, clearT: 0, deathT: 0,
   hint: null, stats: {}, menuT: 0, best: 0, muted: false, bot: false, god: false, levelStartScore: 0, pauseIdx: 0,
-  mode: 'arcade', titleMode: 'arcade', endless: null
+  mode: 'arcade', titleMode: 'arcade', endless: null, daily: null
 };
 const RANKS = [
   { n: '', t: 0 }, { n: 'D', w: 'DOPE', t: 14 }, { n: 'C', w: 'COOL', t: 34 }, { n: 'B', w: 'RAD', t: 60 }, { n: 'A', w: 'GNARLY', t: 92 },
@@ -39,9 +39,10 @@ function loadSave() {
   Ach.load();
   try { G.best = parseInt(localStorage.getItem('veexBest') || '0', 10) || 0; } catch (e) { G.best = 0; }
   try { selectHero(localStorage.getItem('veexHero') || 'veex'); } catch (e) { selectHero('veex'); }
-  try { G.titleMode = localStorage.getItem('veexMode') === 'endless' ? 'endless' : 'arcade'; } catch (e) { G.titleMode = 'arcade'; }
+  try { const m = localStorage.getItem('veexMode'); G.titleMode = m === 'endless' || m === 'daily' ? m : 'arcade'; } catch (e) { G.titleMode = 'arcade'; }
   Medals.load();
 }
+const TITLE_MODES = ['arcade', 'endless', 'daily'];
 function saveMode() { try { localStorage.setItem('veexMode', G.titleMode); } catch (e) { /* ignore */ } }
 function saveHero() { try { localStorage.setItem('veexHero', G.hero); } catch (e) { /* ignore */ } }
 function saveBest() { try { if (G.mode !== 'endless' && G.score > G.best) { G.best = G.score; localStorage.setItem('veexBest', String(G.best)); } } catch (e) { /* ignore */ } }
@@ -151,7 +152,7 @@ function drawCodeEntry(c) {
 }
 
 function startGame(li, cheated) {
-  G.mode = 'arcade'; G.endless = null; G.medalRes = null; G.hpMul = 1; G.dmgMul = 1;
+  G.mode = 'arcade'; G.endless = null; G.daily = null; G.medalRes = null; G.hpMul = 1; G.dmgMul = 1;
   G.lives = 3; G.score = 0; G.level = li; G.player = null; G.sty.v = 0; G.seenProps = {};
   G.cheated = !!cheated || !!G.god; G.runDeaths = 0;   // codes / god mode: no achievements, no online ranking
   startLevel(li);
@@ -423,8 +424,8 @@ function step() {
     case 'title':
       if (G.opts) { stepOptions(); Input.clear(); break; }            // panels capture the inputs before the hero selector
       if (G.codeEntry && !G.cheatGo) { padCode(); Input.clear(); break; }
-      if (!G.titlePanel && !G.cheatGo && (Input.eat('up') || Input.eat('down'))) {   // mode: ARCADE <-> ENDLESS
-        G.titleMode = G.titleMode === 'arcade' ? 'endless' : 'arcade'; saveMode(); Snd.resume(); Snd.sfx.ui(); G.modeSwapT = 0;
+      if (!G.titlePanel && !G.cheatGo && (Input.eat('up') || Input.eat('down'))) {   // mode: ARCADE / ENDLESS / QUOTIDIEN
+        const mi = TITLE_MODES.indexOf(G.titleMode); G.titleMode = TITLE_MODES[(mi + (Input.held.up ? TITLE_MODES.length - 1 : 1)) % TITLE_MODES.length]; saveMode(); Snd.resume(); Snd.sfx.ui(); G.modeSwapT = 0;
       }
       G.modeSwapT = (G.modeSwapT || 0) + 1;
       if (!G.titlePanel && HERO_ORDER.length > 1 && (Input.eat('left') || Input.eat('right'))) {
@@ -437,7 +438,7 @@ function step() {
       if (Input.padTap.b4) { openOptions('title'); break; }
       if (G.titlePanel) {
         const tp = Input.padTap, own = { board: tp.b3, ach: tp.b2, medals: tp.b5 }[G.titlePanel];
-        if (G.titlePanel === 'board' && (Input.eat('left') || Input.eat('right'))) { Online.setMode(Online.mode === 'endless' ? 'arcade' : 'endless'); Snd.sfx.ui(); }
+        if (G.titlePanel === 'board' && (Input.eat('left') || Input.eat('right'))) { const d = Input.held.left ? 2 : 1; Online.setMode(TITLE_MODES[(TITLE_MODES.indexOf(Online.mode) + d) % TITLE_MODES.length]); Snd.sfx.ui(); }
         if (tp.b1 || tp.b9 || tp.b0 || own) { G.titlePanel = null; Snd.sfx.ui(); }
         Input.clear(); break;
       }
@@ -445,7 +446,7 @@ function step() {
       if (Input.padTap.b2) { openTitlePanel('ach'); break; }
       if (Input.padTap.b5) { openTitlePanel('medals'); break; }
       if (Input.eat('title') && !G.cheatGo) { openCodeEntry(); Input.padTap = {}; break; }
-      if (Input.eat('confirm')) { Snd.resume(); Snd.sfx.select(); if (G.titleMode === 'endless') Endless.start(); else startGame(0); }
+      if (Input.eat('confirm')) { Snd.resume(); Snd.sfx.select(); if (G.titleMode === 'endless' || G.titleMode === 'daily') Endless.start(G.titleMode === 'daily'); else startGame(0); }
       break;
     case 'play':
       if (Input.eat('pause')) { G.state = 'pause'; G.pauseIdx = 0; Snd.sfx.ui(); return; }
@@ -473,7 +474,7 @@ function step() {
       break;
     case 'gameover':
       FX.updateWorld();
-      if (G.menuT > 40 && Input.eat('confirm')) { if (G.mode === 'endless') Endless.start(); else { G.score = G.levelStartScore; G.lives = 3; G.player = null; startLevel(G.level); } }
+      if (G.menuT > 40 && Input.eat('confirm')) { if (G.mode === 'endless') Endless.start(!!G.daily); else { G.score = G.levelStartScore; G.lives = 3; G.player = null; startLevel(G.level); } }
       if (G.menuT > 40 && Input.eat('title')) { G.state = 'title'; Snd.stopMusic(); Input.clear(); }
       break;
     case 'entry': FX.updateWorld(); stepEntry(); break;
@@ -579,7 +580,7 @@ function drawHUD(c) {
   drawText(c, '1UP', 118, 53, { size: 9, color: '#3dffa0', outline: OUT });
   // score
   drawText(c, String(G.score).padStart(8, '0'), W / 2, 16, { size: 14, color: '#fff', outline: OUT, align: 'center', glow: '#27f0ff', italic: true });
-  const hiBase = G.mode === 'endless' ? Medals.endless.score : G.best;
+  const hiBase = G.daily ? Daily.bestToday(G.daily.day).score : G.mode === 'endless' ? Medals.endless.score : G.best;
   drawText(c, 'HI ' + String(Math.max(hiBase, G.score)).padStart(8, '0'), W / 2, 27, { size: 9, color: '#ff9ae9', outline: OUT, align: 'center' });
   if (G.mode === 'endless' && G.endless) drawText(c, G.endless.wave ? 'VAGUE ' + G.endless.wave : 'PRET ?', W / 2, 40, { size: 11, color: '#ffe44d', outline: OUT, align: 'center', italic: true, glow: '#ff2fd0' });
   // target bar
@@ -722,14 +723,17 @@ function drawTitle(c) {
   c.restore();
   }
   drawText(c, 'MUAY THAI STREET FIGHTER  -  1986', lx, 150, { size: 11, color: '#27f0ff', outline: OUT, align: 'center', italic: true });
-  // mode selector (up / down): ARCADE | ENDLESS, with one line about the selected mode
-  [['arcade', 'ARCADE'], ['endless', 'ENDLESS']].forEach(([id, label], i) => {
-    const on = G.titleMode === id, cx = lx + (i ? 58 : -58), bw = 104, by = 158;
+  // mode selector (up / down): ARCADE | ENDLESS | QUOTIDIEN, with one line about the selected mode
+  [['arcade', 'ARCADE'], ['endless', 'ENDLESS'], ['daily', 'QUOTIDIEN']].forEach(([id, label], i) => {
+    const on = G.titleMode === id, cx = lx + (i - 1) * 100, bw = 96, by = 158;
     c.fillStyle = on ? 'rgba(255,47,208,.38)' : 'rgba(10,0,30,.72)'; c.fillRect(cx - bw / 2, by, bw, 19);
     c.strokeStyle = on ? '#ff2fd0' : '#4a3a7a'; c.lineWidth = on ? 2 : 1; c.strokeRect(cx - bw / 2 + 0.5, by + 0.5, bw - 1, 18);
     drawText(c, label, cx, by + 14, { size: 12, color: on ? '#fff' : '#8a7aaa', outline: OUT, align: 'center', italic: true, glow: on ? '#ff2fd0' : null });
   });
-  const info = G.titleMode === 'endless'
+  const dayBest = Daily.bestToday(Daily.today()).wave;
+  const info = G.titleMode === 'daily'
+    ? 'DU JOUR : ' + Daily.names(Daily.today()) + (dayBest ? '  -  VAGUE ' + dayBest : '')
+    : G.titleMode === 'endless'
     ? (Medals.endless.wave ? 'VAGUES INFINIES  -  RECORD : VAGUE ' + Medals.endless.wave : 'VAGUES INFINIES  -  TIENS LE PLUS LONGTEMPS')
     : LEVELS.length + ' NIVEAUX  -  MEDAILLES ' + Medals.count() + ' / ' + LEVELS.length * 3;
   drawText(c, info, lx, 192, { size: 9, color: '#27f0ff', outline: OUT, align: 'center' });
@@ -817,8 +821,8 @@ function drawScreen(c) {
       break;
     case 'gameover':
       if (G.mode === 'endless' && G.endless) {
-        const r = G.endlessRes;
-        drawPanel(c, 'GAME OVER', [['VAGUE ATTEINTE', String(G.endless.wave)], ['SCORE', String(G.score)], ['RECORD', 'VAGUE ' + Math.max(Medals.endless.wave, G.endless.wave)]],
+        const r = G.endlessRes, rec = G.daily ? Math.max(Daily.bestToday(G.daily.day).wave, G.endless.wave) : Math.max(Medals.endless.wave, G.endless.wave);
+        drawPanel(c, G.daily ? 'RUN DU JOUR' : 'GAME OVER', [['VAGUE ATTEINTE', String(G.endless.wave)], ['SCORE', String(G.score)], [G.daily ? 'MEILLEUR DU JOUR' : 'RECORD', 'VAGUE ' + rec]],
           G.menuT > 40 ? K('ENTREE : REJOUER   -   T : TITRE', 'A : REJOUER   -   SELECT : TITRE') : '');
         if (r && (r.newWave || r.newScore) && G.menuT % 40 < 28) drawText(c, 'NOUVEAU RECORD', W / 2, 200, { size: 12, color: '#3dffa0', outline: OUT, align: 'center', italic: true, glow: '#3dffa0' });
       } else {
@@ -885,7 +889,7 @@ function overlay() {
   sctx.save();
   sctx.translate(VIEW.ox, VIEW.oy); sctx.scale(VIEW.sc, VIEW.sc);
   sctx.imageSmoothingEnabled = true;
-  if (G.state === 'title') { drawTitle(sctx); drawCodeEntry(sctx); if (G.opts) drawOptions(sctx); if (G.titlePanel === 'board') { drawBoardPanel(sctx, 'CLASSEMENT MONDIAL'); drawText(sctx, K('GAUCHE / DROITE : ARCADE - ENDLESS   -   L / ECHAP : RETOUR', 'CROIX : ARCADE - ENDLESS   -   B / Y : RETOUR'), W / 2, H - 22, { size: 9, color: '#27f0ff', outline: OUT, align: 'center' }); } if (G.titlePanel === 'ach') Ach.drawList(sctx); if (G.titlePanel === 'medals') drawMedalsPanel(sctx); }
+  if (G.state === 'title') { drawTitle(sctx); drawCodeEntry(sctx); if (G.opts) drawOptions(sctx); if (G.titlePanel === 'board') { drawBoardPanel(sctx, 'CLASSEMENT MONDIAL'); drawText(sctx, K('GAUCHE / DROITE : ARCADE - ENDLESS - JOUR   -   L / ECHAP : RETOUR', 'CROIX : ARCADE - ENDLESS - JOUR   -   B / Y : RETOUR'), W / 2, H - 22, { size: 9, color: '#27f0ff', outline: OUT, align: 'center' }); } if (G.titlePanel === 'ach') Ach.drawList(sctx); if (G.titlePanel === 'medals') drawMedalsPanel(sctx); }
   else {
     FX.drawText(sctx, Math.round(G.camX));
     if (G.state === 'play' || G.state === 'pause' || G.state === 'clear' || G.state === 'gameover') drawHUD(sctx);
@@ -987,10 +991,11 @@ function boot() {
     if (q.has('ending')) { G.state = 'ending'; G.menuT = 0; End.reset(); End.t = parseInt(q.get('ending'), 10) || 0;   // dev: ?ending=<frame>; browsers only allow audio after a gesture, so the music starts on the first click / key
       const startEndingMusic = () => { Snd.resume(); if (G.state === 'ending') Snd.playMusic(4, false); removeEventListener('pointerdown', startEndingMusic); removeEventListener('keydown', startEndingMusic); };
       addEventListener('pointerdown', startEndingMusic); addEventListener('keydown', startEndingMusic); }
-    if (q.has('panel')) G.titlePanel = q.get('panel');   // dev: ?panel=medals | ach | board
-    if (q.has('mode')) G.titleMode = q.get('mode') === 'endless' ? 'endless' : 'arcade';
-    if (q.has('endless')) {
-      Endless.start();
+    if (q.has('panel')) { G.titlePanel = q.get('panel'); if (G.titlePanel === 'board') Online.setMode(q.get('mode')); }   // dev: ?panel=medals | ach | board
+    if (q.has('mode')) G.titleMode = TITLE_MODES.includes(q.get('mode')) ? q.get('mode') : 'arcade';
+    if (q.has('day') && /^\d{4}-\d{2}-\d{2}$/.test(q.get('day'))) Daily.forceDay = q.get('day');   // dev: ?daily=1&day=2026-01-01
+    if (q.has('endless') || q.has('daily')) {
+      Endless.start(q.has('daily'));
       if (q.has('wave')) G.endless.wave = Math.max(0, parseInt(q.get('wave'), 10) - 1);   // dev: ?endless=1&wave=10 starts at wave 10
     } else if (q.has('level')) {
       startGame(clamp(parseInt(q.get('level'), 10) - 1, 0, LEVELS.length - 1), true);

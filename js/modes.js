@@ -20,6 +20,7 @@ const Medals = {
       this.lv = d.lv && typeof d.lv === 'object' ? d.lv : {};
       this.endless = Object.assign({ wave: 0, score: 0 }, d.endless);
     } catch (e) { this.lv = {}; this.endless = { wave: 0, score: 0 }; }
+    Daily.load();
   },
   save() { try { localStorage.setItem('veexMedals', JSON.stringify({ lv: this.lv, endless: this.endless })); } catch (e) { /* ignore */ } },
   get(li) { return this.lv[li] || null; },
@@ -42,6 +43,7 @@ const Medals = {
   // endless run over: keep the best wave / score
   endRun() {
     if (G.mode !== 'endless' || G.cheated || !G.endless) return;
+    if (G.daily) { Daily.endRun(); return; }
     const e = this.endless, w = G.endless.wave;
     G.endlessRes = { wave: w, newWave: w > e.wave, newScore: G.score > e.score };
     if (w > e.wave) e.wave = w;
@@ -66,20 +68,71 @@ function drawMedalBadge(c, x, y, kind, on, fresh, t) {
   } else drawText(c, kind.id === 'rank' ? 'S' : '0', x, y + 5, { size: 14, color: ink, align: 'center', italic: true });
 }
 
+// ---------- DAILY RUN ----------
+// Endless with the seed of the UTC day: same waves + same 2 modifiers for everybody, own board per day.
+// Unlimited retries (same seed each time, so it can be practised); the best run of the day is what counts.
+const DAILY_MODS = [
+  { id: 'glass', name: 'VERRE CASSE', desc: 'DEGATS SUBIS x2' },
+  { id: 'tank', name: 'BLINDES', desc: 'ENNEMIS +50% PV' },
+  { id: 'horde', name: 'FOULE', desc: 'PLUS DE MONDE PAR VAGUE' },
+  { id: 'solo', name: 'UNE VIE', desc: 'UNE SEULE VIE, PAS DE RETOUR' },
+  { id: 'rush', name: 'BOSS RUSH', desc: 'UN BOSS TOUTES LES 3 VAGUES' },
+  { id: 'dry', name: 'SANS SOINS', desc: 'PLUS DE SODA NI DE PIZZA' }
+];
+const Daily = {
+  best: { day: '', wave: 0, score: 0 }, forceDay: null, _memo: null,
+  today() { return this.forceDay || new Date().toISOString().slice(0, 10); },   // UTC day: everybody shares the same one
+  load() {
+    try { this.best = Object.assign({ day: '', wave: 0, score: 0 }, JSON.parse(localStorage.getItem('veexDaily') || '{}')); } catch (e) { /* ignore */ }
+  },
+  save() { try { localStorage.setItem('veexDaily', JSON.stringify(this.best)); } catch (e) { /* ignore */ } },
+  bestToday(day) { return this.best.day === day ? this.best : { day, wave: 0, score: 0 }; },
+  seed(day) { let h = 2166136261; const s = 'veex-daily-' + day; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; },
+  rng(seed) { let a = seed; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; },
+  // the 2 modifiers of a day (memoised: the title screen asks every frame)
+  mods(day) {
+    if (this._memo && this._memo.day === day) return this._memo.mods;
+    const r = this.rng(this.seed(day)), n = DAILY_MODS.length;
+    const a = Math.floor(r() * n); let b = Math.floor(r() * (n - 1)); if (b >= a) b++;
+    const bad = (x, y) => (x === 3 && y === 0) || (x === 0 && y === 3);   // UNE VIE + VERRE CASSE is not a day, it is a joke
+    if (bad(a, b)) b = (b + 1) % n === a ? (b + 2) % n : (b + 1) % n;
+    const mods = [DAILY_MODS[a], DAILY_MODS[b]];
+    this._memo = { day, mods };
+    return mods;
+  },
+  make(day) { return { day, mods: this.mods(day).map(m => m.id), rng: this.rng(this.seed(day) ^ 0x9E3779B9) }; },
+  has(id) { return !!(G.daily && G.daily.mods.includes(id)); },
+  names(day) { return this.mods(day).map(m => m.name).join(' + '); },
+  endRun() {
+    const w = G.endless.wave, d = G.daily.day, b = this.bestToday(d);
+    G.endlessRes = { wave: w, newWave: w > b.wave, newScore: G.score > b.score };
+    this.best = { day: d, wave: Math.max(b.wave, w), score: Math.max(b.score, G.score) };
+    this.save();
+  }
+};
+
 // ---------- ENDLESS ----------
 // One arena (the camera never scrolls), waves forever. Every 5th wave is a boss, the theme changes every 5 waves
 // (NEON -> ARCADE -> SUNSET -> CYBER -> NEON...), enemies get tougher each wave. 3 lives, no checkpoint.
 const ENDLESS_STOP = { x: 0, endless: true, waves: [] };
 const Endless = {
-  start() {
-    G.mode = 'endless'; G.lives = 3; G.score = 0; G.level = 0; G.player = null; G.sty.v = 0; G.seenProps = {};
+  rnd() { return G.daily ? G.daily.rng() : Math.random(); },
+  start(daily) {
+    G.daily = daily ? Daily.make(Daily.today()) : null;
+    G.mode = 'endless'; G.lives = Daily.has('solo') ? 1 : 3; G.score = 0; G.level = 0; G.player = null; G.sty.v = 0; G.seenProps = {};
     G.cheated = !!G.god; G.runDeaths = 0; G.endlessRes = null; G.boss = null;
     G.endless = { wave: 0, rest: 70, lastBoss: false };
     startLevel(0);
     this.layout(0);
     G.hpMul = 1; G.dmgMul = 1; G.maxTok = 2;
-    G.banner = { t: 0, title: 'ENDLESS', sub: 'VAGUES INFINIES  -  TIENS LE PLUS LONGTEMPS', kind: 'level' };
-    G.hint = { t: 0, text: 'VAGUE APRES VAGUE : AUCUN POINT DE REPRISE' };
+    if (G.daily) {
+      const ms = Daily.mods(G.daily.day);
+      G.banner = { t: 0, title: 'RUN DU JOUR', sub: ms.map(m => m.name).join('  +  '), kind: 'level' };
+      G.hint = { t: 0, text: ms.map(m => m.desc).join('  -  ') };
+    } else {
+      G.banner = { t: 0, title: 'ENDLESS', sub: 'VAGUES INFINIES  -  TIENS LE PLUS LONGTEMPS', kind: 'level' };
+      G.hint = { t: 0, text: 'VAGUE APRES VAGUE : AUCUN POINT DE REPRISE' };
+    }
   },
   // arena furniture of a theme, squeezed onto the single screen
   layout(li) {
@@ -98,22 +151,25 @@ const Endless = {
     if (n >= 3) pool.push(['thrower', 3]);
     if (n >= 4) pool.push(['rusher', 3]);
     if (n >= 5) pool.push(['heavy', 2 + Math.floor(n / 5)]);
-    let r = Math.random() * pool.reduce((s, p) => s + p[1], 0);
+    let r = this.rnd() * pool.reduce((s, p) => s + p[1], 0);
     for (const p of pool) { if ((r -= p[1]) < 0) return p[0]; }
     return 'grunt';
   },
   startWave() {
-    const E = G.endless, n = ++E.wave, th = Math.floor((n - 1) / 5) % LEVELS.length, boss = n % 5 === 0;
+    const E = G.endless, n = ++E.wave, th = Math.floor((n - 1) / 5) % LEVELS.length, boss = n % (Daily.has('rush') ? 3 : 5) === 0;
     const newTheme = th !== G.level;
     if (newTheme) this.theme(th);
     G.hpMul = Math.min(3, 1 + (n - 1) * 0.05); G.dmgMul = Math.min(2, 1 + (n - 1) * 0.025);
     G.maxTok = n < 4 ? 2 : 3;
+    if (Daily.has('tank')) G.hpMul *= 1.5;
+    if (Daily.has('glass')) G.dmgMul *= 2;
+    if (Daily.has('horde')) G.maxTok++;
     let kinds = [];
     if (boss) {
       const esc = Math.min(2, Math.floor(n / 5));
       for (let i = 0; i < esc; i++) kinds.push('grunt');
     } else {
-      const count = Math.min(7, 1 + Math.ceil((n + 1) / 2)), heavyCap = 1 + Math.floor(n / 10);
+      const count = Math.min(7, 1 + Math.ceil((n + 1) / 2)) + (Daily.has('horde') ? 2 : 0), heavyCap = 1 + Math.floor(n / 10);
       let heavies = 0;
       for (let i = 0; i < count; i++) {
         let k = this.pickKind(n);
@@ -121,7 +177,7 @@ const Endless = {
         kinds.push(k);
       }
     }
-    let side = Math.random() < 0.5 ? -1 : 1, i = 0;
+    let side = this.rnd() < 0.5 ? -1 : 1, i = 0;
     for (const k of kinds) { G.spawnQ.push({ kind: k, t: i * 26 + 4, side }); side = -side; i++; }
     if (boss) {
       const key = 'boss' + (G.level + 1), look = LOOKS[G.level][key];
@@ -143,11 +199,12 @@ const Endless = {
     const drop = (kind, dx) => G.pickups.push(new Pickup(kind, W / 2 + dx, 306));
     if (E.lastBoss) {
       G.boss = null; Snd.playMusic(LEVELS[G.level].music, false); Snd.sfx.fanfare();
-      drop('pizza', -30); drop('tape', 30);
+      if (!Daily.has('dry')) drop('pizza', -30);
+      drop('tape', 30);
       if (n % 10 === 0) drop('life', 0);
       E.rest = 150;
     } else {
-      if (p.hp < 60 || n % 3 === 0) drop(p.hp < 40 ? 'pizza' : 'soda', 0);
+      if (!Daily.has('dry') && (p.hp < 60 || n % 3 === 0)) drop(p.hp < 40 ? 'pizza' : 'soda', 0);
       E.rest = 50;
     }
     if (n >= 10) Ach.unlock('endless10');

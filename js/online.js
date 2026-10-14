@@ -9,12 +9,13 @@ const Online = {
     const q = new URLSearchParams(location.search).get('api'); if (q) return q;
     return /netlify\.app$/.test(location.hostname) ? '/api/scores' : this.PROD;
   },
-  setMode(m) { this.mode = m === 'endless' ? 'endless' : 'arcade'; this.board = null; this.myRank = null; return this.load(); },
+  qs(mode) { return mode === 'endless' ? 'mode=endless' : mode === 'daily' ? 'mode=daily&day=' + Daily.today() : ''; },
+  setMode(m) { this.mode = m === 'endless' || m === 'daily' ? m : 'arcade'; this.board = null; this.myRank = null; return this.load(); },
   async load() {
     this.status = 'loading'; this.error = '';
     const mode = this.mode;
     try {
-      const u = this.url(), r = await fetch(mode === 'endless' ? u + (u.includes('?') ? '&' : '?') + 'mode=endless' : u, { cache: 'no-store' });
+      const u = this.url(), q = this.qs(mode), r = await fetch(q ? u + (u.includes('?') ? '&' : '?') + q : u, { cache: 'no-store' });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const d = await r.json();
       if (mode !== this.mode) return;   // the player switched boards while this one was loading
@@ -22,7 +23,7 @@ const Online = {
     } catch (e) { this.status = 'error'; this.error = 'CLASSEMENT INDISPONIBLE (HORS LIGNE ?)'; }
   },
   async submit(entry) {
-    this.status = 'sending'; this.error = ''; this.myRank = null; this.myEntry = entry; this.mode = entry.mode === 'endless' ? 'endless' : 'arcade'; this.board = null;
+    this.status = 'sending'; this.error = ''; this.myRank = null; this.myEntry = entry; this.mode = entry.mode === 'endless' || entry.mode === 'daily' ? entry.mode : 'arcade'; this.board = null;
     try {
       const r = await fetch(this.url(), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(entry) });
       const d = await r.json().catch(() => ({}));
@@ -46,7 +47,7 @@ function entryName() { return G.entry.chars.map(i => ENTRY_CHARS[i]).join(''); }
 function submitEntry() {
   const name = entryName(); try { localStorage.setItem('veexInitials', name); } catch (e) { /* ignore */ }
   const ent = { name, score: G.score, level: G.level + 1, hero: G.hero, cleared: G.entry.after === 'title' };
-  if (G.mode === 'endless' && G.endless) { ent.mode = 'endless'; ent.wave = G.endless.wave; ent.cleared = false; }
+  if (G.mode === 'endless' && G.endless) { ent.mode = G.daily ? 'daily' : 'endless'; ent.wave = G.endless.wave; ent.cleared = false; if (G.daily) ent.day = G.daily.day; }
   Online.submit(ent);
   G.state = 'board'; G.menuT = 0; G.boardAfter = G.entry.after; Snd.sfx.select(); Input.clear();
 }
@@ -92,8 +93,8 @@ function drawEntry(c) {
 }
 function drawBoardPanel(c, title) {
   c.fillStyle = 'rgba(5,1,15,.82)'; c.fillRect(0, 0, W, H);
-  const endless = Online.mode === 'endless';
-  drawText(c, endless ? 'CLASSEMENT ENDLESS' : (title || 'CLASSEMENT MONDIAL'), W / 2, 38, { size: 22, color: '#fff', outline: '#ff2fd0', align: 'center', italic: true, glow: '#ff2fd0', outlineW: 4 });
+  const endless = Online.mode !== 'arcade';
+  drawText(c, Online.mode === 'daily' ? 'CLASSEMENT DU JOUR' : endless ? 'CLASSEMENT ENDLESS' : (title || 'CLASSEMENT MONDIAL'), W / 2, 38, { size: 22, color: '#fff', outline: '#ff2fd0', align: 'center', italic: true, glow: '#ff2fd0', outlineW: 4 });
   const x0 = W / 2 - 170, y0 = 58;
   c.fillStyle = 'rgba(16,6,40,.92)'; c.fillRect(x0, y0, 340, 250); c.strokeStyle = '#8b5cff'; c.lineWidth = 1; c.strokeRect(x0 + 0.5, y0 + 0.5, 339, 249);
   const head = { size: 9, color: '#8b5cff', outline: OUT };

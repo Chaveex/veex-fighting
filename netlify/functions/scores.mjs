@@ -1,13 +1,15 @@
 // VEEXING FORCE online leaderboard (Netlify Function + Netlify Blobs).
-//   GET  /api/scores[?mode=endless]  -> { scores: [{ name, score, level, hero, cleared, wave?, date }] }  (top 20, best first)
-//   POST /api/scores  { name, score, level, hero, cleared, mode?, wave? }  -> { rank, scores }
-// Two separate boards: 'arcade' (default) and 'endless' (infinite waves, `wave` = wave reached).
+//   GET  /api/scores[?mode=endless | ?mode=daily[&day=YYYY-MM-DD]]  -> { scores: [{ name, score, level, hero, cleared, wave?, date }] }  (top 20, best first)
+//   POST /api/scores  { name, score, level, hero, cleared, mode?, wave?, day? }  -> { rank, scores }
+// Boards: 'arcade' (default), 'endless' (infinite waves, `wave` = wave reached) and one 'daily-<day>' per UTC day (endless run with the day's seed).
 // The game also runs from file:// (local double-click), so the API answers any origin (CORS *).
 // Arcade trust model: light validation + one submission per player every 15 s; it is a fun board, not an anti-cheat system.
 import { getStore } from '@netlify/blobs';
 
 const KEEP = 100, SHOW = 20, MAX_SCORE = 5_000_000, COOLDOWN_MS = 15_000;
 const CORS = { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET,POST,OPTIONS', 'access-control-allow-headers': 'content-type' };
+const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+const utcDay = (offset = 0) => new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...CORS, 'content-type': 'application/json', 'cache-control': 'no-store' } });
 
 async function hashIp(ip) {
@@ -21,7 +23,8 @@ export default async (req, context) => {
   const url = new URL(req.url);
 
   if (req.method === 'GET') {
-    const key = url.searchParams.get('mode') === 'endless' ? 'endless' : 'arcade';
+    const m = url.searchParams.get('mode'), d = url.searchParams.get('day');
+    const key = m === 'endless' ? 'endless' : m === 'daily' ? 'daily-' + (DAY_RE.test(d || '') ? d : utcDay()) : 'arcade';
     const board = (await store.get(key, { type: 'json' })) || [];
     return json({ scores: board.slice(0, SHOW) });
   }
@@ -29,7 +32,13 @@ export default async (req, context) => {
 
   let b;
   try { b = await req.json(); } catch { return json({ error: 'json' }, 400); }
-  const key = b.mode === 'endless' ? 'endless' : 'arcade';
+  let key = b.mode === 'endless' ? 'endless' : 'arcade';
+  if (b.mode === 'daily') {
+    const day = String(b.day || '');
+    if (![utcDay(-1), utcDay(), utcDay(1)].includes(day)) return json({ error: 'day' }, 400);   // today +/- 1 (clock skew, midnight)
+    key = 'daily-' + day;
+  }
+  const waved = key !== 'arcade';
   const board = (await store.get(key, { type: 'json' })) || [];
   const name = String(b.name || '').toUpperCase(), score = Number(b.score), level = Number(b.level);
   const hero = b.hero === 'roxy' ? 'roxy' : 'veex', cleared = !!b.cleared;
@@ -37,7 +46,7 @@ export default async (req, context) => {
   if (!Number.isInteger(score) || score <= 0 || score > MAX_SCORE) return json({ error: 'score' }, 400);
   if (!Number.isInteger(level) || level < 1 || level > 4) return json({ error: 'level' }, 400);
   const wave = Number(b.wave);
-  if (key === 'endless' && (!Number.isInteger(wave) || wave < 1 || wave > 999)) return json({ error: 'wave' }, 400);
+  if (waved && (!Number.isInteger(wave) || wave < 1 || wave > 999)) return json({ error: 'wave' }, 400);
 
   const who = await hashIp(context.ip || req.headers.get('x-nf-client-connection-ip') || 'unknown');
   const last = await store.get('rl/' + who, { type: 'json' });
@@ -45,7 +54,7 @@ export default async (req, context) => {
   await store.setJSON('rl/' + who, { t: Date.now() });
 
   const entry = { name, score, level, hero, cleared, date: new Date().toISOString().slice(0, 10) };
-  if (key === 'endless') entry.wave = wave;
+  if (waved) entry.wave = wave;
   board.push(entry);
   board.sort((a, c) => c.score - a.score);
   const rank = board.indexOf(entry) + 1;
