@@ -39,6 +39,14 @@ const KINDS = {
       { id: 'kick', wt: 1, range: 38, st: 22, ac: 4, rc: 26, dmg: 7, x0: 0, x1: 42, z0: 0, z1: 16, kb: 4, lift: 2.4, hs: 3, shake: 2, pw: 'low', lunge: 1.2 }
     ]
   },
+  // big thrower: lifts a heavy object (barrel / crate / tire / unit) over his head and lobs it in an arc onto the hero's position
+  brute: {
+    hp: 76, spd: 0.8, hw: 14, scale: 1.45, score: 320, keepDist: 215, coolMin: 70, coolMax: 120, drop: 0.4, armor: true,
+    attacks: [
+      { id: 'lob', wt: 1, type: 'lob', minR: 110, range: 400, st: 44, ac: 2, rc: 48, pw: 'arms_up', warn: true, obj: 'object', dmg: 15, blast: 40 },
+      { id: 'smack', wt: 1, range: 46, st: 22, ac: 4, rc: 26, dmg: 12, x0: 0, x1: 58, z0: 16, z1: 84, kb: 6, lift: 3.5, hs: 5, shake: 4, pw: 'hay', lunge: 2, warn: true, armorAtk: true }
+    ]
+  },
   // ---------------- bosses ----------------
   boss1: {
     boss: true, hp: 430, spd: 0.95, hw: 15, scale: 1.55, score: 2000, poiseMax: 55, engage: 46, phases: [0.5],
@@ -119,6 +127,12 @@ class Enemy extends Fighter {
     this.acd = {}; this.beams = []; this.invulT = 0;
     this.moving = false; this.flip = Math.random() < 0.5 ? 1 : -1; this.sway = rand(6);
     this.score = d.score || 100;
+    this.weapon = null;
+  }
+  // carry a weapon (js/weapons.js): one more melee / lob attack, drawn in the hand, dropped when K.O.
+  arm(id) {
+    const d = KINDS[this.kind], a = Weapons.enemyAtk(id);
+    this.weapon = id; this.def = Object.assign({}, d, { attacks: d.attacks.concat([a]) });
   }
   get spdMul() { return 1 + this.phase * 0.14; }
   isWinding() { return this.state === 'windup'; }
@@ -281,7 +295,7 @@ class Enemy extends Fighter {
     this.moving = Math.abs(vx) + Math.abs(this.vy) > 0.2;
     if (this.cool <= 0) {
       if (adx < 44 && ady < 14) return this.startAttack(a[1]);
-      if (ady < 14 && adx > a[0].minR && adx < a[0].range) return this.startAttack(a[0]);
+      if ((ady < 14 || a[0].type === 'lob') && adx > a[0].minR && adx < a[0].range) return this.startAttack(a[0]);
     }
   }
   pickAttack(adx, ady) {
@@ -295,6 +309,7 @@ class Enemy extends Fighter {
       switch (a.type) {
         case 'dash': valid = adx >= a.minR && adx <= a.range && ady < 12; break;
         case 'proj': case 'wave': valid = adx >= a.minR && adx <= a.range && ady < 16; break;
+        case 'lob': valid = adx >= a.minR && adx <= a.range && ady < 60; break;
         case 'leap': case 'tp': valid = adx >= a.minR && adx <= a.range; break;
         case 'beam': valid = true; break;
         case 'summon': valid = G.enemies.length < 5; break;
@@ -362,6 +377,7 @@ class Enemy extends Fighter {
         Snd.sfx.throw_(); if (a.type === 'wave') { FX.addShake(4); Snd.sfx.land(); }
         break;
       }
+      case 'lob': Weapons.enemyLob(this, a); break;
       case 'beam': {
         for (const b of G.beams) if (b.owner === undefined) { b.owner = this; }
         Snd.sfx.laserFire(); FX.addShake(3);
@@ -409,7 +425,7 @@ class Enemy extends Fighter {
         if (t > a.ac) { this.leapImpact(); }
         return;
       }
-      case 'proj': case 'wave': case 'beam': case 'summon':
+      case 'proj': case 'wave': case 'beam': case 'summon': case 'lob':
         if (t >= a.ac) this.finishAttack();
         return;
       default: {
@@ -446,7 +462,10 @@ class Enemy extends Fighter {
   resolveHit(a) {
     const p = G.player, dir = a.both ? sgn(p.x - this.x) : this.facing;
     this.atkHit = true;
-    if (p.hurtBy(a.dmg, dir, a.kb || 3, a.lift || 0, this)) G.onPlayerHit(this, a, dir);
+    if (p.hurtBy(a.dmg, dir, a.kb || 3, a.lift || 0, this)) {
+      G.onPlayerHit(this, a, dir);
+      if (a.shock && p.hp > 0) { p.stunT = Math.max(p.stunT, 38); p.state = 'hurt'; Weapons.shockFx(p); }   // taser: the hero is stunned
+    }
   }
 
   // ---------------- being hit ----------------
@@ -496,16 +515,16 @@ class Enemy extends Fighter {
         return idlePose(t + this.id * 13, this.enemyStance());
       }
       case 'windup': {
-        const w = POSES[a.pw + '_w'] || POSES.stance, k = easeOut(clamp(this.stT / a.st, 0, 1));
+        const w = POSES[a.pw + '_w'] || (a.pw === 'arms_up' ? POSES.arms_up : POSES.stance), k = easeOut(clamp(this.stT / a.st, 0, 1));
         return lerpPose(this.enemyStance(), w, k);
       }
       case 'attack': {
-        const s = POSES[a.pw + '_s'] || POSES.spin_s;
-        const w = POSES[a.pw + '_w'] || POSES.stance;
+        const s = POSES[a.pw + '_s'] || (a.type === 'lob' ? POSES.throw_s : POSES.spin_s);
+        const w = POSES[a.pw + '_w'] || (a.pw === 'arms_up' ? POSES.arms_up : POSES.stance);
         return lerpPose(w, s, clamp((this.stT + 1) / 2, 0, 1));
       }
       case 'recover': {
-        const s = POSES[a.pw + '_s'] || POSES.spin_s;
+        const s = POSES[a.pw + '_s'] || (a.type === 'lob' ? POSES.throw_s : POSES.spin_s);
         return lerpPose(s, this.enemyStance(), easeInOut(clamp(this.stT / (a.rc * 0.9), 0, 1)));
       }
       case 'hurt': return this.stT < 6 ? POSES.hurt2 : POSES.hurt;
@@ -575,6 +594,12 @@ class Enemy extends Fighter {
       if (this.flash > 0) Rig.draw(c, j, this.style, x, y, this.facing, Object.assign({}, o, { flat: '#fff' }));
     }
     c.globalAlpha = 1;
+    if (this.weapon && this.alpha > 0.3) Weapons.drawHeld(c, camX, this);
+    if (this.state === 'windup' && this.atk && this.atk.type === 'lob' && this.atk.obj !== 'grenade') {   // the BRUTE hoists the object over his head
+      const k = easeOut(clamp(this.stT / this.atk.st, 0, 1)), oy = y - this.hh * (0.5 + 0.62 * k), os = this.style.scale / EU * 0.9;
+      c.save(); c.translate(x, oy); c.scale(os, os); c.rotate(Math.sin(this.t * 0.9) * 0.05 * k);
+      drawLobObj(c, LOB_OBJ[G.level % LOB_OBJ.length], this.t); c.restore();
+    }
     if (this.state === 'windup' && (this.atk.warn || this.boss)) {
       // red danger pulse at the feet
       c.globalCompositeOperation = 'lighter'; c.globalAlpha = 0.25 + 0.2 * Math.sin(this.t * 0.9);

@@ -1331,6 +1331,222 @@
     "h": 128
    },
    "duration": 70
+  },
+  "wchop_w0": {
+   "frame": {
+    "x": 1024,
+    "y": 1792,
+    "w": 128,
+    "h": 128
+   },
+   "duration": 70
+  },
+  "wchop_w1": {
+   "frame": {
+    "x": 1152,
+    "y": 1792,
+    "w": 128,
+    "h": 128
+   },
+   "duration": 70
+  },
+  "wchop_s0": {
+   "frame": {
+    "x": 0,
+    "y": 1920,
+    "w": 128,
+    "h": 128
+   },
+   "duration": 60
+  },
+  "wchop_r0": {
+   "frame": {
+    "x": 128,
+    "y": 1920,
+    "w": 128,
+    "h": 128
+   },
+   "duration": 70
+  },
+  "wchop_r1": {
+   "frame": {
+    "x": 256,
+    "y": 1920,
+    "w": 128,
+    "h": 128
+   },
+   "duration": 70
+  },
+  "wstab_w0": {
+   "frame": {
+    "x": 384,
+    "y": 1920,
+    "w": 128,
+    "h": 128
+   },
+   "duration": 70
+  },
+  "wstab_s0": {
+   "frame": {
+    "x": 512,
+    "y": 1920,
+    "w": 128,
+    "h": 128
+   },
+   "duration": 60
+  },
+  "wstab_r0": {
+   "frame": {
+    "x": 640,
+    "y": 1920,
+    "w": 128,
+    "h": 128
+   },
+   "duration": 70
+  },
+  "wstab_r1": {
+   "frame": {
+    "x": 768,
+    "y": 1920,
+    "w": 128,
+    "h": 128
+   },
+   "duration": 70
+  },
+  "wspin_w0": {
+   "frame": {
+    "x": 896,
+    "y": 1920,
+    "w": 128,
+    "h": 128
+   },
+   "duration": 70
+  },
+  "wspin_w1": {
+   "frame": {
+    "x": 1024,
+    "y": 1920,
+    "w": 128,
+    "h": 128
+   },
+   "duration": 70
+  },
+  "wspin_w2": {
+   "frame": {
+    "x": 1152,
+    "y": 1920,
+    "w": 128,
+    "h": 128
+   },
+   "duration": 70
+  },
+  "wspin_s0": {
+   "frame": {
+    "x": 0,
+    "y": 2048,
+    "w": 128,
+    "h": 128
+   },
+   "duration": 60
+  },
+  "wspin_r0": {
+   "frame": {
+    "x": 128,
+    "y": 2048,
+    "w": 128,
+    "h": 128
+   },
+   "duration": 70
+  },
+  "wspin_r1": {
+   "frame": {
+    "x": 256,
+    "y": 2048,
+    "w": 128,
+    "h": 128
+   },
+   "duration": 70
+  },
+  "wbaton_w0": {
+   "frame": {
+    "x": 384,
+    "y": 2048,
+    "w": 128,
+    "h": 128
+   },
+   "duration": 70
+  },
+  "wbaton_s0": {
+   "frame": {
+    "x": 512,
+    "y": 2048,
+    "w": 128,
+    "h": 128
+   },
+   "duration": 60
+  },
+  "wbaton_r0": {
+   "frame": {
+    "x": 640,
+    "y": 2048,
+    "w": 128,
+    "h": 128
+   },
+   "duration": 70
+  },
+  "wbaton_r1": {
+   "frame": {
+    "x": 768,
+    "y": 2048,
+    "w": 128,
+    "h": 128
+   },
+   "duration": 70
+  },
+  "whurl_w0": {
+   "frame": {
+    "x": 896,
+    "y": 2048,
+    "w": 128,
+    "h": 128
+   },
+   "duration": 70
+  },
+  "whurl_w1": {
+   "frame": {
+    "x": 1024,
+    "y": 2048,
+    "w": 128,
+    "h": 128
+   },
+   "duration": 70
+  },
+  "whurl_s0": {
+   "frame": {
+    "x": 1152,
+    "y": 2048,
+    "w": 128,
+    "h": 128
+   },
+   "duration": 60
+  },
+  "whurl_r0": {
+   "frame": {
+    "x": 0,
+    "y": 2176,
+    "w": 128,
+    "h": 128
+   },
+   "duration": 70
+  },
+  "whurl_r1": {
+   "frame": {
+    "x": 128,
+    "y": 2176,
+    "w": 128,
+    "h": 128
+   },
+   "duration": 70
   }
  },
  "meta": {
@@ -1339,7 +1555,7 @@
   "look": "roxy",
   "size": {
    "w": 1280,
-   "h": 1920
+   "h": 2304
   },
   "anchor": {
    "x": 64,
@@ -1549,6 +1765,36 @@
     "name": "rushn",
     "from": 144,
     "to": 147,
+    "direction": 0
+   },
+   {
+    "name": "wchop",
+    "from": 148,
+    "to": 152,
+    "direction": 0
+   },
+   {
+    "name": "wstab",
+    "from": 153,
+    "to": 156,
+    "direction": 0
+   },
+   {
+    "name": "wspin",
+    "from": 157,
+    "to": 162,
+    "direction": 0
+   },
+   {
+    "name": "wbaton",
+    "from": 163,
+    "to": 166,
+    "direction": 0
+   },
+   {
+    "name": "whurl",
+    "from": 167,
+    "to": 171,
     "direction": 0
    }
   ],
@@ -2086,6 +2332,89 @@
      0.55
     ],
     "ph": "wsrr"
+   },
+   "wchop": {
+    "f": [
+     "wchop_w0",
+     "wchop_w1",
+     "wchop_s0",
+     "wchop_r0",
+     "wchop_r1"
+    ],
+    "w": [
+     0.45,
+     0.55,
+     1,
+     0.5,
+     0.5
+    ],
+    "ph": "wwsrr"
+   },
+   "wstab": {
+    "f": [
+     "wstab_w0",
+     "wstab_s0",
+     "wstab_r0",
+     "wstab_r1"
+    ],
+    "w": [
+     1,
+     1,
+     0.5,
+     0.5
+    ],
+    "ph": "wsrr"
+   },
+   "wspin": {
+    "f": [
+     "wspin_w0",
+     "wspin_w1",
+     "wspin_w2",
+     "wspin_s0",
+     "wspin_r0",
+     "wspin_r1"
+    ],
+    "w": [
+     0.3,
+     0.35,
+     0.35,
+     1,
+     0.5,
+     0.5
+    ],
+    "ph": "wwwsrr"
+   },
+   "wbaton": {
+    "f": [
+     "wbaton_w0",
+     "wbaton_s0",
+     "wbaton_r0",
+     "wbaton_r1"
+    ],
+    "w": [
+     1,
+     1,
+     0.5,
+     0.5
+    ],
+    "ph": "wsrr"
+   },
+   "whurl": {
+    "f": [
+     "whurl_w0",
+     "whurl_w1",
+     "whurl_s0",
+     "whurl_r0",
+     "whurl_r1"
+    ],
+    "w": [
+     0.5,
+     0.5,
+     1,
+     0.5,
+     0.5
+    ],
+    "ph": "wwsrr"
    }
   }
  }

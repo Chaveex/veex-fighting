@@ -1,0 +1,217 @@
+{
+ "frames": {
+  "bar_0": {
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 64,
+    "h": 48
+   },
+   "duration": 80
+  },
+  "knife_0": {
+   "frame": {
+    "x": 64,
+    "y": 0,
+    "w": 64,
+    "h": 48
+   },
+   "duration": 80
+  },
+  "nunchaku_0": {
+   "frame": {
+    "x": 128,
+    "y": 0,
+    "w": 64,
+    "h": 48
+   },
+   "duration": 80
+  },
+  "nunchaku_1": {
+   "frame": {
+    "x": 192,
+    "y": 0,
+    "w": 64,
+    "h": 48
+   },
+   "duration": 80
+  },
+  "nunchaku_2": {
+   "frame": {
+    "x": 256,
+    "y": 0,
+    "w": 64,
+    "h": 48
+   },
+   "duration": 80
+  },
+  "nunchaku_3": {
+   "frame": {
+    "x": 320,
+    "y": 0,
+    "w": 64,
+    "h": 48
+   },
+   "duration": 80
+  },
+  "taser_0": {
+   "frame": {
+    "x": 384,
+    "y": 0,
+    "w": 64,
+    "h": 48
+   },
+   "duration": 80
+  },
+  "taser_1": {
+   "frame": {
+    "x": 448,
+    "y": 0,
+    "w": 64,
+    "h": 48
+   },
+   "duration": 80
+  },
+  "taser_2": {
+   "frame": {
+    "x": 0,
+    "y": 48,
+    "w": 64,
+    "h": 48
+   },
+   "duration": 80
+  },
+  "taser_3": {
+   "frame": {
+    "x": 64,
+    "y": 48,
+    "w": 64,
+    "h": 48
+   },
+   "duration": 80
+  },
+  "grenade_0": {
+   "frame": {
+    "x": 128,
+    "y": 48,
+    "w": 64,
+    "h": 48
+   },
+   "duration": 80
+  },
+  "barrel_0": {
+   "frame": {
+    "x": 192,
+    "y": 48,
+    "w": 64,
+    "h": 48
+   },
+   "duration": 80
+  },
+  "crate_0": {
+   "frame": {
+    "x": 256,
+    "y": 48,
+    "w": 64,
+    "h": 48
+   },
+   "duration": 80
+  },
+  "tire_0": {
+   "frame": {
+    "x": 320,
+    "y": 48,
+    "w": 64,
+    "h": 48
+   },
+   "duration": 80
+  },
+  "unit_0": {
+   "frame": {
+    "x": 384,
+    "y": 48,
+    "w": 64,
+    "h": 48
+   },
+   "duration": 80
+  },
+  "unit_1": {
+   "frame": {
+    "x": 448,
+    "y": 48,
+    "w": 64,
+    "h": 48
+   },
+   "duration": 80
+  }
+ },
+ "meta": {
+  "app": "aseprite (tools/ase/weapons.lua)",
+  "image": "weapons.png",
+  "size": {
+   "w": 512,
+   "h": 96
+  },
+  "anchor": {
+   "x": 16,
+   "y": 24
+  },
+  "scale": 1,
+  "frameTags": [
+   {
+    "name": "bar",
+    "from": 0,
+    "to": 0,
+    "direction": 0
+   },
+   {
+    "name": "knife",
+    "from": 1,
+    "to": 1,
+    "direction": 0
+   },
+   {
+    "name": "nunchaku",
+    "from": 2,
+    "to": 5,
+    "direction": 0
+   },
+   {
+    "name": "taser",
+    "from": 6,
+    "to": 9,
+    "direction": 0
+   },
+   {
+    "name": "grenade",
+    "from": 10,
+    "to": 10,
+    "direction": 0
+   },
+   {
+    "name": "barrel",
+    "from": 11,
+    "to": 11,
+    "direction": 0
+   },
+   {
+    "name": "crate",
+    "from": 12,
+    "to": 12,
+    "direction": 0
+   },
+   {
+    "name": "tire",
+    "from": 13,
+    "to": 13,
+    "direction": 0
+   },
+   {
+    "name": "unit",
+    "from": 14,
+    "to": 15,
+    "direction": 0
+   }
+  ]
+ }
+}

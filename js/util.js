@@ -21,7 +21,7 @@ const easeInOut = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 const dist2 = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
 
 // ---------- input (keyboard + gamepad, with buffering) ----------
-const ACTIONS = ['left', 'right', 'up', 'down', 'jump', 'punch', 'kick', 'knee', 'dash', 'crouch', 'special', 'pause', 'confirm', 'title'];
+const ACTIONS = ['left', 'right', 'up', 'down', 'jump', 'punch', 'kick', 'knee', 'dash', 'crouch', 'special', 'pause', 'confirm', 'title', 'pickup'];
 const Input = {
   BUF: 12,
   map: {
@@ -29,9 +29,9 @@ const Input = {
     up: ['ArrowUp', 'KeyW'], down: ['ArrowDown', 'KeyS'],
     jump: ['Space', 'KeyU'], punch: ['KeyJ', 'KeyF'], kick: ['KeyK', 'KeyG'], knee: ['KeyL', 'KeyH'],
     dash: ['ShiftLeft', 'ShiftRight', 'KeyE', 'KeyO'], crouch: ['KeyC', 'ControlLeft', 'ControlRight', 'KeyX'],
-    special: ['KeyR', 'KeyI'], pause: ['Escape', 'KeyP'], confirm: ['Enter', 'Space', 'KeyJ'], title: ['KeyT']
+    special: ['KeyR', 'KeyI'], pause: ['Escape', 'KeyP'], confirm: ['Enter', 'Space', 'KeyJ'], title: ['KeyT'], pickup: ['KeyV', 'KeyQ']
   },
-  padMap: { jump: [0], knee: [1], punch: [2], kick: [3], crouch: [4, 6], dash: [5, 7], special: [10, 11, 8], pause: [9], confirm: [0, 9], title: [8],
+  padMap: { jump: [0], knee: [1], punch: [2], kick: [3], crouch: [4], pickup: [6], dash: [5, 7], special: [10, 11, 8], pause: [9], confirm: [0, 9], title: [8],
             up: [12], down: [13], left: [14], right: [15] },
   codeDown: {}, edge: {}, held: {}, buf: {}, padPrev: {}, usingPad: false, padTap: {}, padBtnPrev: [],
   init() {

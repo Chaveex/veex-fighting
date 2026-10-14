@@ -184,6 +184,7 @@ function spawnEnemy(kind, x, y, opts) {
   const looks = LOOKS[G.level];
   const look = looks[kind] || LOOKS[0][kind];
   const e = new Enemy(kind, look, x, y);
+  const wp = Weapons.rollEnemy(kind); if (wp) e.arm(wp);   // some thugs carry a weapon
   if (opts && opts.flash) { e.entered = true; e.invulT = 24; FX.ring(x, y - 30, 4, 4, 16, '#ff2fd0', 2); FX.glow(x, y - 30, 30, 8, '#fff'); }
   G.enemies.push(e);
   if (e.boss) G.boss = e;
@@ -195,6 +196,7 @@ const curStop = () => G.mode === 'endless' ? ENDLESS_STOP : LEVELS[G.level].stop
 function lockStop() {
   const L = LEVELS[G.level], stop = curStop();
   G.locked = true; G.waveIdx = 0;
+  if (!stop.endless) Weapons.onArena(stop.boss ? 0.15 : 0.3);   // a weapon falls into the arena
   G.bounds = { minX: G.camX, maxX: G.camX + W };
   if (stop.endless) return;   // ENDLESS: Endless.step() drives the waves
   if (stop.boss) {
@@ -346,6 +348,7 @@ function onKill(e, dir, hx, hy) {
     if (Math.random() < d) kind = pick(['soda', 'soda', 'pizza', 'tape']);
     if (G.player.hp < 35 && Math.random() < 0.25) kind = 'pizza';
     if (kind) G.pickups.push(new Pickup(kind, e.x, e.y));
+    if (e.weapon && Weapons.items() < 3) G.pickups.push(new WeaponItem(e.weapon, e.x, e.y, Math.max(2, Math.ceil(WEAPONS[e.weapon].uses * 0.6)), { t: -10 }));   // armed thug: he drops it
   } else {
     G.pickups.push(new Pickup('pizza', e.x - 20, e.y), new Pickup('tape', e.x + 20, e.y));
   }
@@ -576,6 +579,7 @@ function drawHUD(c) {
     c.fillStyle = fill >= 1 ? '#27f0ff' : '#1a7a99'; c.fillRect(-4, 4 - 8 * fill, 8, 8 * fill);
     c.restore();
   }
+  if (p.weapon) Weapons.drawHud(c, p);
   drawText(c, 'x' + G.lives, 104, 53, { size: 10, color: '#fff', outline: OUT });
   drawText(c, '1UP', 118, 53, { size: 9, color: '#3dffa0', outline: OUT });
   // score
@@ -749,8 +753,8 @@ function drawTitle(c) {
   const chips = [[pad ? 'SELECT' : 'C', 'CODE'], [pad ? 'Y' : 'L', 'CLASSEMENT'], [pad ? 'X' : 'S', 'SUCCES'], [pad ? 'RB' : 'B', 'MEDAILLES'], [pad ? 'LB' : 'O', 'OPTIONS']];
   chips.forEach((m, i) => chip(210 + 42 + i * 84, 233, m[0], m[1]));
   // controls panel
-  const rows = pad ? [['STICK / CROIX', 'BOUGER'], ['X', 'POING'], ['Y', 'PIED'], ['B', 'GENOU'], ['A', 'SAUT'], ['RB / RT', 'DASH'], ['LB / LT', 'SE BAISSER'], ['L3 / R3', 'FURY']]
-    : [['FLECHES / ZQSD', 'BOUGER'], ['J', 'POING'], ['K', 'PIED'], ['L', 'GENOU'], ['ESPACE', 'SAUT'], ['SHIFT', 'DASH'], ['C', 'SE BAISSER'], ['R', 'FURY']];
+  const rows = pad ? [['STICK / CROIX', 'BOUGER'], ['X', 'POING'], ['Y', 'PIED'], ['B', 'GENOU'], ['A', 'SAUT'], ['RB / RT', 'DASH'], ['LB / LT', 'SE BAISSER'], ['L3 / R3  /  LT', 'FURY  /  ARME']]
+    : [['FLECHES / ZQSD', 'BOUGER'], ['J', 'POING'], ['K', 'PIED'], ['L', 'GENOU'], ['ESPACE', 'SAUT'], ['SHIFT', 'DASH'], ['C', 'SE BAISSER'], ['R  /  V', 'FURY  /  ARME']];
   const py0 = 244, ph0 = 108;
   c.fillStyle = 'rgba(10,0,30,.78)'; c.fillRect(mx, py0, mw, ph0);
   c.strokeStyle = '#8b5cff'; c.lineWidth = 1; c.strokeRect(mx + 0.5, py0 + 0.5, mw - 1, ph0 - 1);
@@ -793,9 +797,9 @@ function drawScreen(c) {
     case 'pause': {
       drawPanel(c, 'PAUSE', padUI()
         ? [['DEPLACEMENT', 'STICK / CROIX'], ['POING / PIED / GENOU', 'X / Y / B'], ['SAUT  /  DASH', 'A  /  RB - RT'], ['SE BAISSER', 'LB - LT  (esquive les coups hauts)'],
-          ['FURY', 'L3 / R3 (jauge pleine)'], ['CLINCH', 'fonce dedans : B genoux / Y projette'], ['CANCEL', 'DASH ou SAUT apres un coup touche'], ['ESQUIVE PARFAITE', 'DASH au moment de l\'impact'], ['PAUSE', 'START']]
+          ['FURY', 'L3 / R3 (jauge pleine)'], ['ARME', 'LT : ramasser / lancer'], ['CLINCH', 'fonce dedans : B genoux / Y projette'], ['CANCEL', 'DASH ou SAUT apres un coup touche'], ['ESQUIVE PARFAITE', 'DASH au moment de l\'impact'], ['PAUSE', 'START']]
         : [['DEPLACEMENT', 'WASD / ZQSD / FLECHES'], ['POING / PIED / GENOU', 'J / K / L'], ['SAUT  /  DASH', 'ESPACE  /  SHIFT'], ['SE BAISSER', 'C  (esquive les coups hauts)'],
-          ['FURY', 'R (jauge pleine)'], ['CLINCH', 'fonce dedans : L genoux / K projette'], ['CANCEL', 'DASH ou SAUT apres un coup touche'], ['ESQUIVE PARFAITE', 'DASH au moment de l\'impact'], ['SON / PLEIN ECRAN', 'M / F']],
+          ['FURY', 'R (jauge pleine)'], ['ARME', 'V : ramasser / lancer'], ['CLINCH', 'fonce dedans : L genoux / K projette'], ['CANCEL', 'DASH ou SAUT apres un coup touche'], ['ESQUIVE PARFAITE', 'DASH au moment de l\'impact'], ['SON / PLEIN ECRAN', 'M / F']],
         K('ENTREE : REPRENDRE   -   O : OPTIONS   -   T : TITRE', 'START / A : REPRENDRE   -   Y : OPTIONS   -   SELECT : TITRE'));
       break;
     }
@@ -954,6 +958,7 @@ function loop(ts) {
   Input.poll();
   Snd.loopsActive(G.state === 'play');
   if (G.state === 'play' && LEVELS[G.level] && LEVELS[G.level].theme === 'miami') Snd.loopStart('waves', 'amb_waves', 0.3);   // Vice: surf bed (sfx2, ducked by the announcer)
+  else Snd.loopStop('waves', 0.5);   // left the Vice stage (ENDLESS changes theme without a startLevel): the surf must not follow us to the cyber tower
   if (G.bot) { botControl(); if (G.frame % 30 === 0) document.title = `L${G.level + 1} stop${G.stopIdx} f${G.frame} ${G.state} hp${G.player ? Math.round(G.player.hp) : 0} sc${G.score} lives${G.lives}`; }
   if (Input.codeDown['KeyM'] && !G.mHeld && !G.codeEntry) { G.muted = Snd.toggleMute(); }
   G.mHeld = !!Input.codeDown['KeyM'];
@@ -1001,6 +1006,8 @@ function boot() {
       startGame(clamp(parseInt(q.get('level'), 10) - 1, 0, LEVELS.length - 1), true);
       if (q.has('stop')) jumpToStop(parseInt(q.get('stop'), 10));
     }
+    if (G.player && q.has('weapon') && WEAPONS[q.get('weapon')]) G.player.weapon = { id: q.get('weapon'), uses: WEAPONS[q.get('weapon')].uses };   // dev: ?level=1&weapon=bar&spawn=brute&arm=knife
+    if (G.player && q.has('spawn')) { const e = spawnEnemy(q.get('spawn'), G.camX + 420, 300, { flash: true }); if (q.has('arm') && WEAPONS[q.get('arm')]) e.arm(q.get('arm')); }
     requestAnimationFrame(loop);
   });
   window.G = G;

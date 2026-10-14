@@ -100,7 +100,7 @@ const Daily = {
     this._memo = { day, mods };
     return mods;
   },
-  make(day) { return { day, mods: this.mods(day).map(m => m.id), rng: this.rng(this.seed(day) ^ 0x9E3779B9) }; },
+  make(day) { return { day, mods: this.mods(day).map(m => m.id), rng: this.rng(this.seed(day) ^ 0x9E3779B9), wrng: this.rng(this.seed(day) ^ 0x51ED270B) }; },
   has(id) { return !!(G.daily && G.daily.mods.includes(id)); },
   names(day) { return this.mods(day).map(m => m.name).join(' + '); },
   endRun() {
@@ -142,6 +142,7 @@ const Endless = {
       .concat((L.plates || []).slice(0, 2).map((o, i) => new ElectroPlate({ x: [150, 480][i], y: o.y, delay: o.delay }, L.plateTiming)));
   },
   theme(li) {
+    Snd.stopLoops();   // jets / buzzes of the old furniture
     G.level = li; BG.init(li); this.layout(li);
     Snd.playMusic(LEVELS[li].music, false);
   },
@@ -151,6 +152,7 @@ const Endless = {
     if (n >= 3) pool.push(['thrower', 3]);
     if (n >= 4) pool.push(['rusher', 3]);
     if (n >= 5) pool.push(['heavy', 2 + Math.floor(n / 5)]);
+    if (n >= 6) pool.push(['brute', 2 + Math.floor(n / 8)]);
     let r = this.rnd() * pool.reduce((s, p) => s + p[1], 0);
     for (const p of pool) { if ((r -= p[1]) < 0) return p[0]; }
     return 'grunt';
@@ -161,6 +163,7 @@ const Endless = {
     if (newTheme) this.theme(th);
     G.hpMul = Math.min(3, 1 + (n - 1) * 0.05); G.dmgMul = Math.min(2, 1 + (n - 1) * 0.025);
     G.maxTok = n < 4 ? 2 : 3;
+    Weapons.onArena(boss ? 0.3 : n % 2 === 1 ? 0.22 : 0.05);   // weapons fall in the arena
     if (Daily.has('tank')) G.hpMul *= 1.5;
     if (Daily.has('glass')) G.dmgMul *= 2;
     if (Daily.has('horde')) G.maxTok++;
@@ -173,7 +176,7 @@ const Endless = {
       let heavies = 0;
       for (let i = 0; i < count; i++) {
         let k = this.pickKind(n);
-        if (k === 'heavy' && ++heavies > heavyCap) k = 'grunt';
+        if ((k === 'heavy' || k === 'brute') && ++heavies > heavyCap) k = 'grunt';
         kinds.push(k);
       }
     }

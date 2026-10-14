@@ -427,7 +427,7 @@ if __name__ == '__main__':
         js.append("  %s: { img: 'data:image/png;base64,%s', json: %s }," % (S.name, base64.b64encode(buf.getvalue()).decode(), json.dumps(data)))
         previews.append((S.name, sheet)); print(S.name, len(S.frames), 'frames', info[2])
     pl, pll = build_plate()
-    for name, (sheet, data) in (('bin', build_bin()), ('pickups', build_pickups()), ('plate', pl), ('plate_light', pll), ('projectiles', build_ase('projectiles', 'projectiles.lua', 8, (32, 24))),
+    for name, (sheet, data) in (('bin', build_bin()), ('pickups', build_pickups()), ('plate', pl), ('plate_light', pll), ('projectiles', build_ase('projectiles', 'projectiles.lua', 8, (32, 24))), ('weapons', build_ase('weapons', 'weapons.lua', 8, (16, 24))),
                                  ('title_bg', build_ase('title_bg', 'title_bg.lua', 4, (0, 0))), ('logo', build_ase('logo', 'logo.lua', 4, (165, 0)))):
         buf = io.BytesIO(); sheet.save(buf, 'PNG', optimize=True)
         js.append("  %s: { img: 'data:image/png;base64,%s', json: %s }," % (name, base64.b64encode(buf.getvalue()).decode(), json.dumps(data)))

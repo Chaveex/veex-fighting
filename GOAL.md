@@ -51,3 +51,7 @@ Principe : rétention par **maîtrise et fierté**, pas par culpabilité.
 5. Héros 3 ou co-op (gros chantier, gros impact)
 
 Points d'entrée code : `js/game.js` (HUD, écran résumé), `netlify/functions/scores.mjs` (classement du jour).
+
+## Fait hors liste
+
+- ✅ Armes ramassables (barre à mine commune + variante par niveau), ennemis armés, ennemi BRUTE qui lance des objets en cloche (voir README).

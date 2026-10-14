@@ -169,7 +169,7 @@ class Player extends Fighter {
     this.chainStep = -1; this.chainTimer = 0; this.dashT = 0; this.dashWin = 0; this.dashDX = 1; this.dashDY = 0;
     this.iframes = 0; this.invul = 0; this.cancelBonus = 0; this.airAtk = 0; this.landLag = 0; this.dashCd = 0;
     this.airDash = false; this.dead = false; this.stunT = 0; this.bounced = false; this.specialT = 0; this.lastCancel = 0;
-    this.clinchE = null; this.clinchT = 0; this.clinchKnees = 0; this.grabT = 0; this.grabE = null; this.throwT = 0; this.throwDir = 1;
+    this.weapon = null; this.clinchE = null; this.clinchT = 0; this.clinchKnees = 0; this.grabT = 0; this.grabE = null; this.throwT = 0; this.throwDir = 1;
   }
   get crouching() { return this.state === 'crouch'; }
   get hurtHeight() {
@@ -264,6 +264,7 @@ class Player extends Fighter {
     if (this.landLag > 0) { this.vx *= 0.5; return; }
     if (Input.peek('special') && this.meter >= 100) { Input.eat('special'); return this.startSpecial(); }
     if (Input.peek('dash') && this.canDash()) { Input.eat('dash'); return this.startDash(ax, ay); }
+    if (Input.peek('pickup') && Weapons.grabKey(this)) { Input.eat('pickup'); return; }   // pick up / throw a weapon (js/weapons.js)
     if (Input.eat('jump')) return this.jump(ax);
     for (const b of ['punch', 'kick', 'knee']) if (Input.eat(b)) return this.startAttack(b, ax);
     if (crouch) { this.state = 'crouch'; this.vx *= 0.6; this.vy *= 0.6; if (ax) this.facing = ax; }
@@ -413,6 +414,7 @@ class Player extends Fighter {
 
   startAttack(btn, ax) {
     const air = this.z > 2;
+    if (btn === 'punch' && this.weapon && !air && !Input.held.crouch) return Weapons.start(this, ax);   // armed: PUNCH swings the weapon (js/weapons.js)
     let mv, chained = false;
     if (air) mv = this.mvs.AIR[btn];
     else if (this.dashWin > 0) mv = this.mvs.DASH[btn];
@@ -443,6 +445,7 @@ class Player extends Fighter {
     else this.vx *= 0.7;
     if (!mv.air) this.vy *= 0.6;
     if (mv.air && t > rs && this.vz > 0) this.vz *= 0.8;
+    if (mv.toss && t === mv.st) Weapons.toss(this);
     if (mv.clinch) {   // knee in the clinch: direct hit on the held enemy, then back to the clinch
       if (this.clinchE) this.placeHeld(this.clinchE, 0.5);
       if (t === mv.st) this.clinchStrike(mv);
@@ -460,7 +463,7 @@ class Player extends Fighter {
       }
       for (const pr of G.props) {           // level props: bins, hydrants, cabinets, bumpers, cars, balls, servers
         if (this.hitSet.has(pr) || !pr.breakable()) continue;
-        if (hitTest(this, mv, this.facing, pr.hurtbox())) { this.hitSet.add(pr); this.moveHit = true; this.gain(2, 3); pr.onHit(this, mv, this.facing, mv.w >= 3 ? 2 : 1); }
+        if (hitTest(this, mv, this.facing, pr.hurtbox())) { this.hitSet.add(pr); this.moveHit = true; this.gain(2, 3); pr.onHit(this, mv, this.facing, mv.w >= 3 ? 2 : 1); if (mv.weapon) Weapons.useUp(this); }
       }
       for (const pr of G.projs) {
         if (pr.team === 'enemy' && pr.deflectable && !this.hitSet.has(pr) && Math.abs(pr.y - this.y) < 22 && Math.abs(pr.x - (this.x + this.facing * mv.x1 * 0.5)) < mv.x1 * 0.7 && pr.z + 10 > this.z + mv.z0 && pr.z - 10 < this.z + mv.z1) {
@@ -514,6 +517,7 @@ class Player extends Fighter {
     if (e.juggle > 0) dmg *= Math.max(0.55, 1 - e.juggle * 0.08);
     dmg = Math.round(dmg);
     G.registerHit(this, e, mv, dmg, crit, counter);
+    if (mv.weapon) { if (mv.shock && e.hp > 0) Weapons.shockFx(e); Weapons.useUp(this); }
   }
 
   // ----- special: Muay Thai fury -----
@@ -643,6 +647,7 @@ class Player extends Fighter {
       if (this.flash > 0) Rig.draw(c, j, HERO_STYLE, this.x - camX + shx, this.y - this.z, this.facing, Object.assign({}, o, { flat: '#fff' }));
     }
     c.globalAlpha = 1;
+    if (this.weapon && this.state !== 'special' && !this.dead) Weapons.drawHeld(c, camX, this);
     this.drawTrail(c, camX, this.cancelBonus > 0 ? '#27f0ff' : '#ff9ae9');
     if (this.cancelBonus > 0 && this.t % 3 === 0) FX.sparks(this.x, this.y - this.z - 30, rand(6.3), 6.3, 1, 3, '#27f0ff', 8, 1);
     if (this.state === 'special' && this.tornado) {   // wind rings spiralling around the spin, neon cyan / pink

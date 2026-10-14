@@ -9,6 +9,7 @@ const LOOKS = [
     thrower: { name: 'DJ VINYL', style: S({ jacket: '#3d2a7a', jacketDark: '#2a1a5a', tee1: '#fff', tee2: '#27f0ff', pants: '#111', pants2: '#27f0ff', shoe: '#ff2fd0', wrap: '#27f0ff', head: 'headphones', hat: '#ff2fd0', hair: '#3a2210', skin: '#e0b090', accent: '#27f0ff' }) },
     heavy:   { name: 'BIKER', style: S({ jacket: '#151515', jacketDark: '#000', tee1: '#c33', tee2: '#fff', pants: '#222', pants2: '#555', shoe: '#111', wrap: '#333', head: 'helmet', hat: '#b02020', accent: '#ffe44d', skin: '#c48a68' }) },
     rusher:  { name: 'SKATER', style: S({ jacket: '#3dffa0', jacketDark: '#20c070', tee1: '#fff', tee2: '#111', pants: '#2338b8', pants2: '#fff', shoe: '#ffe44d', wrap: '#111', head: 'beanie', hat: '#ff6a3d', accent: '#3dffa0', skin: '#e2a887' }) },
+    brute:   { name: 'DOCKER', style: S({ jacket: '#6a4a2a', jacketDark: '#4a3018', tee1: '#ddd', tee2: '#6a4a2a', pants: '#2a3a5a', pants2: '#ffe44d', shoe: '#111', wrap: '#ffe44d', head: 'beanie', hat: '#2a2a2a', hair: '#222', skin: '#c48a68', accent: '#ffe44d' }) },
     boss1:   { name: 'BIG BOOMER', style: S({ jacket: '#ff2fd0', jacketDark: '#b0107f', tee1: '#111', tee2: '#27f0ff', pants: '#111', pants2: '#ffe44d', shoe: '#fff', wrap: '#ffe44d', head: 'shades', hair: '#111', skin: '#9c6444', accent: '#ff2fd0', aura: '#ff2fd0', prop: boomboxProp }) }
   },
   { // 2 - GALAXY ARCADE
@@ -17,6 +18,7 @@ const LOOKS = [
     thrower: { name: 'GAMER', style: S({ jacket: '#2a2a3a', jacketDark: '#1a1a26', tee1: '#3dffa0', tee2: '#111', pants: '#3a3a4a', pants2: '#3dffa0', shoe: '#ff2fd0', wrap: '#3dffa0', head: 'visor', hair: '#5a3a1a', skin: '#e8c0a0', accent: '#3dffa0' }) },
     heavy:   { name: 'JOCK', style: S({ jacket: '#e8323c', jacketDark: '#a01020', tee1: '#fff', tee2: '#e8323c', pants: '#fff', pants2: '#e8323c', shoe: '#fff', wrap: '#fff', head: 'cap', hat: '#e8323c', hair: '#c9a24a', skin: '#e2a887', accent: '#ffe44d' }) },
     rusher:  { name: 'MALL RAT', style: S({ jacket: '#ffe44d', jacketDark: '#d9b800', tee1: '#111', tee2: '#ff2fd0', pants: '#8b5cff', pants2: '#fff', shoe: '#27f0ff', wrap: '#8b5cff', head: 'cap', hat: '#27f0ff', hair: '#222', skin: '#a06a48', accent: '#8b5cff' }) },
+    brute:   { name: 'BOUNCER', style: S({ jacket: '#111', jacketDark: '#000', tee1: '#fff', tee2: '#ff2fd0', pants: '#111', pants2: '#ff2fd0', shoe: '#222', wrap: '#ff2fd0', head: 'shades', hair: '#111', skin: '#8a5a3c', accent: '#ff2fd0' }) },
     boss2:   { name: 'LADY LASER', style: S({ jacket: '#27f0ff', jacketDark: '#10a0c0', tee1: '#ff2fd0', tee2: '#fff', pants: '#ff2fd0', pants2: '#27f0ff', shoe: '#fff', wrap: '#ffe44d', head: 'blonde', hat: '#27f0ff', hair: '#ff9ae9', skin: '#f0c0a0', accent: '#27f0ff', aura: '#27f0ff' }) }
   },
   { // 3 - SUNSET BOULEVARD (Miami)
@@ -25,6 +27,7 @@ const LOOKS = [
     thrower: { name: 'SPIKER', style: S({ jacket: '#ff6a3d', jacketDark: '#c04020', tee1: '#fff', tee2: '#ff6a3d', pants: '#27f0ff', pants2: '#ffe44d', shoe: '#fff', wrap: '#fff', head: 'shades', hair: '#e8c060', skin: '#e0a070', accent: '#ffe44d' }) },
     heavy:   { name: 'BODYBUILDER', style: S({ jacket: '#e2a887', jacketDark: '#c08868', tee1: '#e2a887', tee2: '#e2a887', pants: '#ff2fd0', pants2: '#27f0ff', shoe: '#fff', wrap: '#ffe44d', head: 'shades', hair: '#d9b040', skin: '#d08a60', accent: '#ff2fd0' }) },
     rusher:  { name: 'BLADER', style: S({ jacket: '#27f0ff', jacketDark: '#10a0c0', tee1: '#fff', tee2: '#ff2fd0', pants: '#ff2fd0', pants2: '#27f0ff', shoe: '#fff', wrap: '#27f0ff', head: 'headphones', hat: '#ffe44d', hair: '#3a2210', skin: '#e2a887', accent: '#ff2fd0' }) },
+    brute:   { name: 'LIFEGUARD', style: S({ jacket: '#e8323c', jacketDark: '#a01020', tee1: '#fff', tee2: '#e8323c', pants: '#fff', pants2: '#e8323c', shoe: '#fff', wrap: '#fff', head: 'cap', hat: '#e8323c', hair: '#c9a24a', skin: '#e2a887', accent: '#27f0ff' }) },
     boss3:   { name: 'DON PASTEL', style: S({ jacket: '#fff', jacketDark: '#d8d0e0', tee1: '#ff8adf', tee2: '#fff', pants: '#fff', pants2: '#d8d0e0', shoe: '#ff8adf', wrap: '#ff8adf', head: 'slick', hair: '#111', skin: '#e2b090', accent: '#ff8adf', aura: '#ff8adf' }) }
   },
   { // 4 - CYBER TOWER
@@ -33,11 +36,13 @@ const LOOKS = [
     thrower: { name: 'DRONE PILOT', style: S({ skin: '#8a94a8', jacket: '#3d2a7a', jacketDark: '#2a1a5a', tee1: '#111', tee2: '#3dffa0', pants: '#2a1a5a', pants2: '#3dffa0', shoe: '#3dffa0', wrap: '#3dffa0', head: 'robot', hat: '#8b5cff', accent: '#3dffa0', legs: '#8a94a8', robot: true }) },
     heavy:   { name: 'MECH', style: S({ skin: '#6a7488', jacket: '#4a5468', jacketDark: '#2a3040', tee1: '#ffe44d', tee2: '#111', pants: '#3a4458', pants2: '#ffe44d', shoe: '#2a3040', wrap: '#ffe44d', head: 'robot', hat: '#ffe44d', accent: '#ff2a4d', legs: '#6a7488', robot: true }) },
     rusher:  { name: 'HOVERBOT', style: S({ skin: '#b0b8c8', jacket: '#ff2fd0', jacketDark: '#b0107f', tee1: '#fff', tee2: '#27f0ff', pants: '#27f0ff', pants2: '#fff', shoe: '#fff', wrap: '#fff', head: 'robot', hat: '#27f0ff', accent: '#ff2fd0', legs: '#b0b8c8', robot: true }) },
+    brute:   { name: 'LOADER', style: S({ skin: '#6a7488', jacket: '#b8601a', jacketDark: '#7a3a10', tee1: '#ffe44d', tee2: '#111', pants: '#3a4458', pants2: '#ffe44d', shoe: '#2a3040', wrap: '#ffe44d', head: 'robot', hat: '#ffe44d', accent: '#ff2a4d', legs: '#6a7488', robot: true }) },
     boss4:   { name: 'MR. CHROME', style: S({ skin: '#c8d0e0', jacket: '#8a94a8', jacketDark: '#5a6478', tee1: '#111', tee2: '#ff2fd0', pants: '#2a3040', pants2: '#ff2fd0', shoe: '#c8d0e0', wrap: '#ff2fd0', head: 'crt', hat: '#5a6478', accent: '#3dffa0', legs: '#c8d0e0', aura: '#3dffa0' }) }
   }
 ];
 
 LOOKS.forEach((lv, i) => Object.keys(lv).forEach(k => { lv[k].key = `l${i + 1}_${k}`; }));
+LOOKS.forEach(lv => { lv.brute.key = lv.heavy.key; });   // the BRUTE wears the HEAVY sprite sheet of its stage (bigger, see KINDS.brute)
 
 function boomboxProp(c, j) {
   // boombox held on the shoulder, above the front hand
@@ -60,7 +65,7 @@ const LEVELS = [
     stops: [
       { x: 260, waves: [['grunt', 'grunt'], ['grunt']] },
       { x: 860, waves: [['grunt', 'grunt', 'fast'], ['grunt', 'thrower']] },
-      { x: 1500, waves: [['fast', 'grunt', 'grunt'], ['thrower', 'grunt', 'fast']] },
+      { x: 1500, waves: [['fast', 'grunt', 'grunt'], ['brute', 'thrower', 'fast']] },
       { x: 2060, boss: 'boss1' }
     ]
   },
@@ -70,7 +75,7 @@ const LEVELS = [
     stops: [
       { x: 260, waves: [['grunt', 'grunt', 'rusher'], ['fast', 'thrower']] },
       { x: 900, waves: [['heavy', 'grunt'], ['fast', 'fast', 'thrower']] },
-      { x: 1500, waves: [['rusher', 'rusher', 'grunt'], ['heavy', 'thrower', 'fast']] },
+      { x: 1500, waves: [['rusher', 'rusher', 'grunt'], ['brute', 'heavy', 'fast']] },
       { x: 2260, boss: 'boss2' }
     ]
   },
@@ -79,8 +84,8 @@ const LEVELS = [
     hint: 'ESQUIVE PARFAITE = RALENTI + FURY',
     stops: [
       { x: 280, waves: [['grunt', 'grunt', 'fast'], ['thrower', 'rusher']] },
-      { x: 880, waves: [['heavy', 'fast', 'grunt'], ['thrower', 'thrower', 'grunt']] },
-      { x: 1500, waves: [['rusher', 'fast', 'fast'], ['heavy', 'heavy']] },
+      { x: 880, waves: [['heavy', 'fast', 'grunt'], ['brute', 'thrower', 'grunt']] },
+      { x: 1500, waves: [['rusher', 'fast', 'fast'], ['heavy', 'brute']] },
       { x: 2100, waves: [['heavy', 'thrower', 'rusher', 'grunt'], ['fast', 'fast', 'thrower']] },
       { x: 2460, boss: 'boss3' }
     ]
@@ -91,9 +96,9 @@ const LEVELS = [
     hint: 'RENVOIE LES PROJECTILES AVEC TES COUPS !',
     stops: [
       { x: 280, waves: [['grunt', 'fast', 'thrower'], ['rusher', 'grunt', 'grunt']] },
-      { x: 880, waves: [['heavy', 'fast', 'fast'], ['thrower', 'thrower', 'rusher']] },
+      { x: 880, waves: [['brute', 'fast', 'fast'], ['thrower', 'thrower', 'rusher']] },
       { x: 1500, waves: [['heavy', 'heavy', 'fast'], ['rusher', 'rusher', 'thrower', 'grunt']] },
-      { x: 2100, waves: [['heavy', 'fast', 'thrower', 'rusher'], ['heavy', 'heavy', 'fast', 'fast']] },
+      { x: 2100, waves: [['heavy', 'fast', 'thrower', 'rusher'], ['brute', 'brute', 'fast', 'fast']] },
       { x: 2660, boss: 'boss4' }
     ]
   }

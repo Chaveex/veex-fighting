@@ -304,6 +304,44 @@ def moves():
     M['rushn'] = seq(RUN, ('w0', P(RUN, pitch=0.35, ff=(-10, 8, -3.5), nh=(18, 58, 7), fh=(14, 58, -2)), 1, 'w'),
                      ('s0', rns, 1, 's'),
                      ('r0', mix(rns, G, 0.45), 0.45, 'r'), ('r1', mix(rns, G, 0.82), 0.55, 'r'))
+    # ---- WEAPON moves (js/weapons.js WEAPON_MV.pw): the weapon is held in the lead hand (nh); drawn by the game over the sprite
+    # CHOP (BARRE A MINE, two hands): raise it high behind the head, lean back -> smash straight down, torso folds over -> recover
+    hs = P(hx=5, hy=22, pitch=0.52, yb=34, twist=20, yh=48, hp=6, nh=(31, 38, 6), fh=(27, 36, -2), ne=(0.3, -0.6, 0.8), fe=(0.3, -0.6, -0.3),
+           nf=(15, 1.5, 4), ff=(-6, 2, -3), fk=(1, 0.2, 0.4))
+    M['wchop'] = seq(G, ('w0', P(hx=-2, pitch=-0.15, yb=26, twist=-10, hp=-4, nh=(1, 66, 6), fh=(-2, 64, -2), ne=(-0.4, 0.1, 0.8), fe=(-0.4, 0.1, -0.3)), 0.45, 'w'),
+                     ('w1', P(hx=-4, hy=26.5, pitch=-0.30, yb=22, twist=-18, yh=52, hp=-12, nh=(-5, 74, 5), fh=(-8, 72, -2), ne=(-0.6, 0.3, 0.7), fe=(-0.6, 0.3, -0.3),
+                              nf=(11, 1.5, 4), ff=(-12, 1.5, -3.5)), 0.55, 'w'),
+                     ('s0', hs, 1, 's'),
+                     ('r0', mix(hs, G, 0.4, nh=(26, 34, 6), fh=(22, 33, -2)), 0.5, 'r'), ('r1', mix(hs, G, 0.8), 0.5, 'r'))
+    # STAB (COUTEAU): hand drawn back at the hip, blade low -> quick lunge, arm straight, hips turned in
+    ss = P(hx=6, hy=24.5, pitch=0.22, yb=14, twist=-34, yh=50, hp=2, nh=(37, 42, 5), ne=(0, -1, 0.1), fh=(8, 52, -4),
+           nf=(18, 1.5, 4), ff=(-7, 1.5, -3.5))
+    M['wstab'] = seq(G, ('w0', P(hx=-1.5, hy=25, pitch=-0.06, yb=26, twist=14, nh=(5, 36, 6), ne=(-0.3, -1, 0.5), fh=(11, 52, -3),
+                              nf=(10, 1.5, 4), ff=(-10, 1.5, -3.5)), 1, 'w'),
+                      ('s0', ss, 1, 's'),
+                      ('r0', mix(ss, G, 0.5, nh=(26, 42, 5)), 0.5, 'r'), ('r1', mix(ss, G, 0.85), 0.5, 'r'))
+    # WHIRL (NUNCHAKU): the wrist circles above the head, rear arm flung out -> sweeping cut across the body, both arms wide
+    ws = P(hx=2, hy=25.5, pitch=0.16, yb=40, twist=-34, yh=50, hp=2, nh=(33, 40, 8), ne=(0.3, -0.5, 0.8), fh=(-15, 44, -7), fe=(-0.4, -0.5, -0.3),
+           nf=(13, 1.5, 4), ff=(-10, 1.5, -3.5))
+    M['wspin'] = seq(G, ('w0', P(hx=0, pitch=-0.08, yb=30, twist=8, nh=(8, 68, 6), ne=(-0.2, 0.3, 0.8), fh=(-6, 56, -6)), 0.3, 'w'),
+                      ('w1', P(hx=-1, pitch=-0.16, yb=36, twist=24, nh=(-8, 72, 4), ne=(-0.5, 0.3, 0.6), fh=(-12, 50, -8), fe=(-0.5, -0.4, -0.5)), 0.35, 'w'),
+                      ('w2', P(hx=1, pitch=0.02, yb=52, twist=-8, nh=(20, 76, 10), ne=(0.2, 0.3, 0.9), fh=(-14, 46, -8)), 0.35, 'w'),
+                      ('s0', ws, 1, 's'),
+                      ('r0', mix(ws, G, 0.45, nh=(24, 46, 8)), 0.5, 'r'), ('r1', mix(ws, G, 0.85), 0.5, 'r'))
+    # BATON (MATRAQUE): raised past the ear -> short sharp chop across the chest line
+    bs = P(hx=4, hy=24.5, pitch=0.26, yb=30, twist=-36, yh=50, hp=3, nh=(33, 45, 6), ne=(0.2, -0.8, 0.5), fh=(8, 50, -3),
+           nf=(14, 1.5, 4), ff=(-8, 1.5, -3.5))
+    M['wbaton'] = seq(G, ('w0', P(hx=-1, pitch=-0.12, yb=24, twist=10, nh=(7, 66, 6), ne=(-0.2, -0.2, 0.7), fh=(10, 50, -3)), 1, 'w'),
+                       ('s0', bs, 1, 's'),
+                       ('r0', mix(bs, G, 0.5, nh=(25, 48, 6)), 0.5, 'r'), ('r1', mix(bs, G, 0.85), 0.5, 'r'))
+    # HURL (throwing the weapon / a grenade): arm cocked far behind the head, chest turned -> overhand release, follow-through
+    hu = P(hx=5, hy=25, pitch=0.32, yb=42, twist=30, yh=50, hp=0, nh=(34, 58, 5), ne=(0.2, -0.5, 0.2), fh=(4, 46, -4),
+           nf=(15, 1.5, 4), ff=(-6, 4, -3), fk=(1, 0.2, 0.4))
+    M['whurl'] = seq(G, ('w0', P(hx=-3, pitch=-0.22, yb=20, twist=-24, nh=(-8, 60, 8), ne=(-0.5, -0.1, 0.8), fh=(14, 50, -2)), 0.5, 'w'),
+                      ('w1', P(hx=-4, pitch=-0.34, yb=14, twist=-30, hp=-8, nh=(-13, 64, 9), ne=(-0.7, 0.0, 0.8), fh=(16, 52, -2),
+                               nf=(11, 1.5, 4), ff=(-12, 1.5, -3.5)), 0.5, 'w'),
+                      ('s0', hu, 1, 's'),
+                      ('r0', mix(hu, G, 0.45, nh=(27, 54, 5)), 0.5, 'r'), ('r1', mix(hu, G, 0.85), 0.5, 'r'))
     return M
 
 # ------------------------------------------------------------------ expansion

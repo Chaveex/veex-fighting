@@ -35,7 +35,7 @@ vm.createContext(sandbox);
 const files = [...fs.readFileSync(path.join(root, 'index.html'), 'utf8').matchAll(/<script src="js\/([\w]+)\.js">/g)].map(m => m[1]);   // same scripts, same order as the page
 let code = files.map(f => fs.readFileSync(path.join(root, 'js', f + '.js'), 'utf8')).join('\n;\n');
 // expose top-level consts of interest & the game loop helpers
-code += `\n;globalThis.__api = { makeProp, startLevel, SpriteSheet, G, step, startGame, Endless, Medals, Daily, LEVELS, Input, botControl, FX, worldTick, render };`;
+code += `\n;globalThis.__api = { makeProp, startLevel, SpriteSheet, G, step, startGame, Endless, Medals, Daily, Weapons, WeaponItem, WEAPONS, Lob, LEVELS, Input, botControl, FX, worldTick, render };`;
 try { vm.runInContext(code, sandbox, { filename: 'game-bundle.js' }); } catch (e) { console.error('BOOT ERROR', e); process.exit(1); }
 const A = sandbox.__api;
 A.__reset = () => { CALLS = 0; };
@@ -46,6 +46,44 @@ if (process.env.ENDLESS) { A.Endless.start(!!process.env.DAILY); if (process.env
 if (stopArg >= 0 && !process.env.ENDLESS) {
   const st = A.LEVELS[level - 1].stops[stopArg];
   A.G.stopIdx = stopArg; A.G.camX = Math.max(0, st.x - 160); A.G.player.x = A.G.camX + 120; A.G.banner = null;
+}
+if (process.env.WTEST) {   // weapons / armed enemies / brute lob behaviour check
+  const G = A.G; G.god = false; G.bot = false; let fails = 0;
+  const ok = (name, cond, extra) => { console.log((cond ? 'PASS ' : 'FAIL ') + name + (extra ? '  ' + extra : '')); if (!cond) fails++; };
+  A.Weapons.rollEnemy = () => null;
+  const arena = () => { A.startLevel(0); G.stopIdx = 1; G.locked = true; G.waveIdx = 99; G.camX = 860; G.bounds = { minX: 860, maxX: 1500 }; G.props = []; G.enemies = []; G.vents = []; G.pickups = []; G.projs = []; G.spawnQ = []; G.player.x = 1000; G.player.y = 306; G.player.iframes = 0; G.player.weapon = null; };
+  const run = n => { for (let i = 0; i < n; i++) A.worldTick(); };
+  const mkE = (kind, x, y) => { const e = G.spawnEnemy(kind, x, y, { flash: true }); e.entered = true; e.invulT = 0; e.cool = 1e9; return e; };
+  let p, e;
+  arena(); p = G.player; G.pickups.push(new A.WeaponItem('bar', 1002, 306, 0, { z: 0, t: 30 })); run(5);
+  ok('walking over does NOT pick it up', !p.weapon);
+  A.Input.buf.pickup = 12; run(8);
+  ok('PICKUP key takes it', p.weapon && p.weapon.id === 'bar' && p.weapon.uses === 6, JSON.stringify(p.weapon));
+  e = mkE('grunt', 1040, 306); const hp0 = e.hp; p.facing = 1; p.startAttack('punch', 1); run(40);
+  ok('bar swing hurts + uses a charge', e.hp <= hp0 - 30 && p.weapon && p.weapon.uses === 5, 'hp ' + hp0 + '->' + e.hp + ' uses ' + (p.weapon && p.weapon.uses));
+  for (const id of ['knife', 'nunchaku', 'taser']) {
+    arena(); p = G.player; p.weapon = { id, uses: 1 }; e = mkE('grunt', 1034, 306); const h = e.hp; p.facing = 1; p.startAttack('punch', 1); run(40);
+    ok(id + ' hits and breaks at 0 uses', e.hp < h && p.weapon === null, 'hp ' + h + '->' + e.hp);
+  }
+  arena(); p = G.player; p.weapon = { id: 'bar', uses: 5 }; e = mkE('grunt', 1100, 306); const ht = e.hp; p.facing = 1; A.Input.buf.pickup = 12; run(40);
+  ok('PICKUP key throws the weapon: hit + dropped as an item (4 uses)', p.weapon === null && e.hp < ht && G.pickups.some(k => k.weapon === 'bar' && k.uses === 4), 'hp ' + ht + '->' + e.hp);
+  arena(); p = G.player; p.weapon = { id: 'knife', uses: 3 }; p.facing = 1; A.Input.buf.pickup = 12; run(70);
+  ok('thrown weapon that misses lands as an item', p.weapon === null && G.pickups.some(k => k.weapon === 'knife' && k.uses === 2));
+  p.x = G.pickups.find(k => k.weapon).x; p.y = G.pickups.find(k => k.weapon).y; p.vx = 0; run(40); A.Input.buf.pickup = 12; run(8);
+  ok('...and can be picked up again', p.weapon && p.weapon.id === 'knife' && p.weapon.uses === 2);
+  arena(); p = G.player; p.weapon = { id: 'grenade', uses: 2 }; e = mkE('grunt', 1140, 306); const hg = e.hp; p.facing = 1; p.startAttack('punch', 1); run(14);
+  ok('grenade tossed', G.projs.some(x => x.kind === 'lob' && x.team === 'player') && p.weapon.uses === 1);
+  run(70); ok('grenade explodes on the thug', e.hp < hg || e.dead, 'hp ' + hg + '->' + e.hp);
+  arena(); p = G.player; e = mkE('grunt', 1060, 306); e.arm('knife'); ok('armed enemy has the extra attack', e.def.attacks.length === 3 && e.weapon === 'knife');
+  const php = p.hp; e.cool = 0; e.attacker = true; G.tokens = 1; run(120);
+  ok('armed enemy attacks (hero took damage or dodged)', p.hp < php || e.atk !== null, 'hp ' + php + '->' + p.hp);
+  arena(); p = G.player; e = mkE('grunt', 1300, 306); e.arm('bar'); e.hp = 1; G.registerHit(p, e, { dir: 1, kb: 3, w: 1 }, 5, false, false);
+  ok('armed enemy drops its weapon on K.O.', G.pickups.some(k => k.weapon === 'bar'));
+  arena(); p = G.player; e = mkE('brute', 1330, 306); const a = e.def.attacks[0]; e.facing = -1; e.startAttack(a);
+  let sawLob = false; const php2 = p.hp;
+  for (let i = 0; i < 160; i++) { A.worldTick(); if (G.projs.some(x => x.kind === 'lob')) sawLob = true; G.player.vx = 0; }
+  ok('brute lobs an object that lands on the hero', sawLob && p.hp < php2, 'hp ' + php2 + '->' + p.hp);
+  console.log(fails ? 'WEAPON TESTS FAILED: ' + fails : 'ALL WEAPON TESTS PASSED'); process.exit(fails ? 2 : 0);
 }
 if (process.env.PROPS) {   // behaviour check of every level prop
   const G = A.G; G.god = false; G.bot = false; let fails = 0;

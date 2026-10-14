@@ -94,6 +94,24 @@ L'écran STAGE CLEAR affiche les médailles gagnées (étincelles sur une médai
 Comme pour les succès et le classement, une partie lancée avec un code ou en invincible ne compte pas.
 Succès liés : **TROIS SUR TROIS** (3 médailles sur un niveau), **SANS FIN** (vague 10 en ENDLESS).
 
+## Armes ramassables et ennemis armés (`js/weapons.js`)
+
+Une arme est **rare** : elle tombe du ciel dans environ une arène sur trois (chaque arme a une durabilité : 6 ou 7 coups, jauge qui clignote rouge sous 3 ; elle fait nettement plus de dégâts que poing/pied/genou). Elle se **ramasse avec V / Q** (manette : LT) quand on est dessus (le nom + « V : PRENDRE » s'affiche ; ramasser une autre arme échange et repose l'ancienne avec ses charges). **POING** (J / X) frappe alors avec l'arme au lieu de la chaîne de jabs. **V / Q / LT sans rien à ramasser = LANCER l'arme** : elle file en tournoyant, touche le premier ennemi ou décor, puis retombe au sol, ramassable (une charge en moins ; la grenade part en cloche comme avec POING).
+
+| Arme | Où | Effet |
+|---|---|---|
+| BARRE A MINE | tous les niveaux | lente, très lourde, grosse projection (6 coups) |
+| COUTEAU | niveau 1 | très rapide, légère (6 coups) |
+| NUNCHAKU | niveau 2 | moulinet : frappe devant et derrière (7 coups) |
+| GRENADE | niveau 3 | lancée en cloche, explose sur la zone, casse le décor (2 charges) |
+| MATRAQUE | niveau 4 | électrique : étourdit longtemps (6 coups) |
+
+- **Ennemis armés** : certains voyous (PUNK, BREAKER, SKATER, lourds) portent une arme visible dans la main et s'en servent (couteau rapide, barre lourde, nunchaku circulaire, matraque qui étourdit le héros, grenade lancée). Ils la lâchent en tombant : on la récupère (charges réduites). Probabilité croissante avec le niveau / la vague.
+- **BRUTE** (DOCKER / BOUNCER / LIFEGUARD / LOADER) : gros lanceur lent. Il soulève un objet lourd (tonneau, caisse, pneu, bloc) au-dessus de sa tête, puis le lance **en cloche** sur la position du héros ; une zone rouge au sol montre l'impact (on peut l'esquiver, ou l'esquive parfaite). Au corps à corps il frappe fort.
+- **Animations du héros avec arme** : chaque arme a sa propre gestuelle, plus aucun jab / pied / genou : `wchop` (barre : levée haut derrière la tête puis frappe verticale à deux mains), `wstab` (couteau : estoc rapide, bras tendu), `wspin` (nunchaku : moulinet au-dessus de la tête puis balayage bras écartés), `wbaton` (matraque : coup sec levé depuis l'oreille), `whurl` (lancer / grenade : bras armé loin derrière puis lâcher par-dessus l'épaule). Poses dans `tools/hero_anim.py` (`moves()`), régénérer avec `python tools/make_hero_sprites.py full veex` puis `... full roxy` ; poses du rig de secours dans `js/rig.js` ; angle de l'arme dans `heroWeaponAngle()`.
+- Art : `assets/props/weapons.aseprite` (dessiné dans Aseprite par `tools/ase/weapons.lua`, exporté par `tools/make_prop_sprites.py` vers `js/propSprites.js`) : armes tenues (barre, couteau, nunchaku 4 images, matraque 4 images, grenade) et objets lancés (tonneau, caisse, pneu, bloc serveur 2 images). Les formes canvas de `weapons.js` ne servent plus que de secours.
+- Dev : `?level=1&weapon=bar&spawn=brute&arm=knife`, test : `WTEST=1 NOGOD=1 node tools/soak.js 1 -1 10`.
+
 ## Juice
 
 Hit-stop, ralentis sur critiques/KO, screen shake directionnel, zoom punch, aberration chromatique,
