@@ -28,6 +28,8 @@ const ACH_DEFS = [
   ['rank_s', 'STYLE S', 'Obtenir la note S a la fin d\'un niveau'],
   ['roxy', 'LA TORNADE', 'Finir un niveau avec ROXY'],
   ['legend', 'LEGENDE DU QUARTIER', 'Finir le jeu sans perdre une vie'],
+  ['medals_all', 'TROIS SUR TROIS', 'Les 3 medailles sur un meme niveau'],
+  ['endless10', 'SANS FIN', 'Atteindre la vague 10 en mode ENDLESS'],
 ];
 const Ach = {
   got: {}, count: {}, toasts: [],
@@ -61,14 +63,14 @@ const Ach = {
   },
   drawList(c) {
     c.fillStyle = 'rgba(5,1,15,.88)'; c.fillRect(0, 0, W, H);
-    drawText(c, 'SUCCES  ' + this.total() + ' / ' + ACH_DEFS.length, W / 2, 30, { size: 20, color: '#fff', outline: '#ff2fd0', align: 'center', italic: true, glow: '#ff2fd0', outlineW: 4 });
+    drawText(c, 'SUCCES  ' + this.total() + ' / ' + ACH_DEFS.length, W / 2, 26, { size: 18, color: '#fff', outline: '#ff2fd0', align: 'center', italic: true, glow: '#ff2fd0', outlineW: 4 });
     ACH_DEFS.forEach((d, i) => {
-      const col = i % 2, row = Math.floor(i / 2), x = 26 + col * 300, y = 52 + row * 23, ok = !!this.got[d[0]];
-      c.fillStyle = ok ? 'rgba(255,228,77,.12)' : 'rgba(40,20,80,.5)'; c.fillRect(x, y, 288, 20);
-      c.fillStyle = ok ? '#ffe44d' : '#3a2a5a'; c.fillRect(x + 4, y + 5, 10, 10);
+      const col = i % 2, row = Math.floor(i / 2), x = 26 + col * 300, y = 44 + row * 21, ok = !!this.got[d[0]];
+      c.fillStyle = ok ? 'rgba(255,228,77,.12)' : 'rgba(40,20,80,.5)'; c.fillRect(x, y, 288, 19);
+      c.fillStyle = ok ? '#ffe44d' : '#3a2a5a'; c.fillRect(x + 4, y + 5, 10, 9);
       drawText(c, ok ? d[1] : d[1], x + 20, y + 10, { size: 9, color: ok ? '#fff' : '#8a7aaa', outline: OUT });
-      drawText(c, d[2], x + 20, y + 18, { size: 7, color: ok ? '#27f0ff' : '#5a4a7a', outline: OUT });
+      drawText(c, d[2], x + 20, y + 17, { size: 7, color: ok ? '#27f0ff' : '#5a4a7a', outline: OUT });
     });
-    drawText(c, K('S / ECHAP : RETOUR', 'B / X : RETOUR'), W / 2, H - 8, { size: 9, color: '#27f0ff', outline: OUT, align: 'center' });
+    drawText(c, K('S / ECHAP : RETOUR', 'B / X : RETOUR'), W / 2, H - 5, { size: 9, color: '#27f0ff', outline: OUT, align: 'center' });
   }
 };

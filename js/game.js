@@ -6,7 +6,8 @@ const G = {
   level: 0, stopIdx: 0, locked: false, waveIdx: 0, lives: 3, score: 0, hpMul: 1,
   combo: { count: 0, timer: 0, max: 0, cancels: 0, dodges: 0 }, sty: { v: 0, idle: 0 },
   target: null, targetT: 0, boss: null, banner: null, goT: 0, clearT: 0, deathT: 0,
-  hint: null, stats: {}, menuT: 0, best: 0, muted: false, bot: false, god: false, levelStartScore: 0, pauseIdx: 0
+  hint: null, stats: {}, menuT: 0, best: 0, muted: false, bot: false, god: false, levelStartScore: 0, pauseIdx: 0,
+  mode: 'arcade', titleMode: 'arcade', endless: null
 };
 const RANKS = [
   { n: '', t: 0 }, { n: 'D', w: 'DOPE', t: 14 }, { n: 'C', w: 'COOL', t: 34 }, { n: 'B', w: 'RAD', t: 60 }, { n: 'A', w: 'GNARLY', t: 92 },
@@ -38,9 +39,12 @@ function loadSave() {
   Ach.load();
   try { G.best = parseInt(localStorage.getItem('veexBest') || '0', 10) || 0; } catch (e) { G.best = 0; }
   try { selectHero(localStorage.getItem('veexHero') || 'veex'); } catch (e) { selectHero('veex'); }
+  try { G.titleMode = localStorage.getItem('veexMode') === 'endless' ? 'endless' : 'arcade'; } catch (e) { G.titleMode = 'arcade'; }
+  Medals.load();
 }
+function saveMode() { try { localStorage.setItem('veexMode', G.titleMode); } catch (e) { /* ignore */ } }
 function saveHero() { try { localStorage.setItem('veexHero', G.hero); } catch (e) { /* ignore */ } }
-function saveBest() { try { if (G.score > G.best) { G.best = G.score; localStorage.setItem('veexBest', String(G.best)); } } catch (e) { /* ignore */ } }
+function saveBest() { try { if (G.mode !== 'endless' && G.score > G.best) { G.best = G.score; localStorage.setItem('veexBest', String(G.best)); } } catch (e) { /* ignore */ } }
 
 // ============ level flow ============
 // UI labels follow the device the player last touched
@@ -100,7 +104,7 @@ function drawOptions(c) {
   drawText(c, 'RETOUR', W / 2, yb, { size: 13, color: onB ? '#ffe44d' : '#fff', outline: OUT, align: 'center', italic: true });
   drawText(c, K('HAUT/BAS : CHOISIR   -   GAUCHE/DROITE : REGLER   -   ECHAP : RETOUR', 'CROIX : CHOISIR / REGLER   -   B : RETOUR'), W / 2, H - 24, { size: 9, color: '#27f0ff', outline: OUT, align: 'center' });
 }
-function openTitlePanel(kind) { G.titlePanel = kind; Snd.sfx.ui(); Input.clear(); Input.padTap = {}; if (kind === 'board') { Online.myRank = null; Online.load(); } }
+function openTitlePanel(kind) { G.titlePanel = kind; Snd.sfx.ui(); Input.clear(); Input.padTap = {}; if (kind === 'board') { Online.myRank = null; Online.setMode(G.titleMode); } }
 function openCodeEntry() { G.codeEntry = { text: '', msg: '', col: '#fff', t: 0, shake: 0, pick: 0 }; Snd.sfx.ui(); Input.clear(); }
 function padCode() {
   const ce = G.codeEntry, tap = Input.padTap; Input.padTap = {};   // one read per frame (a frame may run several steps)
@@ -147,6 +151,7 @@ function drawCodeEntry(c) {
 }
 
 function startGame(li, cheated) {
+  G.mode = 'arcade'; G.endless = null; G.medalRes = null; G.hpMul = 1; G.dmgMul = 1;
   G.lives = 3; G.score = 0; G.level = li; G.player = null; G.sty.v = 0; G.seenProps = {};
   G.cheated = !!cheated || !!G.god; G.runDeaths = 0;   // codes / god mode: no achievements, no online ranking
   startLevel(li);
@@ -185,10 +190,12 @@ function spawnEnemy(kind, x, y, opts) {
 }
 G.spawnEnemy = spawnEnemy;
 
+const curStop = () => G.mode === 'endless' ? ENDLESS_STOP : LEVELS[G.level].stops[G.stopIdx];
 function lockStop() {
-  const L = LEVELS[G.level], stop = L.stops[G.stopIdx];
+  const L = LEVELS[G.level], stop = curStop();
   G.locked = true; G.waveIdx = 0;
   G.bounds = { minX: G.camX, maxX: G.camX + W };
+  if (stop.endless) return;   // ENDLESS: Endless.step() drives the waves
   if (stop.boss) {
     const look = LOOKS[G.level][stop.boss];
     G.banner = { t: 0, title: 'WARNING', sub: look.name, kind: 'boss' }; Snd.sfx.announce('warning', 3);
@@ -198,7 +205,7 @@ function lockStop() {
   } else nextWave();
 }
 function nextWave() {
-  const stop = LEVELS[G.level].stops[G.stopIdx];
+  const stop = curStop();
   const kinds = stop.waves[G.waveIdx++];
   let side = Math.random() < 0.5 ? -1 : 1, i = 0;
   for (const k of kinds) { G.spawnQ.push({ kind: k, t: i * 26 + 4, side }); side = -side; i++; }
@@ -206,7 +213,7 @@ function nextWave() {
 function liveEnemies() { let n = 0; for (const e of G.enemies) if (!e.dead) n++; return n; }
 
 function stageLogic() {
-  const L = LEVELS[G.level], stop = L.stops[G.stopIdx];
+  const L = LEVELS[G.level], stop = curStop();
   // spawn queue
   for (let i = G.spawnQ.length - 1; i >= 0; i--) {
     const q = G.spawnQ[i];
@@ -228,7 +235,8 @@ function stageLogic() {
     if (G.goT > 0) G.goT--;
   } else {
     G.bounds = { minX: G.camX, maxX: G.camX + W };
-    if (stop.boss) {
+    if (stop.endless) Endless.step();
+    else if (stop.boss) {
       if (G.boss && G.boss.dead && G.clearT === 0 && !G.bossDeadHandled) {
         G.bossDeadHandled = true; G.clearT = 190; G.spawnQ.length = 0;
         FX.slow(70, 0.22); FX.flashScreen(0.9, '#fff'); FX.addShake(16); FX.explosion(G.boss.x, G.boss.y - 40, 2.2); Snd.sfx.boom();
@@ -254,7 +262,10 @@ function finishLevel() {
   Snd.sfx.fanfare(); Input.clear(); Snd.sfx.announce('stage_clear', 3);
   Ach.unlock('stage' + (G.level + 1));
   if (G.stats.dmgTaken === 0) Ach.unlock('flawless');
-  if (gradeFor() === 'S') Ach.unlock('rank_s');
+  const grade = gradeFor();
+  if (grade === 'S') Ach.unlock('rank_s');
+  G.medalRes = G.cheated ? null : Medals.record(G.level, grade, G.score - G.levelStartScore, G.frame / 60, G.stats.dmgTaken);
+  if (G.medalRes && G.medalRes.got.rank && G.medalRes.got.flawless && G.medalRes.got.speed) Ach.unlock('medals_all');
   if (G.hero === 'roxy') Ach.unlock('roxy');
   if (G.level + 1 >= LEVELS.length && G.runDeaths === 0) Ach.unlock('legend');
 }
@@ -390,7 +401,7 @@ function worldTick() {
   if (p.state === 'dead') {
     if (++G.deathT > 110) {
       G.runDeaths = (G.runDeaths || 0) + 1;
-      if (G.lives > 0) respawn(); else { G.state = 'gameover'; G.menuT = 0; saveBest(); Snd.stopMusic(); Snd.sfx.over(); Snd.sfx.announce('game_over', 3); Input.clear(); if (canRank()) startEntry('gameover'); }
+      if (G.lives > 0) respawn(); else { G.state = 'gameover'; G.menuT = 0; saveBest(); Medals.endRun(); Snd.stopMusic(); Snd.sfx.over(); Snd.sfx.announce('game_over', 3); Input.clear(); if (canRank()) startEntry('gameover'); }
     }
   }
 }
@@ -412,7 +423,11 @@ function step() {
     case 'title':
       if (G.opts) { stepOptions(); Input.clear(); break; }            // panels capture the inputs before the hero selector
       if (G.codeEntry && !G.cheatGo) { padCode(); Input.clear(); break; }
-      if (HERO_ORDER.length > 1 && (Input.eat('left') || Input.eat('right'))) {
+      if (!G.titlePanel && !G.cheatGo && (Input.eat('up') || Input.eat('down'))) {   // mode: ARCADE <-> ENDLESS
+        G.titleMode = G.titleMode === 'arcade' ? 'endless' : 'arcade'; saveMode(); Snd.resume(); Snd.sfx.ui(); G.modeSwapT = 0;
+      }
+      G.modeSwapT = (G.modeSwapT || 0) + 1;
+      if (!G.titlePanel && HERO_ORDER.length > 1 && (Input.eat('left') || Input.eat('right'))) {
         const i = HERO_ORDER.indexOf(G.hero), d = Input.held.left ? -1 : 1;
         selectHero(HERO_ORDER[(i + d + HERO_ORDER.length) % HERO_ORDER.length]); saveHero(); Snd.resume(); Snd.sfx.ui(); G.heroSwapT = 0;
       }
@@ -420,11 +435,17 @@ function step() {
       if (G.cheatGo) { if (--G.cheatGo.t <= 0) { const go = G.cheatGo; G.cheatGo = null; G.codeEntry = null; startGame(go.li, true); if (G.cheatBoss) jumpToStop(LEVELS[go.li].stops.length - 1); } break; }
       if (G.codeEntry) { padCode(); Input.clear(); break; }
       if (Input.padTap.b4) { openOptions('title'); break; }
-      if (G.titlePanel) { const tp = Input.padTap; if (tp.b1 || tp.b9 || tp.b0 || (G.titlePanel === 'board' ? tp.b3 : tp.b2)) { G.titlePanel = null; Snd.sfx.ui(); } Input.clear(); break; }
+      if (G.titlePanel) {
+        const tp = Input.padTap, own = { board: tp.b3, ach: tp.b2, medals: tp.b5 }[G.titlePanel];
+        if (G.titlePanel === 'board' && (Input.eat('left') || Input.eat('right'))) { Online.setMode(Online.mode === 'endless' ? 'arcade' : 'endless'); Snd.sfx.ui(); }
+        if (tp.b1 || tp.b9 || tp.b0 || own) { G.titlePanel = null; Snd.sfx.ui(); }
+        Input.clear(); break;
+      }
       if (Input.padTap.b3) { openTitlePanel('board'); break; }
       if (Input.padTap.b2) { openTitlePanel('ach'); break; }
+      if (Input.padTap.b5) { openTitlePanel('medals'); break; }
       if (Input.eat('title') && !G.cheatGo) { openCodeEntry(); Input.padTap = {}; break; }
-      if (Input.eat('confirm')) { Snd.resume(); Snd.sfx.select(); startGame(0); }
+      if (Input.eat('confirm')) { Snd.resume(); Snd.sfx.select(); if (G.titleMode === 'endless') Endless.start(); else startGame(0); }
       break;
     case 'play':
       if (Input.eat('pause')) { G.state = 'pause'; G.pauseIdx = 0; Snd.sfx.ui(); return; }
@@ -452,7 +473,7 @@ function step() {
       break;
     case 'gameover':
       FX.updateWorld();
-      if (G.menuT > 40 && Input.eat('confirm')) { G.score = G.levelStartScore; G.lives = 3; G.player = null; startLevel(G.level); }
+      if (G.menuT > 40 && Input.eat('confirm')) { if (G.mode === 'endless') Endless.start(); else { G.score = G.levelStartScore; G.lives = 3; G.player = null; startLevel(G.level); } }
       if (G.menuT > 40 && Input.eat('title')) { G.state = 'title'; Snd.stopMusic(); Input.clear(); }
       break;
     case 'entry': FX.updateWorld(); stepEntry(); break;
@@ -558,7 +579,9 @@ function drawHUD(c) {
   drawText(c, '1UP', 118, 53, { size: 9, color: '#3dffa0', outline: OUT });
   // score
   drawText(c, String(G.score).padStart(8, '0'), W / 2, 16, { size: 14, color: '#fff', outline: OUT, align: 'center', glow: '#27f0ff', italic: true });
-  drawText(c, 'HI ' + String(Math.max(G.best, G.score)).padStart(8, '0'), W / 2, 27, { size: 9, color: '#ff9ae9', outline: OUT, align: 'center' });
+  const hiBase = G.mode === 'endless' ? Medals.endless.score : G.best;
+  drawText(c, 'HI ' + String(Math.max(hiBase, G.score)).padStart(8, '0'), W / 2, 27, { size: 9, color: '#ff9ae9', outline: OUT, align: 'center' });
+  if (G.mode === 'endless' && G.endless) drawText(c, G.endless.wave ? 'VAGUE ' + G.endless.wave : 'PRET ?', W / 2, 40, { size: 11, color: '#ffe44d', outline: OUT, align: 'center', italic: true, glow: '#ff2fd0' });
   // target bar
   const e = G.target;
   if (e && G.targetT > 0 && !e.boss) {
@@ -699,7 +722,18 @@ function drawTitle(c) {
   c.restore();
   }
   drawText(c, 'MUAY THAI STREET FIGHTER  -  1986', lx, 150, { size: 11, color: '#27f0ff', outline: OUT, align: 'center', italic: true });
-  if (t % 60 < 40) drawText(c, K('PRESS  ENTER', 'PRESS  START'), lx, 178, { size: 18, color: '#fff', outline: '#ff2fd0', align: 'center', italic: true, glow: '#ff2fd0' });
+  // mode selector (up / down): ARCADE | ENDLESS, with one line about the selected mode
+  [['arcade', 'ARCADE'], ['endless', 'ENDLESS']].forEach(([id, label], i) => {
+    const on = G.titleMode === id, cx = lx + (i ? 58 : -58), bw = 104, by = 158;
+    c.fillStyle = on ? 'rgba(255,47,208,.38)' : 'rgba(10,0,30,.72)'; c.fillRect(cx - bw / 2, by, bw, 19);
+    c.strokeStyle = on ? '#ff2fd0' : '#4a3a7a'; c.lineWidth = on ? 2 : 1; c.strokeRect(cx - bw / 2 + 0.5, by + 0.5, bw - 1, 18);
+    drawText(c, label, cx, by + 14, { size: 12, color: on ? '#fff' : '#8a7aaa', outline: OUT, align: 'center', italic: true, glow: on ? '#ff2fd0' : null });
+  });
+  const info = G.titleMode === 'endless'
+    ? (Medals.endless.wave ? 'VAGUES INFINIES  -  RECORD : VAGUE ' + Medals.endless.wave : 'VAGUES INFINIES  -  TIENS LE PLUS LONGTEMPS')
+    : LEVELS.length + ' NIVEAUX  -  MEDAILLES ' + Medals.count() + ' / ' + LEVELS.length * 3;
+  drawText(c, info, lx, 192, { size: 9, color: '#27f0ff', outline: OUT, align: 'center' });
+  if (t % 60 < 40) drawText(c, K('PRESS  ENTER', 'PRESS  START'), lx, 213, { size: 16, color: '#fff', outline: '#ff2fd0', align: 'center', italic: true, glow: '#ff2fd0' });
   // menu shortcuts: key chips on one row
   const chip = (x, y, key, label) => {   // x = slot centre
     c.font = `bold 9px ${FONT}`; const kw = Math.ceil(c.measureText(key).width) + 8, lw = Math.ceil(c.measureText(label).width), tot = kw + 4 + lw, x0 = Math.round(x - tot / 2);
@@ -708,26 +742,27 @@ function drawTitle(c) {
     drawText(c, label, x0 + kw + 4, y, { size: 9, color: '#fff', outline: OUT });
   };
   const pad = padUI(), mx = 232, mw = 376, mc = mx + mw / 2;
-  [[pad ? 'SELECT' : 'C', 'CODE'], [pad ? 'Y' : 'L', 'CLASSEMENT'], [pad ? 'X' : 'S', 'SUCCES'], [pad ? 'LB' : 'O', 'OPTIONS']]
-    .forEach((m, i) => chip(mx + mw / 8 + i * mw / 4, 198, m[0], m[1]));
+  const chips = [[pad ? 'SELECT' : 'C', 'CODE'], [pad ? 'Y' : 'L', 'CLASSEMENT'], [pad ? 'X' : 'S', 'SUCCES'], [pad ? 'RB' : 'B', 'MEDAILLES'], [pad ? 'LB' : 'O', 'OPTIONS']];
+  chips.forEach((m, i) => chip(210 + 42 + i * 84, 233, m[0], m[1]));
   // controls panel
   const rows = pad ? [['STICK / CROIX', 'BOUGER'], ['X', 'POING'], ['Y', 'PIED'], ['B', 'GENOU'], ['A', 'SAUT'], ['RB / RT', 'DASH'], ['LB / LT', 'SE BAISSER'], ['L3 / R3', 'FURY']]
     : [['FLECHES / ZQSD', 'BOUGER'], ['J', 'POING'], ['K', 'PIED'], ['L', 'GENOU'], ['ESPACE', 'SAUT'], ['SHIFT', 'DASH'], ['C', 'SE BAISSER'], ['R', 'FURY']];
-  const py0 = 212, ph0 = 140;
+  const py0 = 244, ph0 = 108;
   c.fillStyle = 'rgba(10,0,30,.78)'; c.fillRect(mx, py0, mw, ph0);
   c.strokeStyle = '#8b5cff'; c.lineWidth = 1; c.strokeRect(mx + 0.5, py0 + 0.5, mw - 1, ph0 - 1);
-  drawText(c, 'COMMANDES', mc, py0 + 14, { size: 10, color: '#ff9ae9', outline: OUT, align: 'center', italic: true });
-  c.fillStyle = '#8b5cff'; c.fillRect(mx + 10, py0 + 19, mw - 20, 1);
+  drawText(c, 'COMMANDES', mc, py0 + 12, { size: 10, color: '#ff9ae9', outline: OUT, align: 'center', italic: true });
+  c.fillStyle = '#8b5cff'; c.fillRect(mx + 10, py0 + 16, mw - 20, 1);
   rows.forEach((r, i) => {   // column-major: movement + attacks left, jump / dash / crouch / fury right
-    const col = i < 4 ? 0 : 1, row = i % 4, x = mx + 14 + col * 184, y = py0 + 34 + row * 13;
+    const col = i < 4 ? 0 : 1, row = i % 4, x = mx + 14 + col * 184, y = py0 + 29 + row * 12;
     drawText(c, r[0], x, y, { size: 9, color: '#ffe44d', outline: OUT });
     drawText(c, r[1], x + 168 - (col ? 8 : 0), y, { size: 9, color: '#fff', outline: OUT, align: 'right' });
   });
-  c.fillStyle = '#8b5cff'; c.fillRect(mx + 10, py0 + 90, mw - 20, 1);
-  drawText(c, K('CLINCH : FONCE DANS UN ENNEMI, PUIS L GENOUX  /  K PROJECTION', 'CLINCH : FONCE DANS UN ENNEMI, PUIS B GENOUX  /  Y PROJECTION'), mc, py0 + 103, { size: 9, color: '#ffe44d', outline: OUT, align: 'center' });
-  drawText(c, 'DASH / SAUT APRES UN COUP = CANCEL   -   DASH A L\'IMPACT = RALENTI', mc, py0 + 115, { size: 9, color: '#27f0ff', outline: OUT, align: 'center' });
-  drawText(c, 'HI-SCORE ' + String(G.best).padStart(8, '0'), mc, py0 + 133, { size: 10, color: '#fff', outline: OUT, align: 'center' });
-  if (!pad) drawText(c, 'M : SON   F : PLEIN ECRAN', mx + mw - 10, py0 + 133, { size: 8, color: '#8b5cff', outline: OUT, align: 'right' });
+  c.fillStyle = '#8b5cff'; c.fillRect(mx + 10, py0 + 73, mw - 20, 1);
+  drawText(c, K('CLINCH : FONCE DANS UN ENNEMI, PUIS L GENOUX  /  K PROJECTION', 'CLINCH : FONCE DANS UN ENNEMI, PUIS B GENOUX  /  Y PROJECTION'), mc, py0 + 85, { size: 9, color: '#ffe44d', outline: OUT, align: 'center' });
+  drawText(c, 'DASH / SAUT APRES UN COUP = CANCEL   -   DASH A L\'IMPACT = RALENTI', mc, py0 + 96, { size: 9, color: '#27f0ff', outline: OUT, align: 'center' });
+  drawText(c, K('HAUT / BAS : MODE', 'CROIX HAUT / BAS : MODE'), mx + 10, py0 + 105, { size: 7, color: '#8b5cff', outline: OUT });
+  drawText(c, 'HI-SCORE ' + String(G.best).padStart(8, '0'), mc, py0 + 105, { size: 8, color: '#fff', outline: OUT, align: 'center' });
+  if (!pad) drawText(c, 'M : SON   F : PLEIN ECRAN', mx + mw - 10, py0 + 105, { size: 7, color: '#8b5cff', outline: OUT, align: 'right' });
   c.drawImage(vig, 0, 0);
 }
 
@@ -761,17 +796,34 @@ function drawScreen(c) {
       break;
     }
     case 'clear': {
-      const s = G.stats;
+      const s = G.stats, m = G.medalRes;
       drawPanel(c, 'STAGE CLEAR!', [['COMBO MAX', String(G.combo.max)], ['KO', String(s.kills)], ['ESQUIVES PARFAITES', String(G.combo.dodges)], ['CANCELS', String(G.combo.cancels)],
-        ['BONUS', String(G.clearBonus)], ['SCORE', String(G.score)]], G.menuT > 60 ? K('ENTREE : SUITE', 'A : SUITE') : '');
+        ['TEMPS', fmtTime(G.frame / 60)], ['BONUS', String(G.clearBonus)], ['SCORE', String(G.score)]], G.menuT > 60 ? K('ENTREE : SUITE', 'A : SUITE') : '');
       drawText(c, gradeFor(), W - 130, 200, { size: 64, color: '#ffe44d', outline: '#ff2fd0', italic: true, align: 'center', glow: '#ff2fd0', outlineW: 6 });
+      if (m) {
+        const tag = m.newScore ? 'NOUVEAU RECORD' : m.newTime ? 'MEILLEUR TEMPS' : '';
+        if (tag && G.menuT % 40 < 28) drawText(c, tag, W - 130, 222, { size: 9, color: '#3dffa0', outline: OUT, align: 'center', glow: '#3dffa0' });
+        MEDAL_KINDS.forEach((k, i) => {
+          const x = W / 2 + (i - 1) * 120, on = m.got[k.id];
+          drawMedalBadge(c, x, 254, k, on, m.fresh[k.id], G.menuT);
+          drawText(c, k.label, x, 276, { size: 8, color: on ? '#fff' : '#6a5a8a', outline: OUT, align: 'center' });
+          if (k.id === 'speed') drawText(c, fmtTime(m.time) + ' / ' + fmtTime(m.par), x, 286, { size: 7, color: on ? '#27f0ff' : '#6a5a8a', outline: OUT, align: 'center' });
+        });
+      } else drawText(c, 'CODE ACTIF : MEDAILLES DESACTIVEES', W / 2, 262, { size: 9, color: '#8a7aaa', outline: OUT, align: 'center' });
       break;
     }
     case 'ending':
       if (End.t > 90 && End.t < End.len - 60) drawText(c, K('ENTREE : PASSER', 'A : PASSER'), W - 12, H - 10, { size: 8, color: '#fff', outline: OUT, align: 'right' });
       break;
     case 'gameover':
-      drawPanel(c, 'GAME OVER', [['SCORE', String(G.score)], ['COMBO MAX', String(G.combo.max)]], G.menuT > 40 ? K('ENTREE : REESSAYER   -   T : TITRE', 'A : REESSAYER   -   SELECT : TITRE') : '');
+      if (G.mode === 'endless' && G.endless) {
+        const r = G.endlessRes;
+        drawPanel(c, 'GAME OVER', [['VAGUE ATTEINTE', String(G.endless.wave)], ['SCORE', String(G.score)], ['RECORD', 'VAGUE ' + Math.max(Medals.endless.wave, G.endless.wave)]],
+          G.menuT > 40 ? K('ENTREE : REJOUER   -   T : TITRE', 'A : REJOUER   -   SELECT : TITRE') : '');
+        if (r && (r.newWave || r.newScore) && G.menuT % 40 < 28) drawText(c, 'NOUVEAU RECORD', W / 2, 200, { size: 12, color: '#3dffa0', outline: OUT, align: 'center', italic: true, glow: '#3dffa0' });
+      } else {
+        drawPanel(c, 'GAME OVER', [['SCORE', String(G.score)], ['COMBO MAX', String(G.combo.max)]], G.menuT > 40 ? K('ENTREE : REESSAYER   -   T : TITRE', 'A : REESSAYER   -   SELECT : TITRE') : '');
+      }
       break;
     case 'victory': {
       c.fillStyle = 'rgba(0,0,0,.55)'; c.fillRect(0, 0, W, H);
@@ -833,7 +885,7 @@ function overlay() {
   sctx.save();
   sctx.translate(VIEW.ox, VIEW.oy); sctx.scale(VIEW.sc, VIEW.sc);
   sctx.imageSmoothingEnabled = true;
-  if (G.state === 'title') { drawTitle(sctx); drawCodeEntry(sctx); if (G.opts) drawOptions(sctx); if (G.titlePanel === 'board') { drawBoardPanel(sctx, 'CLASSEMENT MONDIAL'); drawText(sctx, K('L / ECHAP : RETOUR', 'B / Y : RETOUR'), W / 2, H - 22, { size: 10, color: '#27f0ff', outline: OUT, align: 'center' }); } if (G.titlePanel === 'ach') Ach.drawList(sctx); }
+  if (G.state === 'title') { drawTitle(sctx); drawCodeEntry(sctx); if (G.opts) drawOptions(sctx); if (G.titlePanel === 'board') { drawBoardPanel(sctx, 'CLASSEMENT MONDIAL'); drawText(sctx, K('GAUCHE / DROITE : ARCADE - ENDLESS   -   L / ECHAP : RETOUR', 'CROIX : ARCADE - ENDLESS   -   B / Y : RETOUR'), W / 2, H - 22, { size: 9, color: '#27f0ff', outline: OUT, align: 'center' }); } if (G.titlePanel === 'ach') Ach.drawList(sctx); if (G.titlePanel === 'medals') drawMedalsPanel(sctx); }
   else {
     FX.drawText(sctx, Math.round(G.camX));
     if (G.state === 'play' || G.state === 'pause' || G.state === 'clear' || G.state === 'gameover') drawHUD(sctx);
@@ -916,9 +968,10 @@ function boot() {
     Snd.resume();
     if (G.state === 'entry' && e.key) entryKey(e);
     if (G.state === 'title' && e.key) {
-      if (G.titlePanel) { if (['Escape', 'Enter', 'KeyL', 'KeyS', 'Backspace'].includes(e.code) || e.key === 'Escape') { G.titlePanel = null; Snd.sfx.ui(); Input.clear(); } }
+      if (G.titlePanel) { if (['Escape', 'Enter', 'KeyL', 'KeyS', 'KeyB', 'Backspace'].includes(e.code) || e.key === 'Escape') { G.titlePanel = null; Snd.sfx.ui(); Input.clear(); } }
       else if (!G.codeEntry && !G.cheatGo && e.code === 'KeyL' && !e.repeat) openTitlePanel('board');
       else if (!G.codeEntry && !G.cheatGo && e.code === 'KeyS' && !e.repeat) openTitlePanel('ach');
+      else if (!G.codeEntry && !G.cheatGo && !G.opts && e.code === 'KeyB' && !e.repeat) openTitlePanel('medals');
       else if (!G.codeEntry && !G.cheatGo && !G.opts && e.code === 'KeyO' && !e.repeat) openOptions('title');
       else codeKey(e);
     }
@@ -934,7 +987,12 @@ function boot() {
     if (q.has('ending')) { G.state = 'ending'; G.menuT = 0; End.reset(); End.t = parseInt(q.get('ending'), 10) || 0;   // dev: ?ending=<frame>; browsers only allow audio after a gesture, so the music starts on the first click / key
       const startEndingMusic = () => { Snd.resume(); if (G.state === 'ending') Snd.playMusic(4, false); removeEventListener('pointerdown', startEndingMusic); removeEventListener('keydown', startEndingMusic); };
       addEventListener('pointerdown', startEndingMusic); addEventListener('keydown', startEndingMusic); }
-    if (q.has('level')) {
+    if (q.has('panel')) G.titlePanel = q.get('panel');   // dev: ?panel=medals | ach | board
+    if (q.has('mode')) G.titleMode = q.get('mode') === 'endless' ? 'endless' : 'arcade';
+    if (q.has('endless')) {
+      Endless.start();
+      if (q.has('wave')) G.endless.wave = Math.max(0, parseInt(q.get('wave'), 10) - 1);   // dev: ?endless=1&wave=10 starts at wave 10
+    } else if (q.has('level')) {
       startGame(clamp(parseInt(q.get('level'), 10) - 1, 0, LEVELS.length - 1), true);
       if (q.has('stop')) jumpToStop(parseInt(q.get('stop'), 10));
     }

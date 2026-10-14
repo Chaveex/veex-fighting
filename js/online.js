@@ -4,20 +4,25 @@
 // ?api=<url> overrides the endpoint (local test: netlify dev -> ?api=http://localhost:8899/api/scores).
 const Online = {
   PROD: 'https://veexing-force.netlify.app/api/scores',
-  board: null, status: 'idle', error: '', myRank: null, myEntry: null,
+  board: null, status: 'idle', error: '', myRank: null, myEntry: null, mode: 'arcade',   // mode: 'arcade' | 'endless' (separate boards)
   url() {
     const q = new URLSearchParams(location.search).get('api'); if (q) return q;
     return /netlify\.app$/.test(location.hostname) ? '/api/scores' : this.PROD;
   },
+  setMode(m) { this.mode = m === 'endless' ? 'endless' : 'arcade'; this.board = null; this.myRank = null; return this.load(); },
   async load() {
     this.status = 'loading'; this.error = '';
+    const mode = this.mode;
     try {
-      const r = await fetch(this.url(), { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status);
-      this.board = (await r.json()).scores || []; this.status = 'ok';
+      const u = this.url(), r = await fetch(mode === 'endless' ? u + (u.includes('?') ? '&' : '?') + 'mode=endless' : u, { cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+      if (mode !== this.mode) return;   // the player switched boards while this one was loading
+      this.board = d.scores || []; this.status = 'ok';
     } catch (e) { this.status = 'error'; this.error = 'CLASSEMENT INDISPONIBLE (HORS LIGNE ?)'; }
   },
   async submit(entry) {
-    this.status = 'sending'; this.error = ''; this.myRank = null; this.myEntry = entry;
+    this.status = 'sending'; this.error = ''; this.myRank = null; this.myEntry = entry; this.mode = entry.mode === 'endless' ? 'endless' : 'arcade'; this.board = null;
     try {
       const r = await fetch(this.url(), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(entry) });
       const d = await r.json().catch(() => ({}));
@@ -40,7 +45,9 @@ function startEntry(after) {
 function entryName() { return G.entry.chars.map(i => ENTRY_CHARS[i]).join(''); }
 function submitEntry() {
   const name = entryName(); try { localStorage.setItem('veexInitials', name); } catch (e) { /* ignore */ }
-  Online.submit({ name, score: G.score, level: G.level + 1, hero: G.hero, cleared: G.entry.after === 'title' });
+  const ent = { name, score: G.score, level: G.level + 1, hero: G.hero, cleared: G.entry.after === 'title' };
+  if (G.mode === 'endless' && G.endless) { ent.mode = 'endless'; ent.wave = G.endless.wave; ent.cleared = false; }
+  Online.submit(ent);
   G.state = 'board'; G.menuT = 0; G.boardAfter = G.entry.after; Snd.sfx.select(); Input.clear();
 }
 function entryKey(e) {   // keyboard: type the letters directly
@@ -85,12 +92,13 @@ function drawEntry(c) {
 }
 function drawBoardPanel(c, title) {
   c.fillStyle = 'rgba(5,1,15,.82)'; c.fillRect(0, 0, W, H);
-  drawText(c, title || 'CLASSEMENT MONDIAL', W / 2, 38, { size: 22, color: '#fff', outline: '#ff2fd0', align: 'center', italic: true, glow: '#ff2fd0', outlineW: 4 });
+  const endless = Online.mode === 'endless';
+  drawText(c, endless ? 'CLASSEMENT ENDLESS' : (title || 'CLASSEMENT MONDIAL'), W / 2, 38, { size: 22, color: '#fff', outline: '#ff2fd0', align: 'center', italic: true, glow: '#ff2fd0', outlineW: 4 });
   const x0 = W / 2 - 170, y0 = 58;
   c.fillStyle = 'rgba(16,6,40,.92)'; c.fillRect(x0, y0, 340, 250); c.strokeStyle = '#8b5cff'; c.lineWidth = 1; c.strokeRect(x0 + 0.5, y0 + 0.5, 339, 249);
   const head = { size: 9, color: '#8b5cff', outline: OUT };
   drawText(c, 'RANG', x0 + 12, y0 + 16, head); drawText(c, 'NOM', x0 + 62, y0 + 16, head); drawText(c, 'SCORE', x0 + 190, y0 + 16, Object.assign({ align: 'right' }, head));
-  drawText(c, 'STAGE', x0 + 222, y0 + 16, head); drawText(c, 'HEROS', x0 + 280, y0 + 16, head);
+  drawText(c, endless ? 'VAGUE' : 'STAGE', x0 + 222, y0 + 16, head); drawText(c, 'HEROS', x0 + 280, y0 + 16, head);
   const B = Online.board;
   if (!B) drawText(c, Online.status === 'error' ? Online.error : 'CHARGEMENT...', W / 2, y0 + 120, { size: 11, color: Online.status === 'error' ? '#ff2a4d' : '#fff', outline: OUT, align: 'center' });
   else if (!B.length) drawText(c, 'PERSONNE ENCORE. A TOI DE JOUER !', W / 2, y0 + 120, { size: 11, color: '#fff', outline: OUT, align: 'center' });
@@ -100,7 +108,7 @@ function drawBoardPanel(c, title) {
     const col = i === 0 ? '#ffe44d' : i < 3 ? '#27f0ff' : '#fff', o = { size: 11, color: me ? '#ff9af0' : col, outline: OUT };
     drawText(c, (i + 1) + '.', x0 + 14, y, o); drawText(c, s.name, x0 + 62, y, o);
     drawText(c, String(s.score).padStart(8, '0'), x0 + 190, y, Object.assign({ align: 'right' }, o));
-    drawText(c, s.cleared ? 'FIN' : String(s.level), x0 + 232, y, o); drawText(c, s.hero.toUpperCase(), x0 + 280, y, o);
+    drawText(c, endless ? String(s.wave || '-') : s.cleared ? 'FIN' : String(s.level), x0 + 232, y, o); drawText(c, s.hero.toUpperCase(), x0 + 280, y, o);
   });
   if (Online.myRank && Online.myRank > 10) drawText(c, 'TON RANG : ' + Online.myRank, W / 2, y0 + 242, { size: 10, color: '#ff9af0', outline: OUT, align: 'center' });
   if (Online.status === 'sending') drawText(c, 'ENVOI DU SCORE...', W / 2, y0 + 242, { size: 10, color: '#fff', outline: OUT, align: 'center' });

@@ -1,6 +1,7 @@
 // VEEXING FORCE online leaderboard (Netlify Function + Netlify Blobs).
-//   GET  /api/scores          -> { scores: [{ name, score, level, hero, cleared, date }] }  (top 20, best first)
-//   POST /api/scores  { name, score, level, hero, cleared }  -> { rank, scores }
+//   GET  /api/scores[?mode=endless]  -> { scores: [{ name, score, level, hero, cleared, wave?, date }] }  (top 20, best first)
+//   POST /api/scores  { name, score, level, hero, cleared, mode?, wave? }  -> { rank, scores }
+// Two separate boards: 'arcade' (default) and 'endless' (infinite waves, `wave` = wave reached).
 // The game also runs from file:// (local double-click), so the API answers any origin (CORS *).
 // Arcade trust model: light validation + one submission per player every 15 s; it is a fun board, not an anti-cheat system.
 import { getStore } from '@netlify/blobs';
@@ -17,18 +18,26 @@ async function hashIp(ip) {
 export default async (req, context) => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
   const store = getStore('leaderboard');
-  const board = (await store.get('arcade', { type: 'json' })) || [];
+  const url = new URL(req.url);
 
-  if (req.method === 'GET') return json({ scores: board.slice(0, SHOW) });
+  if (req.method === 'GET') {
+    const key = url.searchParams.get('mode') === 'endless' ? 'endless' : 'arcade';
+    const board = (await store.get(key, { type: 'json' })) || [];
+    return json({ scores: board.slice(0, SHOW) });
+  }
   if (req.method !== 'POST') return json({ error: 'method' }, 405);
 
   let b;
   try { b = await req.json(); } catch { return json({ error: 'json' }, 400); }
+  const key = b.mode === 'endless' ? 'endless' : 'arcade';
+  const board = (await store.get(key, { type: 'json' })) || [];
   const name = String(b.name || '').toUpperCase(), score = Number(b.score), level = Number(b.level);
   const hero = b.hero === 'roxy' ? 'roxy' : 'veex', cleared = !!b.cleared;
   if (!/^[A-Z0-9]{3}$/.test(name)) return json({ error: 'name' }, 400);
   if (!Number.isInteger(score) || score <= 0 || score > MAX_SCORE) return json({ error: 'score' }, 400);
   if (!Number.isInteger(level) || level < 1 || level > 4) return json({ error: 'level' }, 400);
+  const wave = Number(b.wave);
+  if (key === 'endless' && (!Number.isInteger(wave) || wave < 1 || wave > 999)) return json({ error: 'wave' }, 400);
 
   const who = await hashIp(context.ip || req.headers.get('x-nf-client-connection-ip') || 'unknown');
   const last = await store.get('rl/' + who, { type: 'json' });
@@ -36,10 +45,11 @@ export default async (req, context) => {
   await store.setJSON('rl/' + who, { t: Date.now() });
 
   const entry = { name, score, level, hero, cleared, date: new Date().toISOString().slice(0, 10) };
+  if (key === 'endless') entry.wave = wave;
   board.push(entry);
   board.sort((a, c) => c.score - a.score);
   const rank = board.indexOf(entry) + 1;
-  await store.setJSON('arcade', board.slice(0, KEEP));
+  await store.setJSON(key, board.slice(0, KEEP));
   return json({ rank: rank <= KEEP ? rank : null, scores: board.slice(0, SHOW) });
 };
 

@@ -69,6 +69,29 @@ En l'air : J jab aérien, K dive kick, L genou volant. Pendant un dash : rush ho
 Après le boss de CYBER TOWER : cinématique de fin, le héros choisi (VEEX ou ROXY) part en moto dans un coucher de soleil façon Vice (`js/ending.js`, 100 % procédural).
 Musique dédiée (thème synthétisé de 16 mesures, `scheduleEnding` dans `js/audio.js`, jouée une fois). Entrée / A pour passer. Aperçu en dev : `?ending=<frame>&hero=roxy`.
 
+## Modes de jeu, rangs et médailles
+
+Sur l'écran titre, **haut / bas** (croix de la manette) choisit le mode, **Entrée / Start** le lance. Le choix est mémorisé.
+
+- **ARCADE** : les 4 niveaux d'affilée, avec fin.
+- **ENDLESS** : une seule arène, des vagues sans fin (`js/modes.js`). Une nouvelle vague dès que l'écran est nettoyé, 3 vies, aucun point de reprise.
+  Tous les **5 vagues** : un boss (BIG BOOMER, LADY LASER, DON PASTEL, MR. CHROME, puis ça recommence) et le décor change (NEON -> ARCADE -> SUNSET -> CYBER).
+  Les ennemis gagnent +5 % de PV et +2,5 % de dégâts par vague (plafonnés à x3 / x2), de nouveaux types apparaissent (BREAKER vague 2, DJ vague 3, SKATER vague 4, lourds vague 5).
+  Entre les vagues : bonus de vague (`vague x 60`), soda / pizza selon les PV ; après un boss : pizza + mixtape, et **1UP toutes les 10 vagues**.
+  Record (vague + score) sauvegardé ; classement en ligne **séparé** (L au titre puis gauche / droite pour passer d'ARCADE à ENDLESS).
+
+**Médailles** (panneau **B** au titre, **RB** manette) : 3 par niveau, 12 en tout, sauvegardées avec le meilleur rang, score et temps.
+
+| Médaille | Condition |
+|---|---|
+| **STYLE S** | note S en fin de niveau |
+| **SANS DEGATS** | aucun dégât encaissé sur le niveau |
+| **RAPIDE** | niveau fini sous le temps « par » (`MEDAL_PAR` dans `js/modes.js` : 2:10 / 2:30 / 2:40 / 2:50) |
+
+L'écran STAGE CLEAR affiche les médailles gagnées (étincelles sur une médaille toute neuve), le temps et « NOUVEAU RECORD ».
+Comme pour les succès et le classement, une partie lancée avec un code ou en invincible ne compte pas.
+Succès liés : **TROIS SUR TROIS** (3 médailles sur un niveau), **SANS FIN** (vague 10 en ENDLESS).
+
 ## Juice
 
 Hit-stop, ralentis sur critiques/KO, screen shake directionnel, zoom punch, aberration chromatique,
@@ -134,9 +157,9 @@ Exemple : `BOSS` puis `VICE` = combat direct contre DON PASTEL.
 
 ## Succès et classement en ligne
 
-- **Succès** : 24 succès (K.O., combos, esquive parfaite, Fury, éléments de décor, fin de chaque niveau, sans dégâts, note S, ROXY, partie sans perdre de vie...).
+- **Succès** : 28 succès (K.O., combos, esquive parfaite, Fury, éléments de décor, fin de chaque niveau, sans dégâts, note S, ROXY, partie sans perdre de vie...).
   Sauvegardés dans le navigateur. Liste sur l'écran titre : **S** (clavier) / **X** (manette). Une bannière s'affiche quand on en débloque un.
-- **Classement mondial** : après un game over ou la victoire, entre tes 3 initiales (clavier ou manette), le score part au classement.
+- **Classement mondial** (deux tableaux : ARCADE et ENDLESS) : après un game over ou la victoire, entre tes 3 initiales (clavier ou manette), le score part au classement.
   Consultable sur l'écran titre : **L** / **Y**. Serveur : `netlify/functions/scores.mjs` (Netlify Functions + Netlify Blobs), déployé avec `npm run deploy`.
 - Une partie lancée avec un **code** (niveau, BOSS, INVINCIBLE) ne compte ni pour les succès ni pour le classement.
 - Test local du serveur : `npx netlify dev --dir dist --functions netlify/functions --port 8899` puis ouvrir le jeu avec `?api=http://localhost:8899/api/scores`.
@@ -190,8 +213,9 @@ Niveau 3 (Vice) : nappe de vagues en boucle (`amb_waves`), sur le bus secondaire
 
 ## Dev
 
+- `?endless=1` lance l'ENDLESS (`&wave=10` commence à la vague 10), `?mode=endless` présélectionne le mode au titre, `?panel=medals|ach|board` ouvre un panneau du titre.
 - `?level=3` démarre au niveau 3, `&stop=2` saute à la 3e zone, `&bot=1` autoplay, `&god=1` invincible, `?sheet=1` planche de poses.
-- `node tools/soak.js <niveau> <stop|-1> <steps>` : test de logique sans navigateur (bot, `NOGOD=1` pour mourir).
+- `node tools/soak.js <niveau> <stop|-1> <steps>` : test de logique sans navigateur (bot, `NOGOD=1` pour mourir, `ENDLESS=1 WAVE=9` pour l'ENDLESS).
 - `python tools/make_prop_sprites.py` régénère les 8 éléments de niveau (`assets/props/`, `js/propSprites.js`) ; `tools/asekit.py` écrit les vrais fichiers `.aseprite`.
 - `python tools/make_vent_sprites.py` régénère la bouche d'égout (`assets/vent.aseprite|png|json`, `js/ventSprites.js`).
 - `python tools/build_enemy_sheets.py` : les 24 ennemis / boss sont des **modèles 3D rendus en pixel art** (même moteur que le héros : `tools/enemy3d.py`, `render3d.py`), finis par le vrai Aseprite (`assets/enemies/*.aseprite|png|json`, `js/enemySprites.js`). `tools/make_enemy_sprites.py` ne sert plus que de bibliothèque (roster, poses).
@@ -199,4 +223,4 @@ Niveau 3 (Vice) : nappe de vagues en boucle (`amb_waves`), sur le bus secondaire
 - `python tools/make_hero_sprites.py` (v7) : le héros est conçu **d'après la description** (plus de photo) : modèle 3D à squelette complet (`tools/hero6.py`, IK 3D, torsion du buste, vraie vrille) rendu en pixel art (`render3d.py`). L'**animation v7** (réécrite de zéro) est dans `tools/hero_anim.py` : cibles en espace écran, frames par phase (préparation / impact / retour), table exportée dans le JSON et lue par `HeroSprites.frameFor` (`python tools/hero_anim_preview.py jab cross elbow` pour les voir, `all` pour tout). Frames → `assets/hero_src.aseprite` (calques `body` + `rim`), puis **le vrai Aseprite** (`tools/ase/hero_finalize.lua`) → `assets/hero.aseprite` indexé, `hero.png` + JSON, GIF d'aperçu (`assets/hero_preview/`). `hero3d.py` (version photo) n'est plus utilisé que par les ennemis (helpers) et le comparatif de styles.
 - Échelle : `PU` (héros, 1.26) et `EU` (ennemis, 1.22) dans `js/util.js` agrandissent sprites, hitboxes, portées et vitesses ; ils doivent rester égaux à `k` des générateurs (`UNIT` / `EU`).
 - `python tools/make_assets.py` régénère `js/assets.js` (tête + portrait embarqués) depuis `public/veex.png`.
-- Structure : `js/util` (input, math) · `audio` · `fx` (juice) · `rig` (squelette) · `fighter` (héros + moves) · `enemies` (IA, boss, projectiles) · `levels` (niveaux, décors) · `game` (boucle, HUD, menus).
+- Structure : `js/util` (input, math) · `audio` · `fx` (juice) · `rig` (squelette) · `fighter` (héros + moves) · `enemies` (IA, boss, projectiles) · `levels` (niveaux, décors) · `modes` (médailles, ENDLESS) · `game` (boucle, HUD, menus).

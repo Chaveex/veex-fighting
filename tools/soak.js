@@ -32,17 +32,17 @@ const sandbox = {
 };
 sandbox.window = sandbox;
 vm.createContext(sandbox);
-const files = ['assets', 'util', 'audio', 'fx', 'rig', 'heroSprites', 'heroSprites_roxy', 'enemySprites', 'ventSprites', 'propSprites', 'sprites', 'fighter', 'enemies', 'hazards', 'props', 'levels', 'game'];
+const files = [...fs.readFileSync(path.join(root, 'index.html'), 'utf8').matchAll(/<script src="js\/([\w]+)\.js">/g)].map(m => m[1]);   // same scripts, same order as the page
 let code = files.map(f => fs.readFileSync(path.join(root, 'js', f + '.js'), 'utf8')).join('\n;\n');
 // expose top-level consts of interest & the game loop helpers
-code += `\n;globalThis.__api = { makeProp, startLevel, SpriteSheet, G, step, startGame, LEVELS, Input, botControl, FX, worldTick, render };`;
+code += `\n;globalThis.__api = { makeProp, startLevel, SpriteSheet, G, step, startGame, Endless, Medals, LEVELS, Input, botControl, FX, worldTick, render };`;
 try { vm.runInContext(code, sandbox, { filename: 'game-bundle.js' }); } catch (e) { console.error('BOOT ERROR', e); process.exit(1); }
 const A = sandbox.__api;
 A.__reset = () => { CALLS = 0; };
 A.__check = () => { if (CALLS > MAXC) MAXC = CALLS; };
 A.G.bot = true; A.G.god = !process.env.NOGOD;
-A.startGame(level - 1);
-if (stopArg >= 0) {
+if (process.env.ENDLESS) { A.Endless.start(); if (process.env.WAVE) A.G.endless.wave = parseInt(process.env.WAVE, 10) - 1; } else A.startGame(level - 1);   // ENDLESS=1 [WAVE=n]
+if (stopArg >= 0 && !process.env.ENDLESS) {
   const st = A.LEVELS[level - 1].stops[stopArg];
   A.G.stopIdx = stopArg; A.G.camX = Math.max(0, st.x - 160); A.G.player.x = A.G.camX + 120; A.G.banner = null;
 }
@@ -109,7 +109,7 @@ try {
   vm.runInContext(drive, sandbox, { timeout: 25000 });
   console.log('max canvas calls/frame', MAXC, 'bad args', JSON.stringify(Object.fromEntries(Object.entries(BYM).filter(([k]) => k.startsWith('BADARG')))));
   console.log('missing frames', JSON.stringify(A.SpriteSheet.missing || {}));
-  console.log('OK steps', sandbox.__done, 'state', A.G.state, 'level', A.G.level + 1, 'stop', A.G.stopIdx, 'score', A.G.score, 'lives', A.G.lives, 'dmgTaken', A.G.stats.dmgTaken, 'combo', A.G.combo.max, 'dodges', A.G.combo.dodges, 'cancels', A.G.combo.cancels, 'ms', Date.now() - t0);
+  console.log('OK steps', sandbox.__done, 'state', A.G.state, 'level', A.G.level + 1, 'stop', A.G.stopIdx, 'mode', A.G.mode, 'wave', A.G.endless ? A.G.endless.wave : '-', 'score', A.G.score, 'lives', A.G.lives, 'dmgTaken', A.G.stats.dmgTaken, 'combo', A.G.combo.max, 'dodges', A.G.combo.dodges, 'cancels', A.G.combo.cancels, 'ms', Date.now() - t0);
 } catch (e) {
   console.log('FAIL', e.message); console.log(e.stack ? e.stack.split('\n').slice(0, 8).join('\n') : '');
   console.log('progress', JSON.stringify(sandbox.__prog));
