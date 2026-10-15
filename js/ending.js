@@ -2,11 +2,11 @@
 // ============ ending: the hero rides off on a motorbike into a Vice-style sunset ============
 // Fully procedural (no assets). Driven by End.step() per frame, drawn by End.draw(c, hero, portrait).
 const End = {
-  t: 0, scroll: 0, len: 1020,
+  t: 0, scroll: 0, len: 1050,
   reset() { this.t = 0; this.scroll = 0; },
   speed() { const t = this.t; return t < 240 ? 2 + 6 * (1 - ease3(1 - t / 240)) * 0.5 : t < 660 ? 3.2 : 3.2 + Math.pow((t - 660) / 40, 2); },
   step() { this.t++; this.scroll += this.speed(); },
-  bikeX() { const t = this.t; return t < 240 ? -110 + 350 * ease3(t / 240) : t < 660 ? 240 + Math.sin(t * 0.02) * 4 : 240 + Math.pow((t - 660) / 34, 2.2) * 40; },
+  bikeX() { const t = this.t; return t < 240 ? -110 + 350 * ease3(t / 240) : t < 660 ? 240 + Math.sin(t * 0.02) * 4 : t < 900 ? 240 + ease3((t - 660) / 60) * 30 + Math.sin(t * 0.05) * 3 : 270 + Math.pow(Math.min(1, (t - 900) / 30), 2) * 420; },   // boosts but stays framed, then bolts off screen at t=900-930, 2 s before the end
   draw(c, hero) {
     const t = this.t;
     drawBackdrop(c, t, this.scroll);
@@ -92,10 +92,18 @@ function artWheel(c, B, cx, cy, rot) {
 // offsets measured on the pose targets in tools/make_ride_sprites.py: px = 1.26 * target).
 function drawBike(c, bx, by, t, scroll, hero, wheelie, boost) {
   const B = bikeArt();
+  // ground shadow: drawn before the wheelie rotation so it stays flat on the road (it only shortens as the front wheel lifts)
+  const sk = 1 - wheelie * 0.9;
+  c.fillStyle = 'rgba(0,0,0,.35)'; c.beginPath(); c.ellipse(bx + 32 * sk, by + 1, 54 * sk, 5, 0, 0, 6.3); c.fill();
+  if (B) {   // underglow reflection: also stays flat on the road (not tilted with the bike), fading as the bike rears up
+    const m = B.meta;
+    c.save(); c.imageSmoothingEnabled = false; c.globalCompositeOperation = 'lighter';
+    c.globalAlpha = (0.55 + 0.15 * Math.sin(t * 0.2)) * (1 - wheelie * 1.5);
+    c.drawImage(B.under, bx - m.ox, by - m.oy); c.restore();
+  }
   c.save();
   c.translate(bx, by); c.rotate(-wheelie); c.translate(-bx, -by);   // pivot on the rear wheel
-  // ground shadow + tail light trail + headlight beam
-  c.fillStyle = 'rgba(0,0,0,.35)'; c.beginPath(); c.ellipse(bx + 32, by + 1, 54, 5, 0, 0, 6.3); c.fill();
+  // tail light trail + headlight beam
   c.globalCompositeOperation = 'lighter';
   const tl = c.createLinearGradient(bx - 90, 0, bx - 6, 0); tl.addColorStop(0, 'rgba(255,42,77,0)'); tl.addColorStop(1, 'rgba(255,42,77,.7)');
   c.fillStyle = tl; c.fillRect(bx - 90 - (boost ? 60 : 0), by - 36, 84 + (boost ? 60 : 0), 3);
@@ -107,7 +115,6 @@ function drawBike(c, bx, by, t, scroll, hero, wheelie, boost) {
     c.imageSmoothingEnabled = false;
     artWheel(c, B, bx, by - 16, rot); artWheel(c, B, bx + 64, by - 16, rot);
     c.drawImage(hero === 'roxy' ? B.body_cyan : B.body_pink, bx - m.ox, by - m.oy);
-    c.globalCompositeOperation = 'lighter'; c.globalAlpha = 0.55 + 0.15 * Math.sin(t * 0.2); c.drawImage(B.under, bx - m.ox, by - m.oy); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
     c.imageSmoothingEnabled = true;
   }
   // rider: dedicated seated pose (tools/make_ride_sprites.py -> assets/hero_ride*.aseprite), same pixel-art renderer as the fight sprites
