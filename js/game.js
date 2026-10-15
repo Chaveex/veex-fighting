@@ -185,20 +185,22 @@ const BOSS_TALKS = {
   },
   2: {   // DON PASTEL: 80s teleshopping salesman
     hold: 'kneel',
+    intro: g => [
+      { who: 'hero', text: "L'IA est même à Vice..." },
+    ],
     pre: g => [
-      { who: 'boss', text: 'Bienvenue à VICE ! Soleil, plage, mise à jour...@on a tout en stock !' },
-      { who: 'hero', text: 'Je veux juste le type qui a frappé ma Moman.' },
-      { who: 'boss', text: 'Alors voici notre offre : la raclée GRATUITE,@la défaite en SUPPLÉMENT !' },
-      { who: 'boss', text: 'Et si vous appelez dans les cinq minutes, on vous met KO deux fois !' },
+      { who: 'boss', text: (g ? 'Gamine' : 'Gamin') + ", je t'arrête tout de suite,@tu fais une grosse erreur." },
+      { who: 'hero', text: "C'est toi qui hallucines... pourquoi il y a des grenades à Vice ?" },
+      { who: 'boss', text: 'Viens là que je te ridiculise ! Tu vas comprendre...' },
     ],
     post: g => [
       { who: 'boss', text: 'Impossible ! Ce modèle était garanti satisfait ou remboursé !' },
       { who: 'hero', text: 'Alors rembourse-moi ma journée.' },
-      { who: 'boss', text: "Vous n'avez toujours rien compris... Pourquoi croyez-vous que@votre Moman est passée à la télé ?" },
+      { who: 'boss', text: "Mais " + (g ? 'gamine' : 'gamin') + " ! T'as toujours pas le contexte ?!@Pourquoi crois-tu que ta Moman est passée à la télé ?" },
       { who: 'hero', text: 'Euh... pour les promos ?' },
-      { who: 'boss', text: "Elle sait ce que cache la tour ! MR. CHROME veut la faire taire,@et nous, on n'était que les livreurs !" },
+      { who: 'boss', text: "Elle sait ce que cache la tour ! MR. CHROME veut la faire taire,@et nous, on n'était que les modèles !" },
       { who: 'hero', text: "Ma Moman ? Elle sait même pas régler la box." },
-      { who: 'boss', text: '...Appelez... maintenant...', pose: 'down' },
+      { who: 'boss', text: '...Maudit humain 1.0... au 8 15 15', pose: 'down' },
     ],
   },
 };
@@ -246,6 +248,7 @@ function startLevel(li) {
   G.hint = { t: 0, text: (padUI() && L.hintPad) || L.hint };
   G.state = 'play'; Input.clear();
   Snd.playMusic(L.music, false);
+  if (G.mode === 'arcade' && BOSS_TALKS[li] && BOSS_TALKS[li].intro) Talk.start(bossTalkLines('intro'), () => {});   // hero's remark on arriving
 }
 
 function spawnEnemy(kind, x, y, opts) {
