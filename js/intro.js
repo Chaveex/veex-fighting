@@ -2,6 +2,38 @@
 // ============ intro: the new-game cutscene. A supermarket, a mum, a pro-AI brute, and a very bad Saturday ============
 // Art: tools/make_intro.py -> js/introArt.js (INTRO_BG backdrop + cart, INTRO_SHEETS.mom). The hero (VEEX / ROXY) and BIG BOOMER reuse their game sheets.
 // Driven by Intro.step() per frame from G.state === 'intro' (js/game.js), drawn by Intro.draw(c). ENTREE: next line, ECHAP: skip everything.
+// shared by the intro and the post-boss talk: bottom dialogue box, typewriter text, speaker tag (boss pink / mum mint / hero cyan)
+function drawDialogueBox(c, who, lines, typed, full, name, t, top) {
+  const col = who === 'boss' ? '#ff2fd0' : who === 'mom' ? '#7fe3c8' : '#27f0ff';
+  const x = 18, y = top ? 62 : 300, w = W - 36, h = 52;
+  c.fillStyle = 'rgba(8,3,22,.88)'; c.fillRect(x, y, w, h); c.strokeStyle = col; c.lineWidth = 2; c.strokeRect(x + 1, y + 1, w - 2, h - 2);
+  c.fillStyle = col; c.fillRect(x + 8, y - 9, 8 + name.length * 8, 14);
+  drawText(c, name, x + 12, y + 2, { size: 9, color: '#0a0418', align: 'left', weight: 'bold' });
+  let n = Math.floor(typed), ty = y + 22;
+  for (const ln of lines) { drawText(c, ln.slice(0, Math.max(0, n)), x + 14, ty, { size: 11, color: '#fff', outline: OUT, align: 'left' }); n -= ln.length + 1; ty += 16; }
+  if (typed >= full && (t >> 4) & 1) drawText(c, '>', x + w - 16, y + h - 10, { size: 10, color: col, outline: OUT, align: 'left' });
+}
+
+// ============ talk: short in-game exchange (world frozen, same box). Talk.start(lines, onDone); G.state === 'talk' ============
+const Talk = {
+  q: null, i: 0, typed: 0, t: 0, onDone: null,
+  start(lines, onDone) { this.q = lines; this.i = 0; this.typed = 0; this.t = 0; this.onDone = onDone; G.state = 'talk'; Input.clear(); },
+  step() {
+    if (!this.q) return; this.t++;
+    FX.updateWorld();
+    const L = this.q[this.i], full = L.text.length;
+    if (Input.eat('pause')) { this.end(); return; }
+    if (this.typed < full) { this.typed = Math.min(full, this.typed + 0.7); if (this.t % 6 === 0) Snd.sfx.ui && Snd.sfx.ui(); }
+    if (Input.eat('confirm')) { if (this.typed < full) this.typed = full; else if (++this.i >= this.q.length) this.end(); else this.typed = 0; }
+  },
+  end() { const cb = this.onDone; this.q = null; this.onDone = null; G.state = 'play'; Input.clear(); cb && cb(); },
+  drawUI(c) {
+    if (!this.q) return; const L = this.q[this.i];
+    const name = L.who === 'boss' ? 'BIG BOOMER' : L.who === 'mom' ? 'MAMAN' : (G.hero === 'roxy' ? 'ROXY' : 'VEEX');
+    drawDialogueBox(c, L.who, L.text.split('\n'), this.typed, L.text.length, name, this.t, true);   // top: the lane near the bottom is where the boss lies
+  },
+};
+
 const Intro = {
   auto: false, t: 0, bi: -1, bt: 0, typed: 0, line: null, done: false, fade: 1, shakeT: 0, flashT: 0,
   A: null, beats: null, onDone: null, _img: null, _mom: null,
@@ -203,17 +235,7 @@ const Intro = {
       drawText(c, 'SAMEDI, 17H42', 18, 24, { size: 10, color: '#27f0ff', outline: OUT, glow: '#27f0ff' });
       c.restore();
     }
-    // dialogue box
-    if (this.line) {
-      const L = this.line, col = L.who === 'boss' ? '#ff2fd0' : L.who === 'mom' ? '#7fe3c8' : '#27f0ff';
-      const x = 18, y = 300, w = W - 36, h = 52;
-      c.fillStyle = 'rgba(8,3,22,.88)'; c.fillRect(x, y, w, h); c.strokeStyle = col; c.lineWidth = 2; c.strokeRect(x + 1, y + 1, w - 2, h - 2);
-      c.fillStyle = col; c.fillRect(x + 8, y - 9, 8 + this.names[L.who].length * 8, 14);
-      drawText(c, this.names[L.who], x + 12, y + 2, { size: 9, color: '#0a0418', align: 'left', weight: 'bold' });
-      let n = Math.floor(this.typed), ty = y + 22;
-      for (const ln of L.lines) { drawText(c, ln.slice(0, Math.max(0, n)), x + 14, ty, { size: 11, color: '#fff', outline: OUT, align: 'left' }); n -= ln.length + 1; ty += 16; }
-      if (this.typed >= L.full && (this.t >> 4) & 1) drawText(c, '▶', x + w - 16, y + h - 10, { size: 10, color: col, outline: OUT, align: 'left' });
-    }
+    if (this.line) drawDialogueBox(c, this.line.who, this.line.lines, this.typed, this.line.full, this.names[this.line.who], this.t);
     if (this.t > 60) drawText(c, K('ENTREE : SUITE   -   ECHAP : PASSER', 'A : SUITE   -   START : PASSER'), W - 12, 14, { size: 7, color: '#bfb3e0', outline: OUT, align: 'right' });
   },
 };

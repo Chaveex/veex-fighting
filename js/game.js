@@ -156,6 +156,15 @@ function startIntro() {
   G.state = 'intro'; Input.clear(); Snd.stopLoops && Snd.stopLoops();
   Intro.start(() => { Input.clear(); startGame(0); });
 }
+function startBossTalk() {
+  const gal = G.hero === 'roxy';
+  Talk.start([
+    { who: 'boss', text: "J'aurais dû courir jusqu'à la salle d'arcade...\nLADY LASER m'aurait protégé..." },
+    { who: 'boss', text: "Et t'en as pas fini avec l'IA ! Mon prompt aurait dû\nte battre. J'étais sûrement en low effort." },
+    { who: 'boss', text: 'On va te rouler dessus, à toi et à ta mère !' },
+    { who: 'hero', text: gal ? "Ça tombe bien, je me tape 300 bornes de bitume\ntous les matins." : "Ça tombe bien, j'avale des kilomètres de route\ntous les jours." },
+  ], () => {});
+}
 function startGame(li, cheated) {
   G.mode = 'arcade'; G.endless = null; G.daily = null; G.medalRes = null; G.hpMul = 1; G.dmgMul = 1;
   G.lives = 3; G.score = 0; G.level = li; G.player = null; G.sty.v = 0; G.seenProps = {};
@@ -171,7 +180,7 @@ function startLevel(li) {
     .concat((L.plates || []).map(o => new ElectroPlate(o, L.plateTiming)));   // floor hazards: steam vents + electrified plates G.maxTok = li < 2 ? 2 : 3;
   G.hpMul = 1 + li * 0.1; G.dmgMul = 1 + li * 0.12;
   FX.reset(); BG.init(li);
-  G.camX = 0; G.stopIdx = 0; G.locked = false; G.waveIdx = 0; G.frame = 0; G.boss = null; G.clearT = 0; G.deathT = 0; G.goT = 0;
+  G.bossTalked = false; G.camX = 0; G.stopIdx = 0; G.locked = false; G.waveIdx = 0; G.frame = 0; G.boss = null; G.clearT = 0; G.deathT = 0; G.goT = 0;
   G.bounds = { minX: 0, maxX: W };
   const old = G.player;
   G.player = new Player(60, 306);
@@ -231,7 +240,11 @@ function stageLogic() {
       spawnEnemy(q.kind, x, rand(LANE_MIN + 4, LANE_MAX - 4));
     }
   }
-  if (G.clearT > 0) { if (--G.clearT === 0) finishLevel(); return; }
+  if (G.clearT > 0) {
+    // level 1: BIG BOOMER lies on the floor and monologues before the clear screen (arcade only; ECHAP skips)
+    if (G.level === 0 && G.mode === 'arcade' && !G.bossTalked && G.boss && G.boss.state === 'dead' && G.boss.stT >= 26) { G.bossTalked = true; startBossTalk(); return; }
+    if (--G.clearT === 0) finishLevel(); return;
+  }
   // camera
   const p = G.player;
   if (!stop) return;
@@ -458,6 +471,8 @@ function step() {
       break;
     case 'intro':
       Intro.step(); break;
+    case 'talk':
+      Talk.step(); break;
     case 'play':
       if (Input.eat('pause')) { G.state = 'pause'; G.pauseIdx = 0; Snd.sfx.ui(); return; }
       if (FX.hitstop > 0) { FX.hitstop--; return; }
@@ -904,9 +919,10 @@ function overlay() {
   if (G.state === 'title') { drawTitle(sctx); drawCodeEntry(sctx); if (G.opts) drawOptions(sctx); if (G.titlePanel === 'board') { drawBoardPanel(sctx, 'CLASSEMENT MONDIAL'); drawText(sctx, K('GAUCHE / DROITE : ARCADE - ENDLESS - JOUR   -   L / ECHAP : RETOUR', 'CROIX : ARCADE - ENDLESS - JOUR   -   B / Y : RETOUR'), W / 2, H - 22, { size: 9, color: '#27f0ff', outline: OUT, align: 'center' }); } if (G.titlePanel === 'ach') Ach.drawList(sctx); if (G.titlePanel === 'medals') drawMedalsPanel(sctx); }
   else {
     FX.drawText(sctx, Math.round(G.camX));
-    if (G.state === 'play' || G.state === 'pause' || G.state === 'clear' || G.state === 'gameover') drawHUD(sctx);
+    if (G.state === 'play' || G.state === 'pause' || G.state === 'clear' || G.state === 'gameover' || G.state === 'talk') drawHUD(sctx);
     if (G.state !== 'play') drawScreen(sctx);
     if (G.state === 'intro') Intro.drawUI(sctx);
+    if (G.state === 'talk') Talk.drawUI(sctx);
   }
   if (G.opts && G.state === 'pause') drawOptions(sctx);
   Ach.drawToast(sctx);   // achievement unlocked: on top of everything
@@ -1015,6 +1031,7 @@ function boot() {
     } else if (q.has('level')) {
       startGame(clamp(parseInt(q.get('level'), 10) - 1, 0, LEVELS.length - 1), true);
       if (q.has('stop')) jumpToStop(parseInt(q.get('stop'), 10));
+      if (q.has('bosstalk')) startBossTalk();   // dev: ?level=1&bosstalk=1 shows the post-boss dialogue straight away
     }
     if (G.player && q.has('weapon') && WEAPONS[q.get('weapon')]) G.player.weapon = { id: q.get('weapon'), uses: WEAPONS[q.get('weapon')].uses };   // dev: ?level=1&weapon=bar&spawn=brute&arm=knife
     if (G.player && q.has('spawn')) { const e = spawnEnemy(q.get('spawn'), G.camX + 420, 300, { flash: true }); if (q.has('arm') && WEAPONS[q.get('arm')]) e.arm(q.get('arm')); }
