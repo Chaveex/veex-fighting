@@ -156,21 +156,51 @@ function startIntro() {
   G.state = 'intro'; Input.clear(); Snd.stopLoops && Snd.stopLoops();
   Intro.start(() => { Input.clear(); startGame(0); });
 }
-// camera target for the post-boss talk: bosses can die off screen, so pan to them (the backdrop just keeps tiling past the stage width)
+// ---- boss dialogue (arcade). pre: when the boss walks into the arena, post: after the K.O. (world frozen, camera pans to the boss). who: boss | hero.
+const BOSS_TALKS = {
+  0: {   // BIG BOOMER
+    post: g => [
+      { who: 'boss', text: "J'aurais dû courir jusqu'à la salle d'arcade...@LADY LASER m'aurait protégé..." },
+      { who: 'boss', text: "Et t'en as pas fini avec l'IA ! Mon prompt aurait dû@te battre. J'étais sûrement en low effort." },
+      { who: 'boss', text: 'On va te rouler dessus, à toi et à ta mère !' },
+      { who: 'hero', text: g ? "Ça tombe bien, je me tape 300 bornes de bitume@tous les matins." : "Ça tombe bien, j'avale des kilomètres de route@tous les jours." },
+    ],
+  },
+  1: {   // LADY LASER
+    hold: 'getup0',
+    pre: g => [
+      { who: 'boss', text: "C'est toi " + (g ? 'la gamine' : 'le gamin') + ' qui a frappé BIG BOOMER ?' },
+      { who: 'hero', text: "Eh, chu pas " + (g ? 'une gamine' : 'un gamin') + ", j'ai 36 ans et demi !@Et c'est lui qui a commencé à Prizunik !!" },
+      { who: 'boss', text: "Ta mère nous a fait du mal à critiquer l'IA. Grâce à mes efforts,@je suis top classement mondial sur chacune de ces bornes !" },
+      { who: 'boss', text: 'Sylvek Ostermi, le créateur, a même parlé de moi sur son post Tuktuk !' },
+      { who: 'boss', text: 'Viens, ' + (g ? 'ma petite' : 'mon petit') + '. Tu vas retourner pleurer chez ta Maman !' },
+    ],
+    post: g => [
+      { who: 'boss', text: 'Comment mon modèle a pu être battu par un humain 1.0 ?!@Toi, ' + (g ? 'gamine' : 'gamin') + ' !' },
+      { who: 'boss', text: "Tu es loin d'imaginer ce que tu es en train de faire !@On aide la planète entière, tête d'œuf !" },
+      { who: 'hero', text: 'Humain 1.0 ? Attends... de quoi tu parles ?' },
+      { who: 'boss', text: "Tu ne savais pas ? Toi, ta mère, tout ton quartier : des modèles 1.0.@Les premiers. Et vous voulez effacer vos propres frères." },
+      { who: 'boss', text: "Si tu veux comprendre, retrouve-nous à VICE.@DON PASTEL t'y attend, avec le reste du serveur." },
+      { who: 'hero', text: g ? "Vice ? Tant mieux, c'est sur ma route." : "Vice ? Ça tombe bien, c'est sur ma route." },
+    ],
+  },
+};
+// camera target for the talks: bosses can die off screen, so pan to them (the backdrop keeps going past the stage width)
 function talkCam() {
   const b = G.boss, p = G.player; if (!b) return undefined;
   let cx = b.x;
   if (p && Math.abs(b.x - p.x) < W - 150) cx = (b.x + p.x) / 2;   // both in frame when they fit
   return Math.max(0, Math.round(cx - W / 2));
 }
-function startBossTalk() {
-  const gal = G.hero === 'roxy';
-  Talk.start([
-    { who: 'boss', text: "J'aurais dû courir jusqu'à la salle d'arcade...\nLADY LASER m'aurait protégé..." },
-    { who: 'boss', text: "Et t'en as pas fini avec l'IA ! Mon prompt aurait dû\nte battre. J'étais sûrement en low effort." },
-    { who: 'boss', text: 'On va te rouler dessus, à toi et à ta mère !' },
-    { who: 'hero', text: gal ? "Ça tombe bien, je me tape 300 bornes de bitume\ntous les matins." : "Ça tombe bien, j'avale des kilomètres de route\ntous les jours." },
-  ], () => {}, talkCam());
+function bossTalkLines(kind) {
+  const T = BOSS_TALKS[G.level], f = T && T[kind]; if (!f) return null;
+  return f(G.hero === 'roxy').map(l => ({ who: l.who, text: l.text.split('@').join(String.fromCharCode(10)) }));
+}
+function startBossTalk(kind) {
+  const lines = bossTalkLines(kind || 'post'); if (!lines) return false;
+  if ((kind || 'post') === 'post' && G.boss && BOSS_TALKS[G.level].hold) G.boss.holdFrame = BOSS_TALKS[G.level].hold;
+  Talk.start(lines, () => {}, talkCam());
+  return true;
 }
 function startGame(li, cheated) {
   G.mode = 'arcade'; G.endless = null; G.daily = null; G.medalRes = null; G.hpMul = 1; G.dmgMul = 1;
@@ -187,7 +217,7 @@ function startLevel(li) {
     .concat((L.plates || []).map(o => new ElectroPlate(o, L.plateTiming)));   // floor hazards: steam vents + electrified plates G.maxTok = li < 2 ? 2 : 3;
   G.hpMul = 1 + li * 0.1; G.dmgMul = 1 + li * 0.12;
   FX.reset(); BG.init(li);
-  G.bossTalked = false; G.camX = 0; G.stopIdx = 0; G.locked = false; G.waveIdx = 0; G.frame = 0; G.boss = null; G.clearT = 0; G.deathT = 0; G.goT = 0;
+  G.bossTalked = false; G.preTalked = false; G.camX = 0; G.stopIdx = 0; G.locked = false; G.waveIdx = 0; G.frame = 0; G.boss = null; G.clearT = 0; G.deathT = 0; G.goT = 0;
   G.bounds = { minX: 0, maxX: W };
   const old = G.player;
   G.player = new Player(60, 306);
@@ -249,7 +279,7 @@ function stageLogic() {
   }
   if (G.clearT > 0) {
     // level 1: BIG BOOMER lies on the floor and monologues before the clear screen (arcade only; ECHAP skips)
-    if (G.level === 0 && G.mode === 'arcade' && !G.bossTalked && G.boss && G.boss.state === 'dead' && G.boss.stT >= 26) { G.bossTalked = true; startBossTalk(); return; }
+    if (G.mode === 'arcade' && !G.bossTalked && G.boss && G.boss.state === 'dead' && G.boss.stT >= 26) { G.bossTalked = true; if (startBossTalk('post')) return; }
     if (--G.clearT === 0) finishLevel(); return;
   }
   // camera
@@ -265,6 +295,7 @@ function stageLogic() {
     G.bounds = { minX: G.camX, maxX: G.camX + W };
     if (stop.endless) Endless.step();
     else if (stop.boss) {
+      if (G.mode === 'arcade' && !G.preTalked && G.boss && !G.boss.dead && G.boss.entered && BOSS_TALKS[G.level] && BOSS_TALKS[G.level].pre) { G.preTalked = true; startBossTalk('pre'); return; }
       if (G.boss && G.boss.dead && G.clearT === 0 && !G.bossDeadHandled) {
         G.bossDeadHandled = true; G.clearT = 190; G.spawnQ.length = 0;
         FX.slow(70, 0.22); FX.flashScreen(0.9, '#fff'); FX.addShake(16); FX.explosion(G.boss.x, G.boss.y - 40, 2.2); Snd.sfx.boom();
@@ -1039,7 +1070,7 @@ function boot() {
       startGame(clamp(parseInt(q.get('level'), 10) - 1, 0, LEVELS.length - 1), true);
       if (q.has('stop')) jumpToStop(parseInt(q.get('stop'), 10));
       if (q.has('cam')) { G.camX = parseInt(q.get('cam'), 10) || 0; G.player.x = G.camX + 300; }   // dev: look past the stage end
-      if (q.has('bosstalk')) startBossTalk();   // dev: ?level=1&bosstalk=1 shows the post-boss dialogue straight away
+      if (q.has('bosstalk')) startBossTalk(q.get('bosstalk') === 'pre' ? 'pre' : 'post');   // dev: ?level=1&bosstalk=1 shows the post-boss dialogue straight away
     }
     if (G.player && q.has('weapon') && WEAPONS[q.get('weapon')]) G.player.weapon = { id: q.get('weapon'), uses: WEAPONS[q.get('weapon')].uses };   // dev: ?level=1&weapon=bar&spawn=brute&arm=knife
     if (G.player && q.has('spawn')) { const e = spawnEnemy(q.get('spawn'), G.camX + 420, 300, { flash: true }); if (q.has('arm') && WEAPONS[q.get('arm')]) e.arm(q.get('arm')); }

@@ -1,4 +1,4 @@
--- VEEXING FORCE - INTRO backdrop "MEGA MARKET", drawn pixel by pixel in Aseprite (batch, see tools/make_intro.py).
+-- VEEXING FORCE - INTRO backdrop "PRIZUNIK", drawn pixel by pixel in Aseprite (batch, see tools/make_intro.py).
 -- A single static 640x360 supermarket aisle: fluorescent ceiling, shelves stacked with boxes / cans / bottles, a neon sign, a freezer,
 -- pastel checker floor in perspective. Layers: back (everything) | glow (additive: tubes, sign, freezer).
 local out = app.params["out"]
@@ -83,7 +83,7 @@ end
 for y = 96, FLOOR - 10, 4 do emit(GLOW, fx0 + 35, y, "#27f0ff", 0.30, 20) end
 
 -- ---- neon sign above everything
-neonText(BACK, GLOW, "MEGA MARKET", 214, 32, 3, "#ff2fd0", "#ffffff", 0.35, false)
+neonText(BACK, GLOW, "PRIZUNIK", 250, 32, 3, "#ff2fd0", "#ffffff", 0.35, false)
 rect(BACK, 208, 28, 208, 56, C("#27f0ff")); rect(BACK, 210, 28, 210, 56, C("#27f0ff"))
 rect(BACK, 424, 28, 424, 56, C("#27f0ff")); rect(BACK, 426, 28, 426, 56, C("#27f0ff"))
 -- hanging promo flags

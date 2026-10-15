@@ -5,7 +5,7 @@
 // shared by the intro and the post-boss talk: bottom dialogue box, typewriter text, speaker tag (boss pink / mum mint / hero cyan)
 function drawDialogueBox(c, who, lines, typed, full, name, t, top) {
   const col = who === 'boss' ? '#ff2fd0' : who === 'mom' ? '#7fe3c8' : '#27f0ff';
-  const x = 18, y = top ? 62 : 300, w = W - 36, h = 52;
+  const x = 18, y = top ? 70 : 300, w = W - 36, h = 52;
   c.fillStyle = 'rgba(8,3,22,.88)'; c.fillRect(x, y, w, h); c.strokeStyle = col; c.lineWidth = 2; c.strokeRect(x + 1, y + 1, w - 2, h - 2);
   c.fillStyle = col; c.fillRect(x + 8, y - 9, 8 + name.length * 8, 14);
   drawText(c, name, x + 12, y + 2, { size: 9, color: '#0a0418', align: 'left', weight: 'bold' });
@@ -30,7 +30,7 @@ const Talk = {
   end() { const cb = this.onDone; this.q = null; this.onDone = null; G.state = 'play'; Input.clear(); cb && cb(); },
   drawUI(c) {
     if (!this.q) return; const L = this.q[this.i];
-    const name = L.who === 'boss' ? 'BIG BOOMER' : L.who === 'mom' ? 'MAMAN' : (G.hero === 'roxy' ? 'ROXY' : 'VEEX');
+    const name = L.who === 'boss' ? ((typeof LOOKS !== 'undefined' && LOOKS[G.level] && LOOKS[G.level]['boss' + (G.level + 1)]) || { name: 'BOSS' }).name : L.who === 'mom' ? 'MAMAN' : (G.hero === 'roxy' ? 'ROXY' : 'VEEX');
     drawDialogueBox(c, L.who, L.text.split('\n'), this.typed, L.text.length, name, this.t, true);   // top: the lane near the bottom is where the boss lies
   },
 };

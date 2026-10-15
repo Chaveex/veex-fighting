@@ -538,6 +538,7 @@ class Enemy extends Fighter {
   }
   // sprite frame for the current state (frame names: see tools/make_enemy_sprites.py)
   spriteFrame(S) {
+    if (this.holdFrame && S.has(this.holdFrame)) return this.holdFrame;   // cutscenes: freeze a pose (e.g. a beaten boss on his knees)
     const a = this.atk, t = this.stT;
     switch (this.state) {
       case 'move': return this.moving ? 'walk' + (Math.floor(this.walkPhase / (Math.PI / 3)) % 6) : 'idle' + (Math.floor((this.t + this.id * 13) / 16) % 2);
