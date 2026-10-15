@@ -17,11 +17,12 @@ function drawDialogueBox(c, who, lines, typed, full, name, t, top) {
 // ============ talk: short in-game exchange (world frozen, same box). Talk.start(lines, onDone); G.state === 'talk' ============
 const Talk = {
   q: null, i: 0, typed: 0, t: 0, onDone: null,
-  start(lines, onDone, cam) { this.q = lines; this.i = 0; this.typed = 0; this.t = 0; this.onDone = onDone; this.cam = cam; G.state = 'talk'; Input.clear(); },
+  start(lines, onDone, cam) { this.q = lines; this.i = 0; this.typed = 0; this.t = 0; this.onDone = onDone; this.cam = cam; this._seen = -1; G.state = 'talk'; Input.clear(); },
   step() {
     if (!this.q) return; this.t++;
     FX.updateWorld();
     const L = this.q[this.i], full = L.text.length;
+    if (this._seen !== this.i) { this._seen = this.i; if (L.pose && G.boss) { G.boss.holdFrame = L.pose; if (L.pose === 'down') { FX.dust(G.boss.x, G.boss.y, 10); FX.addShake(5); Snd.sfx.land && Snd.sfx.land(); } } }
     if (Input.eat('pause')) { this.end(); return; }
     if (this.cam !== undefined && Math.abs(this.cam - G.camX) > 1.5) { G.camX += (this.cam - G.camX) * 0.12; return; }   // pan to the speaker first
     if (this.typed < full) { this.typed = Math.min(full, this.typed + 0.7); if (this.t % 6 === 0) Snd.sfx.ui && Snd.sfx.ui(); }
@@ -30,7 +31,7 @@ const Talk = {
   end() { const cb = this.onDone; this.q = null; this.onDone = null; G.state = 'play'; Input.clear(); cb && cb(); },
   drawUI(c) {
     if (!this.q) return; const L = this.q[this.i];
-    const name = L.who === 'boss' ? ((typeof LOOKS !== 'undefined' && LOOKS[G.level] && LOOKS[G.level]['boss' + (G.level + 1)]) || { name: 'BOSS' }).name : L.who === 'mom' ? 'MAMAN' : (G.hero === 'roxy' ? 'ROXY' : 'VEEX');
+    const name = L.who === 'boss' ? ((typeof LOOKS !== 'undefined' && LOOKS[G.level] && LOOKS[G.level]['boss' + (G.level + 1)]) || { name: 'BOSS' }).name : L.who === 'mom' ? 'MOMAN' : (G.hero === 'roxy' ? 'ROXY' : 'VEEX');
     drawDialogueBox(c, L.who, L.text.split('\n'), this.typed, L.text.length, name, this.t, true);   // top: the lane near the bottom is where the boss lies
   },
 };
@@ -51,7 +52,7 @@ const Intro = {
     this.t = 0; this.bi = -1; this.bt = 0; this.typed = 0; this.line = null; this.done = false; this.fade = 1; this.shakeT = 0; this.flashT = 0;
     this.onDone = onDone;
     const gal = G.hero === 'roxy';
-    this.names = { hero: gal ? 'ROXY' : 'VEEX', mom: 'MAMAN', boss: 'BIG BOOMER' };
+    this.names = { hero: gal ? 'ROXY' : 'VEEX', mom: 'MOMAN', boss: 'BIG BOOMER' };
     this.A = {
       hero: { x: -70, y: 282, f: 1, fr: 'idle', ph: 0, anim: 'idle', hurt: 0 },
       mom: { x: -150, y: 282, f: 1, fr: 'stand', ph: 0, anim: 'stand', hurt: 0 },
@@ -81,7 +82,7 @@ const Intro = {
         H.x = M.x - 78; H.f = 1; H.anim = k < 1 ? 'walk' : 'idle'; H.ph = bt;
       } },
       { who: 'mom', text: 'Bon. Trois paquets de nouilles\net on rentre.', run: bt => { M.anim = 'talk'; M.ph = bt; H.anim = 'idle'; H.ph = bt; } },
-      { who: 'hero', text: "Maman... t'en as déjà six dans le caddie.", run: bt => { M.anim = 'stand'; M.ph = bt; H.anim = 'idle'; H.ph = bt; } },
+      { who: 'hero', text: "Moman... t'en as déjà six dans le caddie.", run: bt => { M.anim = 'stand'; M.ph = bt; H.anim = 'idle'; H.ph = bt; } },
       { who: 'mom', text: 'Six, c\'est pour la semaine.\nLe reste, c\'est pour la crise.', run: bt => { M.anim = 'talk'; M.ph = bt; H.anim = 'idle'; H.ph = bt; } },
       // 4: the brute walks in from the right, boombox thumping
       { dur: 130, init: () => { B.x = 760; B.f = -1; Snd.sfx.boom(); }, run: bt => {
@@ -109,7 +110,7 @@ const Intro = {
         if (M.fly) { M.x += M.vx; M.y += M.vy; M.vy += 0.6; M.vx *= 0.97; if (M.y >= 282) { M.y = 282; M.fly = false; M.vx = 0; this.shakeT = 8; Snd.sfx.hit(2); } M.anim = M.fly ? 'tumble' : 'down'; M.f = 1; }
         H.anim = 'idle'; H.ph = bt;
       } },
-      { who: 'hero', text: '...MAMAN ?!', run: bt => { H.anim = 'fury'; H.ph = bt; M.anim = 'down'; B.anim = 'idle'; B.ph = bt; M.f = 1; } },
+      { who: 'hero', text: '...MOMAN ?!', run: bt => { H.anim = 'fury'; H.ph = bt; M.anim = 'down'; B.anim = 'idle'; B.ph = bt; M.f = 1; } },
       { who: 'hero', text: 'TU AS FRAPPÉ MA MÈRE ?!', run: bt => { H.anim = 'fury'; H.ph = bt; M.anim = 'down'; B.anim = 'idle'; B.ph = bt; if (bt % 14 === 0) this.shakeT = 6; } },
       // 15: the hero charges, the brute goes flying into the shelves
       { dur: 130, init: () => { this._hk2 = 0; B.hit = false; B.fly = false; }, run: bt => {

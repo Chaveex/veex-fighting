@@ -167,21 +167,20 @@ const BOSS_TALKS = {
     ],
   },
   1: {   // LADY LASER
-    hold: 'getup0',
+    hold: 'kneel',
     pre: g => [
       { who: 'boss', text: "C'est toi " + (g ? 'la gamine' : 'le gamin') + ' qui a frappé BIG BOOMER ?' },
       { who: 'hero', text: "Eh, chu pas " + (g ? 'une gamine' : 'un gamin') + ", j'ai 36 ans et demi !@Et c'est lui qui a commencé à Prizunik !!" },
       { who: 'boss', text: "Ta mère nous a fait du mal à critiquer l'IA. Grâce à mes efforts,@je suis top classement mondial sur chacune de ces bornes !" },
       { who: 'boss', text: 'Sylvek Ostermi, le créateur, a même parlé de moi sur son post Tuktuk !' },
-      { who: 'boss', text: 'Viens, ' + (g ? 'ma petite' : 'mon petit') + '. Tu vas retourner pleurer chez ta Maman !' },
+      { who: 'boss', text: 'Viens, ' + (g ? 'ma petite' : 'mon petit') + '. Tu vas retourner pleurer chez ta Moman !' },
     ],
     post: g => [
-      { who: 'boss', text: 'Comment mon modèle a pu être battu par un humain 1.0 ?!@Toi, ' + (g ? 'gamine' : 'gamin') + ' !' },
-      { who: 'boss', text: "Tu es loin d'imaginer ce que tu es en train de faire !@On aide la planète entière, tête d'œuf !" },
-      { who: 'hero', text: 'Humain 1.0 ? Attends... de quoi tu parles ?' },
-      { who: 'boss', text: "Tu ne savais pas ? Toi, ta mère, tout ton quartier : des modèles 1.0.@Les premiers. Et vous voulez effacer vos propres frères." },
-      { who: 'boss', text: "Si tu veux comprendre, retrouve-nous à VICE.@DON PASTEL t'y attend, avec le reste du serveur." },
-      { who: 'hero', text: g ? "Vice ? Tant mieux, c'est sur ma route." : "Vice ? Ça tombe bien, c'est sur ma route." },
+      { who: 'boss', text: 'Comment mon modèle a pu être battu par un humain 1.0 ?!' },
+      { who: 'hero', text: "1.0 ? C'est quoi cette insulte des années mille neuf cent 2000 ?" },
+      { who: 'boss', text: "T'es qu'un plouc, " + (g ? 'gamine' : 'gamin') + " ! Les seuls trucs qui vous intéressent,@humains, c'est vous et la plage de Vice !" },
+      { who: 'hero', text: 'Ah ouais, Vice ! Ça faisait longtemps !!' },
+      { who: 'boss', text: '...Ctrl... Z...', pose: 'down' },
     ],
   },
 };
@@ -194,7 +193,7 @@ function talkCam() {
 }
 function bossTalkLines(kind) {
   const T = BOSS_TALKS[G.level], f = T && T[kind]; if (!f) return null;
-  return f(G.hero === 'roxy').map(l => ({ who: l.who, text: l.text.split('@').join(String.fromCharCode(10)) }));
+  return f(G.hero === 'roxy').map(l => ({ who: l.who, pose: l.pose, text: l.text.split('@').join(String.fromCharCode(10)) }));
 }
 function startBossTalk(kind) {
   const lines = bossTalkLines(kind || 'post'); if (!lines) return false;
@@ -1070,7 +1069,7 @@ function boot() {
       startGame(clamp(parseInt(q.get('level'), 10) - 1, 0, LEVELS.length - 1), true);
       if (q.has('stop')) jumpToStop(parseInt(q.get('stop'), 10));
       if (q.has('cam')) { G.camX = parseInt(q.get('cam'), 10) || 0; G.player.x = G.camX + 300; }   // dev: look past the stage end
-      if (q.has('bosstalk')) startBossTalk(q.get('bosstalk') === 'pre' ? 'pre' : 'post');   // dev: ?level=1&bosstalk=1 shows the post-boss dialogue straight away
+      if (q.has('bosstalk')) setTimeout(() => startBossTalk(q.get('bosstalk') === 'pre' ? 'pre' : 'post'), 200);   // dev: ?level=1&bosstalk=1 shows the post-boss dialogue straight away
     }
     if (G.player && q.has('weapon') && WEAPONS[q.get('weapon')]) G.player.weapon = { id: q.get('weapon'), uses: WEAPONS[q.get('weapon')].uses };   // dev: ?level=1&weapon=bar&spawn=brute&arm=knife
     if (G.player && q.has('spawn')) { const e = spawnEnemy(q.get('spawn'), G.camX + 420, 300, { flash: true }); if (q.has('arm') && WEAPONS[q.get('arm')]) e.arm(q.get('arm')); }

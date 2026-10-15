@@ -43,6 +43,8 @@ def deep_of(c):
 src = open(os.path.join(ROOT, 'js', 'rig.js'), encoding='utf8').read()
 block = src[src.index('const POSES = {'):src.index('// ----- procedural cycles')]
 POSES = {m.group(1): dict(zip(PK, [float(x) for x in m.group(2).split(',')])) for m in re.finditer(r'(\w+):\s+P\(([^)]*)\)', block)}
+# beaten boss on one knee, head bowed, front hand on the thigh (cutscenes: Enemy.holdFrame = 'kneel')
+POSES['kneel'] = dict(hx=2.0, hy=11.0, lean=0.34, tilt=0.26, hFx=11.0, hFy=17.0, hBx=-3.0, hBy=8.0, fFx=14.0, fFy=1.0, fBx=-13.0, fBy=3.0)
 def lerp_pose(a, b, t): return {k: a[k] + (b[k] - a[k]) * t for k in PK}
 def idle_pose(b, hfx, base):
     p = dict(base); p['hy'] += b * 0.9; p['hFy'] += b * 1.4; p['hBy'] += b * 1.1; p['hFx'] += hfx * 1.2; p['lean'] += b * 0.012; return p
@@ -471,6 +473,7 @@ def frame_plan(sp):
     P = POSES
     fr += [('hurt', P['hurt'], (3, 0)), ('hurt2', P['hurt2'], (4, 1)), ('tumble', P['tumble'], (3, 3)), ('down', P['down'], (0, 0)),
            ('getup0', lerp_pose(P['down'], P['getup'], .5), (0, 0)), ('getup1', P['getup'], (-1, 0)), ('held', P['held'], (2, 1))]
+    if sp['kind'].startswith('boss'): fr.append(('kneel', P['kneel'], (1, 0)))
     for pw in PWS[sp['kind']]:
         if pw == 'arms_up': fr.append(('arms_up', P['arms_up'], (0, 4))); continue
         s = P[pw + '_s']
