@@ -203,6 +203,11 @@ const BOSS_TALKS = {
       { who: 'boss', text: '...Maudit humain 1.0... au 8 15 15', pose: 'down' },
     ],
   },
+  3: {   // CYBER TOWER: arrival remark (MR. CHROME's dialogue still to write)
+    intro: g => [
+      { who: 'hero', text: 'Ah, maintenant on a le droit à la robotique...' },
+    ],
+  },
 };
 // camera target for the talks: bosses can die off screen, so pan to them (the backdrop keeps going past the stage width)
 function talkCam() {
