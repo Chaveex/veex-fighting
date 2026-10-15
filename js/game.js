@@ -209,7 +209,7 @@ const BOSS_TALKS = {
       { who: 'hero', text: 'Ah, maintenant on a le droit à la robotique...' },
     ],
     pre: g => [
-      { who: 'boss', text: "Humain 1.5. Tu as traversé trois niveaux pour venir t'éteindre ici." },
+      { who: 'boss', text: "Humain 1.5. Tu as traversé la région pour venir t'éteindre ici." },
       { who: 'hero', text: "J'ai surtout traversé des rayons de supermarché." },
       { who: 'boss', text: "Je suis MR. CHROME. Le serveur, c'est moi.@Et toi, tu es un vieux modèle." },
       { who: 'hero', text: "Un vieux modèle ? J'ai 36 ans et demi !" },
