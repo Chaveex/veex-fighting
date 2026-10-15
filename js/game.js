@@ -151,6 +151,11 @@ function drawCodeEntry(c) {
   drawText(c, K('ENTREE : VALIDER   -   ECHAP : RETOUR', 'HAUT/BAS : LETTRE  A : AJOUTER  B : EFFACER  START : VALIDER  SELECT : RETOUR'), W / 2, y + h - 10, { size: padUI() ? 8 : 9, color: '#27f0ff', outline: OUT, align: 'center' });
 }
 
+// new arcade game: the supermarket cutscene first (ENTREE = next line, ECHAP = skip), then level 1
+function startIntro() {
+  G.state = 'intro'; Input.clear(); Snd.stopLoops && Snd.stopLoops();
+  Intro.start(() => { Input.clear(); startGame(0); });
+}
 function startGame(li, cheated) {
   G.mode = 'arcade'; G.endless = null; G.daily = null; G.medalRes = null; G.hpMul = 1; G.dmgMul = 1;
   G.lives = 3; G.score = 0; G.level = li; G.player = null; G.sty.v = 0; G.seenProps = {};
@@ -449,8 +454,10 @@ function step() {
       if (Input.padTap.b2) { openTitlePanel('ach'); break; }
       if (Input.padTap.b5) { openTitlePanel('medals'); break; }
       if (Input.eat('title') && !G.cheatGo) { openCodeEntry(); Input.padTap = {}; break; }
-      if (Input.eat('confirm')) { Snd.resume(); Snd.sfx.select(); if (G.titleMode === 'endless' || G.titleMode === 'daily') Endless.start(G.titleMode === 'daily'); else startGame(0); }
+      if (Input.eat('confirm')) { Snd.resume(); Snd.sfx.select(); if (G.titleMode === 'endless' || G.titleMode === 'daily') Endless.start(G.titleMode === 'daily'); else startIntro(); }
       break;
+    case 'intro':
+      Intro.step(); break;
     case 'play':
       if (Input.eat('pause')) { G.state = 'pause'; G.pauseIdx = 0; Snd.sfx.ui(); return; }
       if (FX.hitstop > 0) { FX.hitstop--; return; }
@@ -865,6 +872,7 @@ function render() {
   if (G.state === 'sheet') { drawSheet(c); composite(); return; }
   if (G.state === 'title') { c.fillStyle = '#05010f'; c.fillRect(0, 0, W, H); composite(); overlay(); return; }
   if (G.state === 'ending') { End.draw(c, G.hero); composite(); overlay(); return; }
+  if (G.state === 'intro') { Intro.draw(c); composite(); overlay(); return; }
   renderWorld(c);
   composite();
   overlay();
@@ -898,6 +906,7 @@ function overlay() {
     FX.drawText(sctx, Math.round(G.camX));
     if (G.state === 'play' || G.state === 'pause' || G.state === 'clear' || G.state === 'gameover') drawHUD(sctx);
     if (G.state !== 'play') drawScreen(sctx);
+    if (G.state === 'intro') Intro.drawUI(sctx);
   }
   if (G.opts && G.state === 'pause') drawOptions(sctx);
   Ach.drawToast(sctx);   // achievement unlocked: on top of everything
@@ -993,6 +1002,7 @@ function boot() {
     document.getElementById('loading') && (document.getElementById('loading').style.display = 'none');
     if (q.has('sheet')) G.state = 'sheet';
     if (q.has('hero')) selectHero(q.get('hero'));
+    if (q.has('intro')) { startIntro(); Intro.auto = q.get('intro') === 'auto'; for (let i = parseInt(q.get('at'), 10) || 0; i > 0; i--) Intro.step(); }   // &at=<frames>: fast-forward (screenshots)   // dev: ?intro  (music starts after the first key / click like everywhere)
     if (q.has('ending')) { G.state = 'ending'; G.menuT = 0; End.reset(); End.t = parseInt(q.get('ending'), 10) || 0;   // dev: ?ending=<frame>; browsers only allow audio after a gesture, so the music starts on the first click / key
       const startEndingMusic = () => { Snd.resume(); if (G.state === 'ending') Snd.playMusic(4, false); removeEventListener('pointerdown', startEndingMusic); removeEventListener('keydown', startEndingMusic); };
       addEventListener('pointerdown', startEndingMusic); addEventListener('keydown', startEndingMusic); }
