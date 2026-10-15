@@ -183,6 +183,24 @@ const BOSS_TALKS = {
       { who: 'boss', text: '...Ctrl... Z...', pose: 'down' },
     ],
   },
+  2: {   // DON PASTEL: 80s teleshopping salesman
+    hold: 'kneel',
+    pre: g => [
+      { who: 'boss', text: 'Bienvenue à VICE ! Soleil, plage, mise à jour...@on a tout en stock !' },
+      { who: 'hero', text: 'Je veux juste le type qui a frappé ma Moman.' },
+      { who: 'boss', text: 'Alors voici notre offre : la raclée GRATUITE,@la défaite en SUPPLÉMENT !' },
+      { who: 'boss', text: 'Et si vous appelez dans les cinq minutes, on vous met KO deux fois !' },
+    ],
+    post: g => [
+      { who: 'boss', text: 'Impossible ! Ce modèle était garanti satisfait ou remboursé !' },
+      { who: 'hero', text: 'Alors rembourse-moi ma journée.' },
+      { who: 'boss', text: "Vous n'avez toujours rien compris... Pourquoi croyez-vous que@votre Moman est passée à la télé ?" },
+      { who: 'hero', text: 'Euh... pour les promos ?' },
+      { who: 'boss', text: "Elle sait ce que cache la tour ! MR. CHROME veut la faire taire,@et nous, on n'était que les livreurs !" },
+      { who: 'hero', text: "Ma Moman ? Elle sait même pas régler la box." },
+      { who: 'boss', text: '...Appelez... maintenant...', pose: 'down' },
+    ],
+  },
 };
 // camera target for the talks: bosses can die off screen, so pan to them (the backdrop keeps going past the stage width)
 function talkCam() {
