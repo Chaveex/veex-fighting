@@ -311,7 +311,15 @@ const BG = {
   // Aseprite layers: sky (static) | far x0.2 | mid x0.5 | floor + facade x1 | additive light: glow, flicker (broken "24H" sign), bulbsA/B (marquee chaser)
   drawArt(c, camX, t) {
     const L = this.img, m = this.la.meta, cx = Math.floor(camX);
-    const blit = (k, par) => { const o = L[k], sx = Math.floor(camX * par) - o.x; c.drawImage(o.im, sx, 0, W, o.im.height, 0, o.y, W, o.im.height); };
+    const blit = (k, par) => {
+      const o = L[k], iw = o.im.width, sx = Math.floor(camX * par) - o.x, ih = o.im.height, sw = Math.min(W, iw - sx);
+      if (sw > 0) c.drawImage(o.im, sx, 0, sw, ih, 0, o.y, sw, ih);
+      if (sw < W && iw > 8) {   // camera panned past the end of the stage (boss that died off screen): mirror the last strip so the set keeps going
+        const rem = W - Math.max(0, sw), mw = Math.min(rem, iw), x0 = Math.max(0, sw);
+        c.save(); c.translate(x0 + mw, 0); c.scale(-1, 1); c.drawImage(o.im, iw - mw, 0, mw, ih, 0, o.y, mw, ih); c.restore();
+        if (rem > mw) { c.save(); c.translate(x0 + mw, 0); c.drawImage(o.im, 0, 0, Math.min(rem - mw, iw), ih, 0, o.y, Math.min(rem - mw, iw), ih); c.restore(); }
+      }
+    };
     c.drawImage(L.sky.im, 0, 0);
     blit('far', m.far);
     c.fillStyle = '#ff2a4d';

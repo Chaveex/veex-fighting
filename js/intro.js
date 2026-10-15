@@ -17,12 +17,13 @@ function drawDialogueBox(c, who, lines, typed, full, name, t, top) {
 // ============ talk: short in-game exchange (world frozen, same box). Talk.start(lines, onDone); G.state === 'talk' ============
 const Talk = {
   q: null, i: 0, typed: 0, t: 0, onDone: null,
-  start(lines, onDone) { this.q = lines; this.i = 0; this.typed = 0; this.t = 0; this.onDone = onDone; G.state = 'talk'; Input.clear(); },
+  start(lines, onDone, cam) { this.q = lines; this.i = 0; this.typed = 0; this.t = 0; this.onDone = onDone; this.cam = cam; G.state = 'talk'; Input.clear(); },
   step() {
     if (!this.q) return; this.t++;
     FX.updateWorld();
     const L = this.q[this.i], full = L.text.length;
     if (Input.eat('pause')) { this.end(); return; }
+    if (this.cam !== undefined && Math.abs(this.cam - G.camX) > 1.5) { G.camX += (this.cam - G.camX) * 0.12; return; }   // pan to the speaker first
     if (this.typed < full) { this.typed = Math.min(full, this.typed + 0.7); if (this.t % 6 === 0) Snd.sfx.ui && Snd.sfx.ui(); }
     if (Input.eat('confirm')) { if (this.typed < full) this.typed = full; else if (++this.i >= this.q.length) this.end(); else this.typed = 0; }
   },

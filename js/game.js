@@ -156,6 +156,13 @@ function startIntro() {
   G.state = 'intro'; Input.clear(); Snd.stopLoops && Snd.stopLoops();
   Intro.start(() => { Input.clear(); startGame(0); });
 }
+// camera target for the post-boss talk: bosses can die off screen, so pan to them (the backdrop just keeps tiling past the stage width)
+function talkCam() {
+  const b = G.boss, p = G.player; if (!b) return undefined;
+  let cx = b.x;
+  if (p && Math.abs(b.x - p.x) < W - 150) cx = (b.x + p.x) / 2;   // both in frame when they fit
+  return Math.max(0, Math.round(cx - W / 2));
+}
 function startBossTalk() {
   const gal = G.hero === 'roxy';
   Talk.start([
@@ -163,7 +170,7 @@ function startBossTalk() {
     { who: 'boss', text: "Et t'en as pas fini avec l'IA ! Mon prompt aurait dû\nte battre. J'étais sûrement en low effort." },
     { who: 'boss', text: 'On va te rouler dessus, à toi et à ta mère !' },
     { who: 'hero', text: gal ? "Ça tombe bien, je me tape 300 bornes de bitume\ntous les matins." : "Ça tombe bien, j'avale des kilomètres de route\ntous les jours." },
-  ], () => {});
+  ], () => {}, talkCam());
 }
 function startGame(li, cheated) {
   G.mode = 'arcade'; G.endless = null; G.daily = null; G.medalRes = null; G.hpMul = 1; G.dmgMul = 1;
@@ -1031,6 +1038,7 @@ function boot() {
     } else if (q.has('level')) {
       startGame(clamp(parseInt(q.get('level'), 10) - 1, 0, LEVELS.length - 1), true);
       if (q.has('stop')) jumpToStop(parseInt(q.get('stop'), 10));
+      if (q.has('cam')) { G.camX = parseInt(q.get('cam'), 10) || 0; G.player.x = G.camX + 300; }   // dev: look past the stage end
       if (q.has('bosstalk')) startBossTalk();   // dev: ?level=1&bosstalk=1 shows the post-boss dialogue straight away
     }
     if (G.player && q.has('weapon') && WEAPONS[q.get('weapon')]) G.player.weapon = { id: q.get('weapon'), uses: WEAPONS[q.get('weapon')].uses };   // dev: ?level=1&weapon=bar&spawn=brute&arm=knife
