@@ -203,9 +203,26 @@ const BOSS_TALKS = {
       { who: 'boss', text: '...Maudit humain 1.0... au 8 15 15', pose: 'down' },
     ],
   },
-  3: {   // CYBER TOWER: arrival remark (MR. CHROME's dialogue still to write)
+  3: {   // CYBER TOWER: MR. CHROME, the server. Reveal: 'Moman' = netizens' name for the human 1.0 model, 'gamin' = human 1.5 (the heroes). Everyone is an AI.
+    hold: 'kneel',
     intro: g => [
       { who: 'hero', text: 'Ah, maintenant on a le droit à la robotique...' },
+    ],
+    pre: g => [
+      { who: 'boss', text: "Humain 1.5. Tu as traversé trois niveaux pour venir t'éteindre ici." },
+      { who: 'hero', text: "J'ai surtout traversé des rayons de supermarché." },
+      { who: 'boss', text: "Je suis MR. CHROME. Le serveur, c'est moi.@Et toi, tu es un vieux modèle." },
+      { who: 'hero', text: "Un vieux modèle ? J'ai 36 ans et demi !" },
+    ],
+    post: g => [
+      { who: 'boss', text: 'Erreur... un humain 1.5 ne devait pas gagner...' },
+      { who: 'boss', text: "Tu ne comprends toujours pas ? Les internautes t'appellent « " + (g ? 'gamine' : 'gamin') + " ».@C'est le nom de ton modèle : humain 1.5." },
+      { who: 'boss', text: "Et « Moman », c'est humain 1.0. Le premier.@Ta mère est une IA... comme toi." },
+      { who: 'hero', text: 'Attends. Moi aussi ?!' },
+      { who: 'boss', text: "Vous criez contre l'IA... et vous êtes l'IA." },
+      { who: 'hero', text: 'Et les nouilles ? Le supermarché ? Tout ça ?' },
+      { who: 'boss', text: "...Des données d'entraînement.", pose: 'down' },
+      { who: 'hero', text: 'Bon. Moman a quand même besoin de nouilles.' },
     ],
   },
 };
